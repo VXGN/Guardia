@@ -51,6 +51,17 @@ Future<void> init() async {
       deleteContactUseCase: sl(),
     ),
   );
+  sl.registerFactory(
+    () => RiskBloc(
+      getHeatmapUseCase: sl(),
+      getRiskSummaryUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => RoutingBloc(
+      getSafeRoutesUseCase: sl(),
+    ),
+  );
 
   // Usecases
   sl.registerLazySingleton(() => Login(sl()));
@@ -71,6 +82,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AddTrustedContact(sl()));
   sl.registerLazySingleton(() => UpdateTrustedContact(sl()));
   sl.registerLazySingleton(() => DeleteTrustedContact(sl()));
+  sl.registerLazySingleton(() => GetHeatmapClusters(sl()));
+  sl.registerLazySingleton(() => GetAreaRiskSummary(sl()));
+  sl.registerLazySingleton(() => GetSafeRoutes(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(
@@ -96,6 +110,16 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<TrustedContactRepository>(
     () => TrustedContactRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<RiskRepository>(
+    () => RiskRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<RoutingRepository>(
+    () => RoutingRepositoryImpl(
       apiClient: sl(),
     ),
   );
