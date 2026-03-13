@@ -28,6 +28,15 @@ Future<void> init() async {
       getReportDetailUseCase: sl(),
     ),
   );
+  sl.registerFactory(
+    () => JourneyBloc(
+      startJourneyUseCase: sl(),
+      getActiveJourneyUseCase: sl(),
+      updateJourneyLocationUseCase: sl(),
+      finishJourneyUseCase: sl(),
+      cancelJourneyUseCase: sl(),
+    ),
+  );
 
   // Usecases
   sl.registerLazySingleton(() => Login(sl()));
@@ -37,6 +46,11 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CreateReport(sl()));
   sl.registerLazySingleton(() => GetMyReports(sl()));
   sl.registerLazySingleton(() => GetReportDetail(sl()));
+  sl.registerLazySingleton(() => StartJourney(sl()));
+  sl.registerLazySingleton(() => GetActiveJourney(sl()));
+  sl.registerLazySingleton(() => UpdateJourneyLocation(sl()));
+  sl.registerLazySingleton(() => FinishJourney(sl()));
+  sl.registerLazySingleton(() => CancelJourney(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(
@@ -47,6 +61,11 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<JourneyRepository>(
+    () => JourneyRepositoryImpl(
       apiClient: sl(),
     ),
   );
