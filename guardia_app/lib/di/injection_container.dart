@@ -37,6 +37,20 @@ Future<void> init() async {
       cancelJourneyUseCase: sl(),
     ),
   );
+  sl.registerFactory(
+    () => PanicBloc(
+      triggerPanicUseCase: sl(),
+      cancelPanicUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => TrustedContactBloc(
+      getContactsUseCase: sl(),
+      addContactUseCase: sl(),
+      updateContactUseCase: sl(),
+      deleteContactUseCase: sl(),
+    ),
+  );
 
   // Usecases
   sl.registerLazySingleton(() => Login(sl()));
@@ -51,6 +65,12 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdateJourneyLocation(sl()));
   sl.registerLazySingleton(() => FinishJourney(sl()));
   sl.registerLazySingleton(() => CancelJourney(sl()));
+  sl.registerLazySingleton(() => TriggerPanic(sl()));
+  sl.registerLazySingleton(() => CancelPanic(sl()));
+  sl.registerLazySingleton(() => GetTrustedContacts(sl()));
+  sl.registerLazySingleton(() => AddTrustedContact(sl()));
+  sl.registerLazySingleton(() => UpdateTrustedContact(sl()));
+  sl.registerLazySingleton(() => DeleteTrustedContact(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(
@@ -66,6 +86,16 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<JourneyRepository>(
     () => JourneyRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<PanicRepository>(
+    () => PanicRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<TrustedContactRepository>(
+    () => TrustedContactRepositoryImpl(
       apiClient: sl(),
     ),
   );
