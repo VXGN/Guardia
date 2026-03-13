@@ -12,6 +12,7 @@ class CustomButton extends StatelessWidget {
     this.type = ButtonType.primary,
     this.iconPath,
     this.isLoading = false,
+    this.backgroundColor,
   });
 
   final String text;
@@ -19,6 +20,7 @@ class CustomButton extends StatelessWidget {
   final ButtonType type;
   final String? iconPath;
   final bool isLoading;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +76,7 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: backgroundColor ?? AppColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),

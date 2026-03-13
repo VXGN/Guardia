@@ -5,6 +5,7 @@ import 'package:guardia_app/features/auth/presentation/pages/login_page.dart';
 import 'package:guardia_app/features/auth/presentation/pages/register_page.dart';
 import 'package:guardia_app/features/home/presentation/pages/main_screen.dart';
 import 'package:guardia_app/features/auth/presentation/pages/authority_login_page.dart';
+import 'package:guardia_app/features/home/presentation/pages/report_success_page.dart';
 
 /// GoRouter instance for Guardia app navigation.
 final GoRouter appRouter = GoRouter(
@@ -39,6 +40,11 @@ final GoRouter appRouter = GoRouter(
       path: '/authority-login',
       name: 'authority-login',
       builder: (context, state) => const AuthorityLoginPage(),
+    ),
+    GoRoute(
+      path: '/report-success',
+      name: 'report-success',
+      builder: (context, state) => const ReportSuccessPage(),
     ),
   ],
 );
