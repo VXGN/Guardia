@@ -431,7 +431,10 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.33"
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 5bef69d (feat(auth): implement Login and Register UI with form validation)
   flutter_svg:
     dependency: "direct main"
     description:
@@ -440,7 +443,10 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.4"
+<<<<<<< HEAD
 >>>>>>> bae53f8 (feat(auth): implement static Splash Screen)
+=======
+>>>>>>> 5bef69d (feat(auth): implement Login and Register UI with form validation)
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -1065,7 +1071,10 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.3"
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 5bef69d (feat(auth): implement Login and Register UI with form validation)
   vector_graphics:
     dependency: transitive
     description:
@@ -1090,7 +1099,10 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+<<<<<<< HEAD
 >>>>>>> bae53f8 (feat(auth): implement static Splash Screen)
+=======
+>>>>>>> 5bef69d (feat(auth): implement Login and Register UI with form validation)
   vector_math:
     dependency: transitive
     description:
