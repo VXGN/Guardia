@@ -62,6 +62,17 @@ Future<void> init() async {
       getSafeRoutesUseCase: sl(),
     ),
   );
+  sl.registerFactory(
+    () => ProfileBloc(
+      getProfileUseCase: sl(),
+      updateProfileUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => NotificationBloc(
+      getNotificationsUseCase: sl(),
+    ),
+  );
 
   // Usecases
   sl.registerLazySingleton(() => Login(sl()));
@@ -85,6 +96,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetHeatmapClusters(sl()));
   sl.registerLazySingleton(() => GetAreaRiskSummary(sl()));
   sl.registerLazySingleton(() => GetSafeRoutes(sl()));
+  sl.registerLazySingleton(() => GetProfile(sl()));
+  sl.registerLazySingleton(() => UpdateProfile(sl()));
+  sl.registerLazySingleton(() => GetNotifications(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(
@@ -120,6 +134,16 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<RoutingRepository>(
     () => RoutingRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<UserRepository>(
+    () => UserRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(
       apiClient: sl(),
     ),
   );
