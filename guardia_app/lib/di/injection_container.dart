@@ -1,40 +1,67 @@
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:guardia_app/core/network/api_client.dart';
+import 'package:guardia_app/core/network/auth_interceptor.dart';
+import 'package:guardia_app/core/services/secure_storage_service.dart';
+import 'package:guardia_app/data/repositories_impl/auth_repository_impl.dart';
+import 'package:guardia_app/domain/repositories/auth_repository.dart';
+import 'package:guardia_app/domain/usecases/auth/login.dart';
 
-/// Global GetIt instance for dependency injection.
-final GetIt sl = GetIt.instance;
+final sl = GetIt.instance;
 
-/// Initialize all dependencies.
-/// Called once at app startup before runApp().
 Future<void> init() async {
-  //
-  // ─── Core ────────────────────────────────────────────────────────
-  //
+  // Features - Auth
+  // Bloc
+  sl.registerFactory(
+    () => AuthBloc(
+      loginUser: sl(),
+      registerUser: sl(),
+      logoutUser: sl(),
+      getCurrentUser: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => ReportBloc(
+      createReportUseCase: sl(),
+      getMyReportsUseCase: sl(),
+      getReportDetailUseCase: sl(),
+    ),
+  );
 
-  // Network
-  sl.registerLazySingleton<ApiClient>(ApiClient.new);
+  // Usecases
+  sl.registerLazySingleton(() => Login(sl()));
+  sl.registerLazySingleton(() => Register(sl()));
+  sl.registerLazySingleton(() => Logout(sl()));
+  sl.registerLazySingleton(() => GetCurrentUser(sl()));
+  sl.registerLazySingleton(() => CreateReport(sl()));
+  sl.registerLazySingleton(() => GetMyReports(sl()));
+  sl.registerLazySingleton(() => GetReportDetail(sl()));
 
-  //
-  // ─── Features ────────────────────────────────────────────────────
-  //
+  // Repository
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      apiClient: sl(),
+      storageService: sl(),
+    ),
+  );
+  sl.registerLazySingleton<ReportRepository>(
+    () => ReportRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
 
-  // TODO: Register feature dependencies here as they are implemented.
-  //
-  // Example pattern for a feature:
-  //
-  // // BLoC
-  // sl.registerFactory(() => AuthBloc(loginUseCase: sl()));
-  //
-  // // Use Cases
-  // sl.registerLazySingleton(() => LoginUseCase(repository: sl()));
-  //
-  // // Repositories
-  // sl.registerLazySingleton<AuthRepository>(
-  //   () => AuthRepositoryImpl(remoteDataSource: sl()),
-  // );
-  //
-  // // Data Sources
-  // sl.registerLazySingleton<AuthRemoteDataSource>(
-  //   () => AuthRemoteDataSourceImpl(client: sl()),
-  // );
+  // Core
+  sl.registerLazySingleton(() => ApiClient(dio: sl()));
+  sl.registerLazySingleton(() => AuthInterceptor(sl()));
+
+  // Services
+  sl.registerLazySingleton(() => SecureStorageService(sl()));
+
+  // External
+  sl.registerLazySingleton(() => const FlutterSecureStorage());
+  sl.registerLazySingleton(() => Dio());
+
+  // Add interceptor to Dio
+  sl<Dio>().interceptors.add(sl<AuthInterceptor>());
 }

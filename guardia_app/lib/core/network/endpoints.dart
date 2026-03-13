@@ -1,32 +1,42 @@
-/// API endpoint constants.
-/// Centralized endpoint management for clean maintenance.
 class Endpoints {
-  Endpoints._();
+  static const String baseUrl = 'https://api.guardia.app/v1'; // TODO: Update with actual URL
 
   // Auth
   static const String login = '/auth/login';
   static const String register = '/auth/register';
   static const String logout = '/auth/logout';
-  static const String refreshToken = '/auth/refresh';
+  static const String me = '/auth/me';
 
-  // User / Profile
-  static const String profile = '/user/profile';
-  static const String updateProfile = '/user/profile/update';
+  // Trusted Contacts
+  static const String trustedContacts = '/trusted-contacts';
 
   // Reports
   static const String reports = '/reports';
-  static const String createReport = '/reports/create';
-  static const String reportDetail = '/reports/'; // + {id}
+  static String reportMedia(String id) => '/reports/$id/media';
+  static String reportDetail(String id) => '/reports/$id';
+  static String reportStatusLogs(String id) => '/reports/$id/status-logs';
 
-  // Heatmap
-  static const String heatmapData = '/heatmap/data';
+  // Risk & Heatmap
+  static const String heatmapClusters = '/heatmap/clusters';
+  static const String areaRiskSummary = '/risk/summary/current-area';
+  static const String riskScores = '/risk/scores';
 
-  // Journey / Routing
-  static const String safeRoutes = '/routes/safe';
-  static const String journeyStart = '/journey/start';
-  static const String journeyEnd = '/journey/end';
+  // Routing
+  static const String safeRoute = '/routing/safe-route';
+
+  // Journeys
+  static const String journeys = '/journeys';
+  static const String activeJourney = '/journeys/active';
+  static String journeyDetail(String id) => '/journeys/$id';
+  static String journeyLocations(String id) => '/journeys/$id/locations';
+  static String finishJourney(String id) => '/journeys/$id/finish';
+  static String cancelJourney(String id) => '/journeys/$id/cancel';
+  static String checkJourneyStatus(String id) => '/journeys/$id/check-status';
 
   // Panic
-  static const String panicAlert = '/panic/alert';
-  static const String emergencyContacts = '/panic/contacts';
+  static const String triggerPanic = '/panic/trigger';
+  static const String cancelPanic = '/panic/cancel';
+
+  // Notifications
+  static const String notifications = '/notifications';
 }
