@@ -28,7 +28,8 @@ dependencies:
   dio: ^5.9.2
 
   # Maps & Location
-  google_maps_flutter: any
+  flutter_map: ^6.1.0
+  latlong2: any
   geolocator: any
   geocoding: any
 

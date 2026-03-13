@@ -3,6 +3,7 @@ import 'package:guardia_app/features/home/presentation/pages/splash_page.dart';
 import 'package:guardia_app/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:guardia_app/features/auth/presentation/pages/login_page.dart';
 import 'package:guardia_app/features/auth/presentation/pages/register_page.dart';
+import 'package:guardia_app/features/home/presentation/pages/main_screen.dart';
 
 /// GoRouter instance for Guardia app navigation.
 final GoRouter appRouter = GoRouter(
@@ -28,12 +29,11 @@ final GoRouter appRouter = GoRouter(
       name: 'register',
       builder: (context, state) => const RegisterPage(),
     ),
-    // TODO: Add routes as features are implemented
-    // GoRoute(
-    //   path: '/home',
-    //   name: 'home',
-    //   builder: (context, state) => const HomePage(),
-    // ),
+    GoRoute(
+      path: '/home',
+      name: 'home',
+      builder: (context, state) => const MainScreen(),
+    ),
   ],
 );
 
