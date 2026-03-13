@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import 'package:guardia_app/core/constants/app_colors.dart';
 
+/// Guardia App Theme Configuration
 class AppTheme {
   AppTheme._();
 
@@ -13,15 +14,11 @@ class AppTheme {
         primaryContainer: AppColors.primaryLight,
         secondary: AppColors.secondary,
         secondaryContainer: AppColors.secondaryLight,
-        surface: AppColors.surface,
         error: AppColors.error,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: AppColors.textPrimary,
-        onError: Colors.white,
       ),
       scaffoldBackgroundColor: AppColors.scaffoldBackground,
 
+      // AppBar
       appBarTheme: const AppBarTheme(
         elevation: 0,
         centerTitle: true,
@@ -34,6 +31,7 @@ class AppTheme {
         ),
       ),
 
+      // ElevatedButton
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -50,6 +48,7 @@ class AppTheme {
         ),
       ),
 
+      // OutlinedButton
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
@@ -65,10 +64,12 @@ class AppTheme {
         ),
       ),
 
+      // InputDecoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.border),
@@ -88,6 +89,7 @@ class AppTheme {
         hintStyle: const TextStyle(color: AppColors.textHint),
       ),
 
+      // Card
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -97,6 +99,7 @@ class AppTheme {
         color: AppColors.surface,
       ),
 
+      // Divider
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
         thickness: 1,
