@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
-import 'package:guardia_app/presentation/bloc/report/report_event.dart';
-import 'package:guardia_app/presentation/bloc/report/report_state.dart';
 import 'package:guardia_app/domain/entities/incident_report.dart';
 
 class MyReportsPage extends StatefulWidget {

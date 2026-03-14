@@ -1,0 +1,1 @@
+[info] 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss (C:\Users\Administrator\Desktop\deadline\Guardia\guardia_app\lib\presentation\pages\profile\profile_page.dart:131:33)
