@@ -11,9 +11,9 @@ const app = express();
 
 const cspDirectives = helmet.contentSecurityPolicy.getDefaultDirectives();
 
-cspDirectives["script-src"] = ["'self'", "'unsafe-inline'", "https://unpkg.com"];
-cspDirectives["style-src"] = ["'self'", "https://unpkg.com"];
-cspDirectives["connect-src"] = ["'self'", "https://unpkg.com"];
+cspDirectives["script-src"] = ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"];
+cspDirectives["style-src"] = ["'self'", "https://unpkg.com", "https://cdn.jsdelivr.net"];
+cspDirectives["connect-src"] = ["'self'", "https://unpkg.com", "https://cdn.jsdelivr.net"];
 
 app.use(
   helmet({

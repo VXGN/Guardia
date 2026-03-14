@@ -1,5 +1,4 @@
 import { prisma } from "../config/database";
-import { NotFoundError } from "../utils/errors";
 
 interface RiskAreaFilters {
   lat?: number;
@@ -58,6 +57,19 @@ export class RiskAreaService {
       heatmapWhere.time_slot = filters.time_slot;
     }
 
+    // Filter heatmap clusters by proximity if lat/lng/radius provided
+    if (filters.lat != null && filters.lng != null && filters.radius != null) {
+      const radiusDeg = filters.radius / 111_000;
+      heatmapWhere.center_lat_blurred = {
+        gte: filters.lat - radiusDeg,
+        lte: filters.lat + radiusDeg,
+      };
+      heatmapWhere.center_lng_blurred = {
+        gte: filters.lng - radiusDeg,
+        lte: filters.lng + radiusDeg,
+      };
+    }
+
     const heatmapClusters = await prisma.heatmapCluster.findMany({
       where: heatmapWhere,
       orderBy: { incident_count: "desc" },
@@ -68,6 +80,21 @@ export class RiskAreaService {
 
     if (filters.time_slot) {
       riskScoreWhere.time_slot = filters.time_slot;
+    }
+
+    // Filter risk scores by proximity if lat/lng/radius provided
+    if (filters.lat != null && filters.lng != null && filters.radius != null) {
+      const radiusDeg = filters.radius / 111_000;
+      riskScoreWhere.road_segment = {
+        start_lat: {
+          gte: filters.lat - radiusDeg,
+          lte: filters.lat + radiusDeg,
+        },
+        start_lng: {
+          gte: filters.lng - radiusDeg,
+          lte: filters.lng + radiusDeg,
+        },
+      };
     }
 
     const riskScores = await prisma.riskScore.findMany({
