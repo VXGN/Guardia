@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 
 class CommunityFeedPage extends StatelessWidget {
@@ -68,7 +69,7 @@ class CommunityFeedPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'community_add_fab',
-        onPressed: () {},
+        onPressed: () => context.push('/report'),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),

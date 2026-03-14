@@ -9,9 +9,10 @@ import 'package:guardia_app/presentation/pages/reports/report_success_page.dart'
 import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
 import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
 import 'package:guardia_app/presentation/pages/profile/notifications_page.dart';
+import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
 import 'package:guardia_app/presentation/pages/journey/active_journey_page.dart';
 import 'package:guardia_app/presentation/pages/contacts/trusted_contacts_page.dart';
-import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
+import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
 
 
 /// GoRouter instance for Guardia app navigation.
@@ -27,6 +28,21 @@ final GoRouter appRouter = GoRouter(
       path: '/onboarding',
       name: 'onboarding',
       builder: (context, state) => const OnboardingPage(),
+    ),
+    GoRoute(
+      path: '/active_journey',
+      name: 'active_journey',
+      builder: (context, state) => const ActiveJourneyPage(),
+    ),
+    GoRoute(
+      path: '/trusted_contacts',
+      name: 'trusted_contacts',
+      builder: (context, state) => const TrustedContactsPage(),
+    ),
+    GoRoute(
+      path: '/profile',
+      name: 'profile',
+      builder: (context, state) => const ProfilePage(),
     ),
     GoRoute(
       path: '/login',
@@ -72,16 +88,6 @@ final GoRouter appRouter = GoRouter(
       path: '/notifications',
       name: 'notifications',
       builder: (context, state) => const NotificationsPage(),
-    ),
-    GoRoute(
-      path: '/active_journey',
-      name: 'active_journey',
-      builder: (context, state) => const ActiveJourneyPage(),
-    ),
-    GoRoute(
-      path: '/trusted_contacts',
-      name: 'trusted_contacts',
-      builder: (context, state) => const TrustedContactsPage(),
     ),
   ],
 );
