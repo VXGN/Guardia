@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 
@@ -164,11 +165,11 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
               ),
               IconButton(
                 icon: const Icon(Icons.message_outlined, color: Color(0xFF61EBCF)),
-                onPressed: () {},
+                onPressed: () => context.pushNamed('companion_chat', pathParameters: {'companionId': (index + 1).toString()}),
               ),
               IconButton(
                 icon: const Icon(Icons.call_outlined, color: Color(0xFF6366F1)),
-                onPressed: () {},
+                onPressed: () => context.pushNamed('companion_call', pathParameters: {'companionId': (index + 1).toString()}),
               )
             ],
           ),
