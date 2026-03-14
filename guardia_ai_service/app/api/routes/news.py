@@ -1,5 +1,8 @@
 """API routes for news scraping and crime area scores."""
 
+import asyncio
+import logging
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +18,7 @@ from app.schemas.news_schemas import (
 from app.services.news_scheduler import run_scrape_job, get_or_scrape
 
 router = APIRouter(prefix="/news", tags=["news"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/articles", response_model=list[NewsArticleOut])
@@ -27,7 +31,11 @@ async def list_articles(
     db: AsyncSession = Depends(get_db),
 ):
     """List scraped crime news articles with optional filters."""
-    await get_or_scrape()
+    try:
+        await get_or_scrape()
+    except Exception:
+        logger.exception("Background scrape refresh failed in /news/articles")
+
     repo = NewsArticleRepository(db)
     articles = await repo.list_articles(
         source=source,
@@ -42,7 +50,11 @@ async def list_articles(
 @router.get("/area-scores", response_model=list[AreaCrimeScoreOut])
 async def get_area_scores(db: AsyncSession = Depends(get_db)):
     """Get crime scores for all NTB areas, sorted by score descending."""
-    await get_or_scrape()
+    try:
+        await get_or_scrape()
+    except Exception:
+        logger.exception("Background scrape refresh failed in /news/area-scores")
+
     repo = AreaCrimeScoreRepository(db)
     scores = await repo.get_all()
     return [AreaCrimeScoreOut.model_validate(s) for s in scores]
@@ -51,7 +63,11 @@ async def get_area_scores(db: AsyncSession = Depends(get_db)):
 @router.get("/area-scores/{area}", response_model=AreaDetailOut)
 async def get_area_detail(area: str, db: AsyncSession = Depends(get_db)):
     """Get detailed crime score and recent articles for a specific NTB area."""
-    await get_or_scrape()
+    try:
+        await get_or_scrape()
+    except Exception:
+        logger.exception("Background scrape refresh failed in /news/area-scores/{area}")
+
     score_repo = AreaCrimeScoreRepository(db)
     article_repo = NewsArticleRepository(db)
 
@@ -70,7 +86,22 @@ async def get_area_detail(area: str, db: AsyncSession = Depends(get_db)):
 @router.post("/scrape", response_model=ScrapeResultOut)
 async def trigger_scrape(_: dict = Depends(verify_firebase_token)):
     """Manually trigger a news scrape (admin use)."""
-    result = await run_scrape_job()
+    try:
+        result = await asyncio.wait_for(run_scrape_job(), timeout=120)
+    except Exception:
+        logger.exception("Manual /news/scrape failed")
+        result = {
+            "total_scraped": 0,
+            "new_articles": 0,
+            "crime_articles": 0,
+        }
+        return ScrapeResultOut(
+            total_scraped=result["total_scraped"],
+            new_articles=result["new_articles"],
+            crime_articles=result["crime_articles"],
+            message="Scrape failed. Check server logs.",
+        )
+
     return ScrapeResultOut(
         total_scraped=result["total_scraped"],
         new_articles=result["new_articles"],

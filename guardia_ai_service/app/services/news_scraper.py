@@ -1,9 +1,7 @@
-"""News scraper for NTB crime news from multiple Indonesian news sources."""
-
+import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-
 import httpx
 from bs4 import BeautifulSoup
 
@@ -15,7 +13,18 @@ USER_AGENT = (
     "Chrome/120.0.0.0 Safari/537.36"
 )
 
-TIMEOUT = 30.0
+TIMEOUT = 60.0
+
+DEFAULT_MAX_ARTICLES_PER_SOURCE = 200
+DEFAULT_MAX_PAGES = 10
+
+
+@dataclass
+class ScrapeConfig:
+    """Configuration for controlling scrape behavior."""
+    max_articles_per_source: int = DEFAULT_MAX_ARTICLES_PER_SOURCE
+    max_pages: int = DEFAULT_MAX_PAGES
+    include_sources: list[str] = field(default_factory=lambda: ["detik", "kompas", "insidelombok", "postlombok"])
 
 
 @dataclass
@@ -39,29 +48,78 @@ async def _fetch_html(url: str) -> str | None:
             response.raise_for_status()
             return response.text
     except Exception as e:
-        logger.error(f"Failed to fetch {url}: {e}")
+        logger.error("Failed to fetch %s: %s", url, e)
         return None
 
 
-async def scrape_detik() -> list[RawArticle]:
-    """Scrape crime news from detik.com NTB regional section."""
+def _deduplicate_articles(articles: list[RawArticle]) -> list[RawArticle]:
+    """Remove duplicate articles by URL."""
+    seen_urls: set[str] = set()
+    unique: list[RawArticle] = []
+    for a in articles:
+        if a.url not in seen_urls:
+            seen_urls.add(a.url)
+            unique.append(a)
+    return unique
+
+
+async def scrape_detik(config: ScrapeConfig | None = None) -> list[RawArticle]:
+    """
+    Scrape crime news possibly related to NTB from detikBali.
+
+    Catatan:
+    - Kanal ini bukan NTB, jadi kata kunci NTB bisa sangat jarang muncul.
+    - Untuk memastikan dulu selector benar, kita longgarkan filter NTB.
+    """
+    if config is None:
+        config = ScrapeConfig()
+
     articles: list[RawArticle] = []
-    urls = [
-        "https://www.detik.com/bali/hukum-dan-kriminal",
-        "https://www.detik.com/sulawesi/hukum-dan-kriminal",
+    base_urls = [
+        "https://www.detik.com/bali/hukum-kriminal",
+        "https://www.detik.com/bali/hukum-kriminal/indeks",
+    ]
+    urls = []
+    for base_url in base_urls:
+        urls.append(base_url)
+        if "indeks" in base_url:
+            for page in range(2, config.max_pages + 1):
+                urls.append(f"{base_url}/{page}")
+
+    ntb_keywords = [
+        "ntb",
+        "lombok",
+        "mataram",
+        "sumbawa",
+        "bima",
+        "dompu",
+        "nusa tenggara barat",
+        "praya",
+        "selong",
     ]
 
     for url in urls:
+        if len(articles) >= config.max_articles_per_source:
+            break
+
         html = await _fetch_html(url)
         if not html:
             continue
 
         soup = BeautifulSoup(html, "html.parser")
 
-        for item in soup.select("article"):
-            title_el = item.select_one("h3.media__title a, h2.title a, .media__title a")
-            if not title_el:
-                title_el = item.select_one("a")
+        items = soup.select("article")
+        if not items:
+            items = soup.select(".list-content article, .media__item")
+        logger.info("detik %s -> %d article items", url, len(items))
+
+        for item in items:
+            if len(articles) >= config.max_articles_per_source:
+                break
+
+            title_el = item.select_one(
+                "h3.media__title a, h2 a, .media__title a, a"
+            )
             if not title_el:
                 continue
 
@@ -74,12 +132,8 @@ async def scrape_detik() -> list[RawArticle]:
             snippet = snippet_el.get_text(strip=True) if snippet_el else None
 
             combined = (title + " " + (snippet or "")).lower()
-            ntb_keywords = [
-                "ntb", "lombok", "mataram", "sumbawa", "bima", "dompu",
-                "nusa tenggara barat", "praya", "selong",
-            ]
-            if not any(kw in combined for kw in ntb_keywords):
-                continue
+            # if not any(kw in combined for kw in ntb_keywords):
+            #     continue
 
             date_el = item.select_one(".media__date span, time, .date")
             published_at = None
@@ -87,87 +141,68 @@ async def scrape_detik() -> list[RawArticle]:
                 date_str = date_el.get("title") or date_el.get("datetime")
                 if date_str:
                     try:
-                        published_at = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                        published_at = datetime.fromisoformat(
+                            date_str.replace("Z", "+00:00")
+                        )
                     except (ValueError, TypeError):
                         pass
 
-            articles.append(RawArticle(
-                source="detik",
-                title=title,
-                url=str(link),
-                snippet=snippet,
-                published_at=published_at,
-            ))
+            articles.append(
+                RawArticle(
+                    source="detik",
+                    title=title,
+                    url=str(link),
+                    snippet=snippet,
+                    published_at=published_at,
+                )
+            )
 
-    logger.info(f"Scraped {len(articles)} articles from detik.com")
-    return articles
+    articles = _deduplicate_articles(articles)
+    logger.info("Scraped %d articles from detik.com (unfiltered NTB)", len(articles))
+    return articles[:config.max_articles_per_source]
 
 
-async def scrape_kompas() -> list[RawArticle]:
-    """Scrape crime news from kompas.com NTB regional section."""
+async def scrape_kompas(config: ScrapeConfig | None = None) -> list[RawArticle]:
+    logger.warning("Kompas regional Nusa Tenggara 404, scraper_kompas dinonaktifkan sementara.")
+    return []
+
+
+async def scrape_insidelombok(config: ScrapeConfig | None = None) -> list[RawArticle]:
+    """Scrape crime / law news from insidelombok.com (kategori Kriminal & Hukum)."""
+    if config is None:
+        config = ScrapeConfig()
+
     articles: list[RawArticle] = []
-    url = "https://regional.kompas.com/nusatenggara"
-
-    html = await _fetch_html(url)
-    if not html:
-        return articles
-
-    soup = BeautifulSoup(html, "html.parser")
-
-    for item in soup.select(".articleListItem, .latest--news .article-item, .most .article-item, .articleItem"):
-        title_el = item.select_one("h3 a, h2 a, .article__title a, .articleTitle a")
-        if not title_el:
-            title_el = item.select_one("a.article__link, a")
-        if not title_el:
-            continue
-
-        title = title_el.get_text(strip=True)
-        link = title_el.get("href", "")
-        if not title or not link:
-            continue
-
-        snippet_el = item.select_one(".article__lead, .articleExcerpt, p")
-        snippet = snippet_el.get_text(strip=True) if snippet_el else None
-
-        date_el = item.select_one(".article__date, .articleDate, time")
-        published_at = None
-        if date_el:
-            date_str = date_el.get("datetime") or date_el.get("title")
-            if date_str:
-                try:
-                    published_at = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                except (ValueError, TypeError):
-                    pass
-
-        articles.append(RawArticle(
-            source="kompas",
-            title=title,
-            url=str(link),
-            snippet=snippet,
-            published_at=published_at,
-        ))
-
-    logger.info(f"Scraped {len(articles)} articles from kompas.com")
-    return articles
-
-
-async def scrape_insidelombok() -> list[RawArticle]:
-    """Scrape crime news from insidelombok.com."""
-    articles: list[RawArticle] = []
-    urls = [
-        "https://insidelombok.id/category/hukum-kriminal/",
+    base_categories = [
         "https://insidelombok.id/category/hukum/",
-        "https://insidelombok.id/",
+        "https://insidelombok.id/category/kriminal/",
     ]
+    urls = []
+    for base_url in base_categories:
+        urls.append(base_url)
+        for page in range(2, config.max_pages + 1):
+            urls.append(f"{base_url}page/{page}/")
 
     for url in urls:
+        if len(articles) >= config.max_articles_per_source:
+            break
+
         html = await _fetch_html(url)
         if not html:
+            logger.warning("No HTML for %s", url)
             continue
 
         soup = BeautifulSoup(html, "html.parser")
 
-        for item in soup.select("article, .post, .entry"):
+        items = soup.select("article")
+        if not items:
+            items = soup.select(".post, .entry")
+        logger.info("InsideLombok %s -> %d article items", url, len(items))
+
+        for item in items:
+            if len(articles) >= config.max_articles_per_source:
+                break
+
             title_el = item.select_one("h2 a, h3 a, .entry-title a, .post-title a")
             if not title_el:
                 continue
@@ -185,49 +220,59 @@ async def scrape_insidelombok() -> list[RawArticle]:
             date_el = item.select_one("time, .entry-date, .post-date")
             published_at = None
             if date_el:
-                date_str = date_el.get("datetime")
+                date_str = date_el.get("datetime") or date_el.get_text(strip=True)
                 if date_str:
                     try:
-                        published_at = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                    except (ValueError, TypeError):
+                        published_at = datetime.fromisoformat(
+                            date_str.replace("Z", "+00:00")
+                        )
+                    except Exception:
                         pass
 
-            articles.append(RawArticle(
-                source="insidelombok",
-                title=title,
-                url=str(link),
-                snippet=snippet,
-                published_at=published_at,
-            ))
+            articles.append(
+                RawArticle(
+                    source="insidelombok",
+                    title=title,
+                    url=str(link),
+                    snippet=snippet,
+                    published_at=published_at,
+                )
+            )
 
-    seen_urls: set[str] = set()
-    unique: list[RawArticle] = []
-    for a in articles:
-        if a.url not in seen_urls:
-            seen_urls.add(a.url)
-            unique.append(a)
-
-    logger.info(f"Scraped {len(unique)} articles from insidelombok")
-    return unique
+    unique = _deduplicate_articles(articles)
+    logger.info("Scraped %d articles from insidelombok", len(unique))
+    return unique[:config.max_articles_per_source]
 
 
-async def scrape_postlombok() -> list[RawArticle]:
-    """Scrape crime news from postlombok.com."""
+async def scrape_postlombok(config: ScrapeConfig | None = None) -> list[RawArticle]:
+    """Scrape crime / law news from postlombok.com."""
+    if config is None:
+        config = ScrapeConfig()
+
     articles: list[RawArticle] = []
-    urls = [
-        "https://postlombok.com/category/hukum-kriminal/",
-        "https://postlombok.com/category/hukum/",
-        "https://postlombok.com/",
-    ]
+    base_url = "https://postlombok.com/"
+    urls = [base_url]
+    for page in range(2, config.max_pages + 1):
+        urls.append(f"{base_url}page/{page}/")
 
     for url in urls:
+        if len(articles) >= config.max_articles_per_source:
+            break
+
         html = await _fetch_html(url)
         if not html:
+            logger.warning("No HTML for %s", url)
             continue
 
         soup = BeautifulSoup(html, "html.parser")
 
-        for item in soup.select("article, .post, .entry"):
+        items = soup.select("article, .post, .entry")
+        logger.info("PostLombok %s -> %d article items", url, len(items))
+
+        for item in items:
+            if len(articles) >= config.max_articles_per_source:
+                break
+
             title_el = item.select_one("h2 a, h3 a, .entry-title a, .post-title a")
             if not title_el:
                 continue
@@ -245,34 +290,34 @@ async def scrape_postlombok() -> list[RawArticle]:
             date_el = item.select_one("time, .entry-date, .post-date")
             published_at = None
             if date_el:
-                date_str = date_el.get("datetime")
+                date_str = date_el.get("datetime") or date_el.get_text(strip=True)
                 if date_str:
                     try:
-                        published_at = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                    except (ValueError, TypeError):
+                        published_at = datetime.fromisoformat(
+                            date_str.replace("Z", "+00:00")
+                        )
+                    except Exception:
                         pass
 
-            articles.append(RawArticle(
-                source="postlombok",
-                title=title,
-                url=str(link),
-                snippet=snippet,
-                published_at=published_at,
-            ))
+            articles.append(
+                RawArticle(
+                    source="postlombok",
+                    title=title,
+                    url=str(link),
+                    snippet=snippet,
+                    published_at=published_at,
+                )
+            )
 
-    seen_urls: set[str] = set()
-    unique: list[RawArticle] = []
-    for a in articles:
-        if a.url not in seen_urls:
-            seen_urls.add(a.url)
-            unique.append(a)
-
-    logger.info(f"Scraped {len(unique)} articles from postlombok")
-    return unique
+    unique = _deduplicate_articles(articles)
+    logger.info("Scraped %d articles from postlombok", len(unique))
+    return unique[:config.max_articles_per_source]
 
 
-async def scrape_all_sources() -> list[RawArticle]:
-    """Scrape all news sources and return combined results."""
+async def scrape_all_sources(config: ScrapeConfig | None = None) -> list[RawArticle]:
+    if config is None:
+        config = ScrapeConfig()
+
     all_articles: list[RawArticle] = []
 
     scrapers = [
@@ -283,11 +328,17 @@ async def scrape_all_sources() -> list[RawArticle]:
     ]
 
     for name, scraper_fn in scrapers:
+        if name not in config.include_sources:
+            logger.info("Skipping scraper %s (not in include_sources)", name)
+            continue
+
         try:
-            articles = await scraper_fn()
+            logger.info("Running scraper: %s", name)
+            articles = await scraper_fn(config)
+            logger.info("Scraper %s returned %d articles", name, len(articles))
             all_articles.extend(articles)
         except Exception as e:
-            logger.error(f"Scraper {name} failed: {e}")
+            logger.error("Scraper %s failed: %s", name, e)
 
-    logger.info(f"Total scraped: {len(all_articles)} articles from all sources")
+    logger.info("Total scraped: %d articles from all sources", len(all_articles))
     return all_articles

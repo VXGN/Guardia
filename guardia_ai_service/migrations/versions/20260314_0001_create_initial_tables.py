@@ -99,7 +99,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(length=36), nullable=False),
         sa.Column("source", sa.String(length=50), nullable=False),
         sa.Column("title", sa.String(length=500), nullable=False),
-        sa.Column("url", sa.String(length=1000), nullable=False),
+        sa.Column("url", sa.String(length=700), nullable=False),
         sa.Column("snippet", sa.Text(), nullable=True),
         sa.Column("crime_type", sa.String(length=100), nullable=True),
         sa.Column("severity_score", sa.SmallInteger(), nullable=True),

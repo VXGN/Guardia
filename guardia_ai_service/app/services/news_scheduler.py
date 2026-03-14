@@ -12,7 +12,7 @@ from app.repositories.news_repos import NewsArticleRepository, AreaCrimeScoreRep
 
 logger = logging.getLogger(__name__)
 
-CACHE_TTL_SECONDS = 6 * 60 * 60
+CACHE_TTL_SECONDS = 3 * 60 * 60
 
 _scrape_cache: dict = {"result": None, "expires_at": 0.0}
 _scrape_lock = asyncio.Lock()
