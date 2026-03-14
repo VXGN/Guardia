@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import 'package:flutter/material.dart';
-=======
-﻿import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
->>>>>>> 602ec3e (refactor: resolve analysis errors and harden type safety across repositories and presentation layer)
+
 import 'package:guardia_app/core/constants/app_constants.dart';
 import 'package:guardia_app/core/theme/app_theme.dart';
 import 'package:guardia_app/routes/app_router.dart';
