@@ -2,11 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.api.routes import auth, reports, heatmap, analysis, journey, admin, news
+from app.api.routes import heatmap, analysis, journey, news
 
 settings = get_settings()
 
-app = FastAPI(title="Guardia AI Service", version="1.0.0")
+app = FastAPI(
+    title="Guardia AI Service",
+    version="1.0.0",
+    description="AI-focused microservice for risk analysis, clustering, routing, and news processing",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,13 +20,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(reports.router)
-app.include_router(heatmap.router)
-app.include_router(analysis.router)
-app.include_router(journey.router)
-app.include_router(admin.router)
-app.include_router(news.router)
+# AI-focused routes only
+app.include_router(heatmap.router)    # Heatmap clustering
+app.include_router(analysis.router)   # Risk analysis with DBSCAN
+app.include_router(journey.router)    # Journey tracking with risk monitoring
+app.include_router(news.router)       # News scraping and crime scoring
 
 
 @app.get("/health")
