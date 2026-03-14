@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
+import 'package:guardia_app/core/services/permission_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guardia_app/di/injection_container.dart';
 
@@ -39,7 +40,14 @@ class _SplashPageState extends State<SplashPage> {
     }
 
     if (state.status == AuthStatus.authenticated) {
-      context.goNamed('home');
+      final hasPermissions = await sl<PermissionService>().hasAllPermissions();
+      if (mounted) {
+        if (hasPermissions) {
+          context.goNamed('home');
+        } else {
+          context.goNamed('permissions');
+        }
+      }
     } else if (state.status == AuthStatus.unauthenticated || state.status == AuthStatus.failure) {
       context.goNamed('login');
     }

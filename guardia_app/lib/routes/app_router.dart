@@ -4,6 +4,7 @@ import 'package:guardia_app/features/auth/presentation/pages/login_page.dart';
 import 'package:guardia_app/features/auth/presentation/pages/register_page.dart';
 import 'package:guardia_app/presentation/pages/home/main_screen.dart';
 import 'package:guardia_app/presentation/pages/onboarding/onboarding_page.dart';
+import 'package:guardia_app/presentation/pages/onboarding/permission_request_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_success_page.dart';
 import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
@@ -28,6 +29,11 @@ final GoRouter appRouter = GoRouter(
       path: '/onboarding',
       name: 'onboarding',
       builder: (context, state) => const OnboardingPage(),
+    ),
+    GoRoute(
+      path: '/permissions',
+      name: 'permissions',
+      builder: (context, state) => const PermissionRequestPage(),
     ),
     GoRoute(
       path: '/active_journey',

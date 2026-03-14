@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:guardia_app/core/network/api_client.dart';
 import 'package:guardia_app/core/network/auth_interceptor.dart';
+import 'package:guardia_app/core/services/permission_service.dart';
 import 'package:guardia_app/core/services/secure_storage_service.dart';
 
 // Repositories
@@ -213,6 +214,7 @@ Future<void> init() async {
 
   // Services
   sl.registerLazySingleton(() => SecureStorageService(sl()));
+  sl.registerLazySingleton(() => PermissionService());
 
   // Core
   sl.registerLazySingleton(() => ApiClient(dio: sl()));

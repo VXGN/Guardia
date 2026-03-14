@@ -9,6 +9,8 @@ import 'package:guardia_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/common/widgets/custom_text_field.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
+import 'package:guardia_app/core/services/permission_service.dart';
+import 'package:guardia_app/di/injection_container.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -59,7 +61,15 @@ class _LoginPageState extends State<LoginPage> {
             ..hideCurrentSnackBar()
             ..showSnackBar(SnackBar(content: Text(state.message!)));
         } else if (state.status == AuthStatus.authenticated) {
-          context.goNamed('home');
+          sl<PermissionService>().hasAllPermissions().then((hasPermissions) {
+            if (context.mounted) {
+              if (hasPermissions) {
+                context.goNamed('home');
+              } else {
+                context.goNamed('permissions');
+              }
+            }
+          });
         }
       },
       builder: (context, state) {
