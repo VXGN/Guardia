@@ -15,7 +15,7 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<Either<Failure, User>> getProfile() async {
     try {
-      final response = await apiClient.get(Endpoints.me);
+      final response = await apiClient.get(Endpoints.profile);
       final dynamic responseData = response.data;
       final user = UserModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(user);
@@ -34,14 +34,14 @@ class UserRepositoryImpl implements UserRepository {
     bool? isAnonymousMode,
   }) async {
     try {
+      final payload = <String, dynamic>{};
+      if (fullName != null) payload['full_name'] = fullName;
+      if (phoneNumber != null) payload['phone_number'] = phoneNumber;
+      if (isAnonymousMode != null) payload['is_anonymous_mode'] = isAnonymousMode;
+
       final response = await apiClient.put(
-        Endpoints.me,
-        data: {
-          'full_name': fullName,
-          'email': email,
-          'phone_number': phoneNumber,
-          'is_anonymous_mode': isAnonymousMode,
-        },
+        Endpoints.profile,
+        data: payload,
       );
 
       final dynamic responseData = response.data;
