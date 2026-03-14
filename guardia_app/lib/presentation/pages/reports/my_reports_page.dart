@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
@@ -29,6 +30,19 @@ class _MyReportsPageState extends State<MyReportsPage> {
         backgroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+            onPressed: () => context.push('/report'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/report'),
+        backgroundColor: AppColors.error,
+        icon: const Icon(Icons.report_problem_outlined, color: Colors.white),
+        label: const Text('REPORT INCIDENT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: BlocBuilder<ReportBloc, ReportState>(
         builder: (context, state) {
