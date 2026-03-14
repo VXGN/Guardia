@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     DBSCAN_EPS_KM: float = 0.3
     DBSCAN_MIN_SAMPLES: int = 3
     RISK_DECAY_DAYS: int = 30
+    NEWS_SCRAPE_MAX_ARTICLES_PER_SOURCE: int = 20
+    NEWS_SCRAPE_MAX_PAGES: int = 3
+    NEWS_SCRAPE_INCLUDE_SOURCES: str = "detik,kompas,insidelombok,postlombok"
 
     model_config = {"env_file": str(BASE_DIR / ".env"), "extra": "ignore"}
 
