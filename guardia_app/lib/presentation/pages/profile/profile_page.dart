@@ -4,6 +4,7 @@ import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:guardia_app/presentation/bloc/auth/auth_event.dart';
 import 'package:guardia_app/presentation/bloc/auth/auth_state.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -29,7 +30,7 @@ class ProfilePage extends StatelessWidget {
                 children: [
                   _buildProfileHeader(user.fullName ?? 'Citizen', user.email ?? 'No associated email'),
                   const SizedBox(height: 32),
-                  _buildImpactCard(),
+                  _buildImpactCard(context),
                   const SizedBox(height: 32),
                   const Text('Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
@@ -69,34 +70,37 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildImpactCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Your Guardia Impact', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildImpactItem(Icons.verified_user, 'Level 2', 'Trusted'),
-              _buildImpactItem(Icons.eco, '250', 'Impact Pts'),
-              _buildImpactItem(Icons.report, '12', 'Reports'),
-            ],
-          ),
-        ],
+  Widget _buildImpactCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/impact_dashboard'),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Your Guardia Impact', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildImpactItem(Icons.verified_user, 'Level 2', 'Trusted'),
+                _buildImpactItem(Icons.eco, '250', 'Impact Pts'),
+                _buildImpactItem(Icons.report, '12', 'Reports'),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

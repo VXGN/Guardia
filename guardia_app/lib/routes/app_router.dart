@@ -6,6 +6,7 @@ import 'package:guardia_app/presentation/pages/home/main_screen.dart';
 import 'package:guardia_app/presentation/pages/onboarding/onboarding_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_success_page.dart';
+import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
 import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
 
 
@@ -52,6 +53,11 @@ final GoRouter appRouter = GoRouter(
       path: '/report',
       name: 'report',
       builder: (context, state) => const ReportIncidentPage(),
+    ),
+    GoRoute(
+      path: '/impact_dashboard',
+      name: 'impact_dashboard',
+      builder: (context, state) => const ImpactDashboardPage(),
     ),
   ],
 );
