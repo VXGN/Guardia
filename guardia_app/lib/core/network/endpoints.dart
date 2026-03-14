@@ -2,41 +2,47 @@ class Endpoints {
   static const String baseUrl = 'https://api.guardia.app/api/v1/'; // Updated to include /api/ prefix
 
   // Auth
-  static const String login = 'auth/login';
-  static const String register = 'auth/register';
-  static const String logout = 'auth/logout';
-  static const String me = 'auth/me';
+  static const String authVerify = '/auth/verify';
+  static const String login = '/auth/login';
+  static const String register = '/auth/register';
+  static const String logout = '/auth/logout';
+  static const String refreshToken = '/auth/refresh';
+
+  // User / Profile
+  static const String profile = '/profile';
 
   // Trusted Contacts
-  static const String trustedContacts = 'trusted-contacts';
+  static const String trustedContacts = '/trusted-contacts';
 
-  // Reports
-  static const String reports = 'reports';
-  static String reportMedia(String id) => 'reports/$id/media';
-  static String reportDetail(String id) => 'reports/$id';
-  static String reportStatusLogs(String id) => 'reports/$id/status-logs';
+  // Reports (BE handles CRUD)
+  static const String reports = '/reports';
+  static const String reportsMy = '/reports/my';
+  static const String reportsStats = '/reports/stats';
 
-  // Risk & Heatmap
-  static const String heatmapClusters = 'heatmap/clusters';
-  static const String areaRiskSummary = 'risk/summary/current-area';
-  static const String riskScores = 'risk/scores';
+  // Heatmap (AI Service)
+  static const String heatmapData = '/heatmap';
 
-  // Routing
-  static const String safeRoute = 'routing/safe-route';
+  // Risk Areas (BE)
+  static const String riskAreas = '/risk-areas';
 
-  // Journeys
-  static const String journeys = 'journeys';
-  static const String activeJourney = 'journeys/active';
-  static String journeyDetail(String id) => 'journeys/$id';
-  static String journeyLocations(String id) => 'journeys/$id/locations';
-  static String finishJourney(String id) => 'journeys/$id/finish';
-  static String cancelJourney(String id) => 'journeys/$id/cancel';
-  static String checkJourneyStatus(String id) => 'journeys/$id/check-status';
+  // Journey / Routing (AI Service)
+  static const String safeRoute = '/route/safe';
+  static const String journeyStart = '/journey/start';
+  static const String journeyUpdate = '/journey/update';
+  static const String journeyStop = '/journey/stop';
+
+  // Risk Analysis (BE proxies to AI)
+  static const String analyzeRisk = '/analysis/risk';
 
   // Panic
-  static const String triggerPanic = 'panic/trigger';
-  static const String cancelPanic = 'panic/cancel';
+  static const String panicTrigger = '/panic/trigger';
 
   // Notifications
-  static const String notifications = 'notifications';
+  static const String notifications = '/notifications';
+  static const String notificationsUnreadCount = '/notifications/unread-count';
+  static const String notificationsMarkAllRead = '/notifications/mark-all-read';
+
+  // News (AI Service)
+  static const String newsArticles = '/news/articles';
+  static const String newsAreaScores = '/news/area-scores';
 }
