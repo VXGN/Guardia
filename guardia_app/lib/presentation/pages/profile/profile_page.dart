@@ -132,6 +132,8 @@ class ProfilePage extends StatelessWidget {
       ),
       child: Column(
         children: [
+          _buildListTile(Icons.history, 'My Reports', onTap: () => context.push('/my_reports')),
+          const Divider(height: 1, indent: 20, endIndent: 20),
           _buildSwitchTile(Icons.notifications_outlined, 'Push Notifications', true),
           const Divider(height: 1, indent: 20, endIndent: 20),
           _buildListTile(Icons.language, 'Language', trailing: const Text('English', style: TextStyle(color: Colors.grey))),
@@ -157,13 +159,13 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, {Widget? trailing}) {
+  Widget _buildListTile(IconData icon, String title, {Widget? trailing, VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon, color: AppColors.primary),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       trailing: trailing ?? const Icon(Icons.chevron_right, color: Colors.grey),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      onTap: () {},
+      onTap: onTap ?? () {},
     );
   }
 
