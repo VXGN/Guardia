@@ -3,7 +3,7 @@ import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/presentation/pages/home/community_feed_page.dart';
 import 'package:guardia_app/presentation/pages/home/home_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_setup_page.dart';
-import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
+import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
 import 'package:guardia_app/presentation/widgets/panic/sos_active_overlay.dart';
 import 'package:guardia_app/presentation/widgets/panic/sos_countdown_overlay.dart';
 
@@ -24,8 +24,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomePage(),
     const CommunityFeedPage(),
+    const MyReportsPage(),
     const CompanionSetupPage(),
-    const ProfilePage(),
   ];
 
   void _onTabTapped(int index) {
@@ -84,13 +84,13 @@ class _MainScreenState extends State<MainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                   _buildNavItem(icon: Icons.map_outlined, label: 'Home', index: 0),
+                  _buildNavItem(icon: Icons.map_outlined, label: 'Home', index: 0),
                   _buildNavItem(icon: Icons.shield_outlined, label: 'Safety Zone', index: 1),
                   
                   const SizedBox(width: 48), // Space for the SOS FAB
                   
-                  _buildNavItem(icon: Icons.people_outline, label: 'Companion', index: 2),
-                  _buildNavItem(icon: Icons.person_outline, label: 'Profile', index: 3),
+                  _buildNavItem(icon: Icons.assignment_outlined, label: 'Reports', index: 2),
+                  _buildNavItem(icon: Icons.people_outline, label: 'Companion', index: 3),
                 ],
               ),
             ),

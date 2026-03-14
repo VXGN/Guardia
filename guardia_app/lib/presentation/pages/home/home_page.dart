@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/presentation/widgets/journey/active_navigation_overlay.dart';
 import 'package:guardia_app/presentation/widgets/journey/routing_options_sheet.dart';
@@ -164,21 +165,24 @@ class _HomePageState extends State<HomePage> {
                       Icons.search,
                       color: AppColors.textSecondary,
                     ),
-                    suffixIcon: Container(
-                      width: 40,
-                      height: 40,
-                      margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFC4C4C4),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'US',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                    suffixIcon: GestureDetector(
+                      onTap: () => context.push('/profile'),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFC4C4C4),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'US',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ),
