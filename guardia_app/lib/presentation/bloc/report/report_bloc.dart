@@ -1,4 +1,4 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/domain/usecases/reports/create_report.dart';
 import 'package:guardia_app/domain/usecases/reports/get_my_reports.dart';
 import 'package:guardia_app/domain/usecases/reports/get_report_detail.dart';
@@ -6,9 +6,6 @@ import 'package:guardia_app/presentation/bloc/report/report_event.dart';
 import 'package:guardia_app/presentation/bloc/report/report_state.dart';
 
 class ReportBloc extends Bloc<ReportEvent, ReportState> {
-  final CreateReport createReportUseCase;
-  final GetMyReports getMyReportsUseCase;
-  final GetReportDetail getReportDetailUseCase;
 
   ReportBloc({
     required this.createReportUseCase,
@@ -19,6 +16,9 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<LoadMyReportsRequested>(_onLoadMyReportsRequested);
     on<LoadReportDetailRequested>(_onLoadReportDetailRequested);
   }
+  final CreateReport createReportUseCase;
+  final GetMyReports getMyReportsUseCase;
+  final GetReportDetail getReportDetailUseCase;
 
   Future<void> _onCreateReportRequested(
     CreateReportRequested event,

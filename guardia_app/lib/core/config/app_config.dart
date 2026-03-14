@@ -1,4 +1,4 @@
-/// Application configuration constants.
+﻿/// Application configuration constants.
 class AppConfig {
   AppConfig._();
 

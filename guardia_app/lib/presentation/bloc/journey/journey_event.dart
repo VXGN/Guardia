@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:guardia_app/domain/entities/journey.dart';
+﻿import 'package:equatable/equatable.dart';
 
 abstract class JourneyEvent extends Equatable {
   const JourneyEvent();
@@ -9,11 +8,6 @@ abstract class JourneyEvent extends Equatable {
 }
 
 class JourneyStartRequested extends JourneyEvent {
-  final double originLat;
-  final double originLng;
-  final double destinationLat;
-  final double destinationLng;
-  final List<String> trustedContactIds;
 
   const JourneyStartRequested({
     required this.originLat,
@@ -22,6 +16,11 @@ class JourneyStartRequested extends JourneyEvent {
     required this.destinationLng,
     required this.trustedContactIds,
   });
+  final double originLat;
+  final double originLng;
+  final double destinationLat;
+  final double destinationLng;
+  final List<String> trustedContactIds;
 
   @override
   List<Object?> get props => [originLat, originLng, destinationLat, destinationLng, trustedContactIds];
@@ -30,31 +29,31 @@ class JourneyStartRequested extends JourneyEvent {
 class JourneyLoadActiveRequested extends JourneyEvent {}
 
 class JourneyUpdateLocationRequested extends JourneyEvent {
-  final String journeyId;
-  final double latitude;
-  final double longitude;
 
   const JourneyUpdateLocationRequested({
     required this.journeyId,
     required this.latitude,
     required this.longitude,
   });
+  final String journeyId;
+  final double latitude;
+  final double longitude;
 
   @override
   List<Object?> get props => [journeyId, latitude, longitude];
 }
 
 class JourneyFinishRequested extends JourneyEvent {
-  final String id;
   const JourneyFinishRequested(this.id);
+  final String id;
 
   @override
   List<Object?> get props => [id];
 }
 
 class JourneyCancelRequested extends JourneyEvent {
-  final String id;
   const JourneyCancelRequested(this.id);
+  final String id;
 
   @override
   List<Object?> get props => [id];

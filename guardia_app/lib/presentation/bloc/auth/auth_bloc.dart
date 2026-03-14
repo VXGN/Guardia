@@ -1,4 +1,4 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/domain/usecases/auth/get_current_user.dart';
 import 'package:guardia_app/domain/usecases/auth/login.dart';
 import 'package:guardia_app/domain/usecases/auth/logout.dart';
@@ -7,10 +7,6 @@ import 'package:guardia_app/presentation/bloc/auth/auth_event.dart';
 import 'package:guardia_app/presentation/bloc/auth/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final Login loginUser;
-  final Register registerUser;
-  final Logout logoutUser;
-  final GetCurrentUser getCurrentUser;
 
   AuthBloc({
     required this.loginUser,
@@ -23,6 +19,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<RegisterSubmitted>(_onRegisterSubmitted);
     on<LogoutRequested>(_onLogoutRequested);
   }
+  final Login loginUser;
+  final Register registerUser;
+  final Logout logoutUser;
+  final GetCurrentUser getCurrentUser;
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoading());

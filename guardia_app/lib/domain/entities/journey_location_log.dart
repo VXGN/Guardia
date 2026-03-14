@@ -1,12 +1,6 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 class JourneyLocationLog extends Equatable {
-  final String id;
-  final String journeyId;
-  final double latitude;
-  final double longitude;
-  final DateTime recordedAt;
-  final bool isAnomalyFlagged;
 
   const JourneyLocationLog({
     required this.id,
@@ -16,6 +10,12 @@ class JourneyLocationLog extends Equatable {
     required this.recordedAt,
     required this.isAnomalyFlagged,
   });
+  final String id;
+  final String journeyId;
+  final double latitude;
+  final double longitude;
+  final DateTime recordedAt;
+  final bool isAnomalyFlagged;
 
   @override
   List<Object?> get props => [

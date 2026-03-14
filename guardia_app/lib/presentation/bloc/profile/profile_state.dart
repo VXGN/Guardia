@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import 'package:guardia_app/domain/entities/user.dart';
 
 abstract class ProfileState extends Equatable {
@@ -13,16 +13,16 @@ class ProfileInitial extends ProfileState {}
 class ProfileLoading extends ProfileState {}
 
 class ProfileLoaded extends ProfileState {
-  final User user;
   const ProfileLoaded(this.user);
+  final User user;
 
   @override
   List<Object?> get props => [user];
 }
 
 class ProfileError extends ProfileState {
-  final String message;
   const ProfileError(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];

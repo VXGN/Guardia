@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:guardia_app/domain/entities/incident_report.dart';
+﻿import 'package:equatable/equatable.dart';
 
 abstract class ReportEvent extends Equatable {
   const ReportEvent();
@@ -9,6 +8,12 @@ abstract class ReportEvent extends Equatable {
 }
 
 class CreateReportRequested extends ReportEvent {
+
+  const CreateReportRequested({
+    required this.incidentType,
+    required this.incidentAt, required this.latitude, required this.longitude, required this.isAnonymous, this.description,
+    this.locationLabel,
+  });
   final String incidentType;
   final String? description;
   final DateTime incidentAt;
@@ -16,16 +21,6 @@ class CreateReportRequested extends ReportEvent {
   final double longitude;
   final bool isAnonymous;
   final String? locationLabel;
-
-  const CreateReportRequested({
-    required this.incidentType,
-    this.description,
-    required this.incidentAt,
-    required this.latitude,
-    required this.longitude,
-    required this.isAnonymous,
-    this.locationLabel,
-  });
 
   @override
   List<Object?> get props => [
@@ -42,8 +37,8 @@ class CreateReportRequested extends ReportEvent {
 class LoadMyReportsRequested extends ReportEvent {}
 
 class LoadReportDetailRequested extends ReportEvent {
-  final String id;
   const LoadReportDetailRequested(this.id);
+  final String id;
 
   @override
   List<Object?> get props => [id];

@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 
 abstract class PanicRepository {

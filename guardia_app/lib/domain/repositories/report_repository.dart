@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/domain/entities/incident_report.dart';
 import 'package:guardia_app/domain/entities/report_media.dart';
@@ -7,11 +7,7 @@ import 'package:guardia_app/domain/entities/report_status_log.dart';
 abstract class ReportRepository {
   Future<Either<Failure, IncidentReport>> createReport({
     required String incidentType,
-    String? description,
-    required DateTime incidentAt,
-    required double latitude,
-    required double longitude,
-    required bool isAnonymous,
+    required DateTime incidentAt, required double latitude, required double longitude, required bool isAnonymous, String? description,
     String? locationLabel,
   });
 

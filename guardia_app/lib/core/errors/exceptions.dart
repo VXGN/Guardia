@@ -1,6 +1,6 @@
-class ServerException implements Exception {
-  final String? message;
+﻿class ServerException implements Exception {
   ServerException([this.message]);
+  final String? message;
 }
 
 class CacheException implements Exception {}
@@ -8,6 +8,6 @@ class CacheException implements Exception {}
 class NetworkException implements Exception {}
 
 class AuthException implements Exception {
-  final String message;
   AuthException(this.message);
+  final String message;
 }

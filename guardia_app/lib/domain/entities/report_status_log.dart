@@ -1,6 +1,13 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 class ReportStatusLog extends Equatable {
+
+  const ReportStatusLog({
+    required this.id,
+    required this.reportId,
+    required this.oldStatus, required this.newStatus, required this.changedAt, this.changedBy,
+    this.notes,
+  });
   final String id;
   final String reportId;
   final String? changedBy;
@@ -8,16 +15,6 @@ class ReportStatusLog extends Equatable {
   final String newStatus;
   final String? notes;
   final DateTime changedAt;
-
-  const ReportStatusLog({
-    required this.id,
-    required this.reportId,
-    this.changedBy,
-    required this.oldStatus,
-    required this.newStatus,
-    this.notes,
-    required this.changedAt,
-  });
 
   @override
   List<Object?> get props => [

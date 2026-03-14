@@ -1,4 +1,4 @@
-import 'package:guardia_app/domain/entities/journey_contact.dart';
+﻿import 'package:guardia_app/domain/entities/journey_contact.dart';
 
 class JourneyContactModel extends JourneyContact {
   const JourneyContactModel({

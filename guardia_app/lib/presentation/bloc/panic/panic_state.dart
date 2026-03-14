@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 abstract class PanicState extends Equatable {
   const PanicState();
@@ -16,8 +16,8 @@ class PanicActive extends PanicState {}
 class PanicCancelled extends PanicState {}
 
 class PanicError extends PanicState {
-  final String message;
   const PanicError(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];

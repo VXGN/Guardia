@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 abstract class RoutingEvent extends Equatable {
   const RoutingEvent();
@@ -8,10 +8,6 @@ abstract class RoutingEvent extends Equatable {
 }
 
 class SafeRoutesRequested extends RoutingEvent {
-  final double originLat;
-  final double originLng;
-  final double destinationLat;
-  final double destinationLng;
 
   const SafeRoutesRequested({
     required this.originLat,
@@ -19,6 +15,10 @@ class SafeRoutesRequested extends RoutingEvent {
     required this.destinationLat,
     required this.destinationLng,
   });
+  final double originLat;
+  final double originLng;
+  final double destinationLat;
+  final double destinationLng;
 
   @override
   List<Object?> get props => [originLat, originLng, destinationLat, destinationLng];

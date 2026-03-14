@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:guardia_app/domain/entities/trusted_contact.dart';
+﻿import 'package:equatable/equatable.dart';
 
 abstract class TrustedContactEvent extends Equatable {
   const TrustedContactEvent();
@@ -8,29 +7,26 @@ abstract class TrustedContactEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadTrustedContactsRequested extends TrustedContactEvent {}
+class LoadTrustedContactsRequested extends TrustedContactEvent {
+  const LoadTrustedContactsRequested();
+}
 
 class AddTrustedContactRequested extends TrustedContactEvent {
-  final String contactName;
-  final String contactPhone;
-  final String? contactEmail;
 
   const AddTrustedContactRequested({
     required this.contactName,
     required this.contactPhone,
     this.contactEmail,
   });
+  final String contactName;
+  final String contactPhone;
+  final String? contactEmail;
 
   @override
   List<Object?> get props => [contactName, contactPhone, contactEmail];
 }
 
 class UpdateTrustedContactRequested extends TrustedContactEvent {
-  final String id;
-  final String? contactName;
-  final String? contactPhone;
-  final String? contactEmail;
-  final bool? isActive;
 
   const UpdateTrustedContactRequested({
     required this.id,
@@ -39,14 +35,19 @@ class UpdateTrustedContactRequested extends TrustedContactEvent {
     this.contactEmail,
     this.isActive,
   });
+  final String id;
+  final String? contactName;
+  final String? contactPhone;
+  final String? contactEmail;
+  final bool? isActive;
 
   @override
   List<Object?> get props => [id, contactName, contactPhone, contactEmail, isActive];
 }
 
 class DeleteTrustedContactRequested extends TrustedContactEvent {
-  final String id;
   const DeleteTrustedContactRequested(this.id);
+  final String id;
 
   @override
   List<Object?> get props => [id];

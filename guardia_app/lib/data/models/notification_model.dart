@@ -1,18 +1,13 @@
-import 'package:guardia_app/domain/entities/app_notification.dart';
+﻿import 'package:guardia_app/domain/entities/app_notification.dart';
 
 class NotificationModel extends AppNotification {
   const NotificationModel({
     required super.id,
-    super.recipientUserId,
+    required super.notificationType, required super.title, required super.body, required super.isSent, required super.createdAt, super.recipientUserId,
     super.recipientPhone,
-    required super.notificationType,
-    required super.title,
-    required super.body,
     super.relatedJourneyId,
     super.relatedReportId,
-    required super.isSent,
     super.sentAt,
-    required super.createdAt,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {

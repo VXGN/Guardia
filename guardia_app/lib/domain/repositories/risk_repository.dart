@@ -1,7 +1,7 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/failures.dart';
-import 'package:guardia_app/domain/entities/risk_score.dart';
 import 'package:guardia_app/domain/entities/heatmap_cluster.dart';
+import 'package:guardia_app/domain/entities/risk_score.dart';
 
 abstract class RiskRepository {
   Future<Either<Failure, List<HeatmapCluster>>> getHeatmapClusters();

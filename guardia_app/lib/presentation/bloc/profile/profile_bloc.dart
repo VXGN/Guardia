@@ -1,12 +1,10 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/domain/usecases/user/get_profile.dart';
 import 'package:guardia_app/domain/usecases/user/update_profile.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_event.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  final GetProfile getProfileUseCase;
-  final UpdateProfile updateProfileUseCase;
 
   ProfileBloc({
     required this.getProfileUseCase,
@@ -15,6 +13,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<LoadProfileRequested>(_onLoadProfileRequested);
     on<UpdateProfileRequested>(_onUpdateProfileRequested);
   }
+  final GetProfile getProfileUseCase;
+  final UpdateProfile updateProfileUseCase;
 
   Future<void> _onLoadProfileRequested(
     LoadProfileRequested event,

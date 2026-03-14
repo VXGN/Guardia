@@ -1,4 +1,4 @@
-import 'package:guardia_app/domain/entities/trusted_contact.dart';
+﻿import 'package:guardia_app/domain/entities/trusted_contact.dart';
 
 class TrustedContactModel extends TrustedContact {
   const TrustedContactModel({
@@ -6,9 +6,7 @@ class TrustedContactModel extends TrustedContact {
     required super.userId,
     required super.contactName,
     required super.contactPhone,
-    super.contactEmail,
-    required super.isActive,
-    required super.createdAt,
+    required super.isActive, required super.createdAt, super.contactEmail,
     super.updatedAt,
   });
 

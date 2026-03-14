@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:guardia_app/domain/entities/user.dart';
+﻿import 'package:equatable/equatable.dart';
 
 abstract class ProfileEvent extends Equatable {
   const ProfileEvent();
@@ -11,10 +10,6 @@ abstract class ProfileEvent extends Equatable {
 class LoadProfileRequested extends ProfileEvent {}
 
 class UpdateProfileRequested extends ProfileEvent {
-  final String? fullName;
-  final String? email;
-  final String? phoneNumber;
-  final bool? isAnonymousMode;
 
   const UpdateProfileRequested({
     this.fullName,
@@ -22,6 +17,10 @@ class UpdateProfileRequested extends ProfileEvent {
     this.phoneNumber,
     this.isAnonymousMode,
   });
+  final String? fullName;
+  final String? email;
+  final String? phoneNumber;
+  final bool? isAnonymousMode;
 
   @override
   List<Object?> get props => [fullName, email, phoneNumber, isAnonymousMode];

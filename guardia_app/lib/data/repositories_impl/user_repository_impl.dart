@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -8,15 +8,16 @@ import 'package:guardia_app/domain/entities/user.dart';
 import 'package:guardia_app/domain/repositories/user_repository.dart';
 
 class UserRepositoryImpl implements UserRepository {
-  final ApiClient apiClient;
 
   UserRepositoryImpl({required this.apiClient});
+  final ApiClient apiClient;
 
   @override
   Future<Either<Failure, User>> getProfile() async {
     try {
       final response = await apiClient.get(Endpoints.me);
-      final user = UserModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final user = UserModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(user);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to load profile'));
@@ -36,14 +37,15 @@ class UserRepositoryImpl implements UserRepository {
       final response = await apiClient.put(
         Endpoints.me,
         data: {
-          if (fullName != null) 'full_name': fullName,
-          if (email != null) 'email': email,
-          if (phoneNumber != null) 'phone_number': phoneNumber,
-          if (isAnonymousMode != null) 'is_anonymous_mode': isAnonymousMode,
+          'full_name': fullName,
+          'email': email,
+          'phone_number': phoneNumber,
+          'is_anonymous_mode': isAnonymousMode,
         },
       );
 
-      final user = UserModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final user = UserModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(user);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to update profile'));

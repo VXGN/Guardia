@@ -1,4 +1,4 @@
-import 'package:guardia_app/domain/entities/journey_location_log.dart';
+﻿import 'package:guardia_app/domain/entities/journey_location_log.dart';
 
 class JourneyLocationLogModel extends JourneyLocationLog {
   const JourneyLocationLogModel({

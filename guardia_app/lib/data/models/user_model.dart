@@ -1,16 +1,12 @@
-import 'package:guardia_app/domain/entities/user.dart';
+﻿import 'package:guardia_app/domain/entities/user.dart';
 
 class UserModel extends User {
   const UserModel({
     required super.id,
-    super.fullName,
+    required super.role, required super.isAnonymousMode, required super.isVerified, required super.createdAt, super.fullName,
     super.email,
     super.phoneNumber,
-    required super.role,
-    required super.isAnonymousMode,
-    required super.isVerified,
     super.fcmToken,
-    required super.createdAt,
     super.updatedAt,
     super.deletedAt,
   });

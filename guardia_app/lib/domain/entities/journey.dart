@@ -1,8 +1,21 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import 'package:guardia_app/domain/entities/journey_contact.dart';
 import 'package:guardia_app/domain/entities/journey_location_log.dart';
 
 class Journey extends Equatable {
+
+  const Journey({
+    required this.id,
+    required this.userId,
+    required this.status,
+    required this.startedAt,
+    required this.safeArrivalConfirmed, required this.createdAt, required this.contacts, required this.locationLogs, this.endedAt,
+    this.originLat,
+    this.originLng,
+    this.destinationLat,
+    this.destinationLng,
+    this.updatedAt,
+  });
   final String id;
   final String userId;
   final String status; // active, completed, alert_triggered, cancelled
@@ -17,23 +30,6 @@ class Journey extends Equatable {
   final DateTime? updatedAt;
   final List<JourneyContact> contacts;
   final List<JourneyLocationLog> locationLogs;
-
-  const Journey({
-    required this.id,
-    required this.userId,
-    required this.status,
-    required this.startedAt,
-    this.endedAt,
-    this.originLat,
-    this.originLng,
-    this.destinationLat,
-    this.destinationLng,
-    required this.safeArrivalConfirmed,
-    required this.createdAt,
-    this.updatedAt,
-    required this.contacts,
-    required this.locationLogs,
-  });
 
   @override
   List<Object?> get props => [

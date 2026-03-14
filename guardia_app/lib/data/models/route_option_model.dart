@@ -1,4 +1,4 @@
-import 'package:guardia_app/domain/entities/route_option.dart';
+﻿import 'package:guardia_app/domain/entities/route_option.dart';
 
 class RouteOptionModel extends RouteOption {
   const RouteOptionModel({

@@ -1,27 +1,16 @@
-import 'package:guardia_app/data/models/report_media_model.dart';
+﻿import 'package:guardia_app/data/models/report_media_model.dart';
 import 'package:guardia_app/data/models/report_status_log_model.dart';
 import 'package:guardia_app/domain/entities/incident_report.dart';
 
 class IncidentReportModel extends IncidentReport {
   const IncidentReportModel({
     required super.id,
-    super.userId,
-    required super.incidentType,
+    required super.incidentType, required super.incidentAt, required super.latitude, required super.longitude, required super.latitudeBlurred, required super.longitudeBlurred, required super.isAnonymous, required super.status, required super.createdAt, required super.media, required super.statusLogs, super.userId,
     super.description,
-    required super.incidentAt,
-    required super.latitude,
-    required super.longitude,
-    required super.latitudeBlurred,
-    required super.longitudeBlurred,
     super.locationLabel,
-    required super.isAnonymous,
-    required super.status,
     super.severityScore,
-    required super.createdAt,
     super.updatedAt,
     super.deletedAt,
-    required super.media,
-    required super.statusLogs,
   });
 
   factory IncidentReportModel.fromJson(Map<String, dynamic> json) {

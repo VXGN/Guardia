@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -10,9 +10,9 @@ import 'package:guardia_app/domain/entities/journey_location_log.dart';
 import 'package:guardia_app/domain/repositories/journey_repository.dart';
 
 class JourneyRepositoryImpl implements JourneyRepository {
-  final ApiClient apiClient;
 
   JourneyRepositoryImpl({required this.apiClient});
+  final ApiClient apiClient;
 
   @override
   Future<Either<Failure, Journey>> startJourney({
@@ -34,7 +34,8 @@ class JourneyRepositoryImpl implements JourneyRepository {
         },
       );
 
-      final journey = JourneyModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final journey = JourneyModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(journey);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to start journey'));
@@ -47,7 +48,8 @@ class JourneyRepositoryImpl implements JourneyRepository {
   Future<Either<Failure, Journey>> getActiveJourney() async {
     try {
       final response = await apiClient.get(Endpoints.activeJourney);
-      final journey = JourneyModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final journey = JourneyModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(journey);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'No active journey found'));
@@ -71,7 +73,8 @@ class JourneyRepositoryImpl implements JourneyRepository {
         },
       );
 
-      final log = JourneyLocationLogModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final log = JourneyLocationLogModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(log);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to update location'));
@@ -84,7 +87,8 @@ class JourneyRepositoryImpl implements JourneyRepository {
   Future<Either<Failure, Journey>> finishJourney(String id) async {
     try {
       final response = await apiClient.post(Endpoints.finishJourney(id));
-      final journey = JourneyModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final journey = JourneyModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(journey);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to finish journey'));
@@ -97,7 +101,8 @@ class JourneyRepositoryImpl implements JourneyRepository {
   Future<Either<Failure, Journey>> cancelJourney(String id) async {
     try {
       final response = await apiClient.post(Endpoints.cancelJourney(id));
-      final journey = JourneyModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final journey = JourneyModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(journey);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to cancel journey'));
@@ -110,7 +115,8 @@ class JourneyRepositoryImpl implements JourneyRepository {
   Future<Either<Failure, Journey>> getJourneyDetail(String id) async {
     try {
       final response = await apiClient.get(Endpoints.journeyDetail(id));
-      final journey = JourneyModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final journey = JourneyModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(journey);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to load journey detail'));
@@ -123,7 +129,9 @@ class JourneyRepositoryImpl implements JourneyRepository {
   Future<Either<Failure, bool>> checkInJourneyStatus(String id) async {
     try {
       final response = await apiClient.get(Endpoints.checkJourneyStatus(id));
-      return Right(response.data['data']['is_safe'] as bool);
+      final dynamic responseData = response.data;
+      final data = responseData['data'] as Map<String, dynamic>;
+      return Right(data['is_safe'] as bool);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to check journey status'));
     } catch (e) {

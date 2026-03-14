@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -6,9 +6,9 @@ import 'package:guardia_app/core/network/endpoints.dart';
 import 'package:guardia_app/domain/repositories/panic_repository.dart';
 
 class PanicRepositoryImpl implements PanicRepository {
-  final ApiClient apiClient;
 
   PanicRepositoryImpl({required this.apiClient});
+  final ApiClient apiClient;
 
   @override
   Future<Either<Failure, void>> triggerPanic({

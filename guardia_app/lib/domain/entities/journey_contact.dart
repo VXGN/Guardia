@@ -1,11 +1,6 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 class JourneyContact extends Equatable {
-  final String id;
-  final String journeyId;
-  final String trustedContactId;
-  final DateTime? notifiedAt;
-  final DateTime? alertSentAt;
 
   const JourneyContact({
     required this.id,
@@ -14,6 +9,11 @@ class JourneyContact extends Equatable {
     this.notifiedAt,
     this.alertSentAt,
   });
+  final String id;
+  final String journeyId;
+  final String trustedContactId;
+  final DateTime? notifiedAt;
+  final DateTime? alertSentAt;
 
   @override
   List<Object?> get props => [

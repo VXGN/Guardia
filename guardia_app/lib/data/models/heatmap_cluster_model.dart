@@ -1,4 +1,4 @@
-import 'package:guardia_app/domain/entities/heatmap_cluster.dart';
+﻿import 'package:guardia_app/domain/entities/heatmap_cluster.dart';
 
 class HeatmapClusterModel extends HeatmapCluster {
   const HeatmapClusterModel({
@@ -8,11 +8,8 @@ class HeatmapClusterModel extends HeatmapCluster {
     required super.radiusMeters,
     required super.intensity,
     required super.incidentCount,
-    super.dominantType,
+    required super.validFrom, required super.validUntil, required super.createdAt, super.dominantType,
     super.timeSlot,
-    required super.validFrom,
-    required super.validUntil,
-    required super.createdAt,
   });
 
   factory HeatmapClusterModel.fromJson(Map<String, dynamic> json) {

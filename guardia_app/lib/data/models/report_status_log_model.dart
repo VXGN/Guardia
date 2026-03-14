@@ -1,14 +1,11 @@
-import 'package:guardia_app/domain/entities/report_status_log.dart';
+﻿import 'package:guardia_app/domain/entities/report_status_log.dart';
 
 class ReportStatusLogModel extends ReportStatusLog {
   const ReportStatusLogModel({
     required super.id,
     required super.reportId,
-    super.changedBy,
-    required super.oldStatus,
-    required super.newStatus,
+    required super.oldStatus, required super.newStatus, required super.changedAt, super.changedBy,
     super.notes,
-    required super.changedAt,
   });
 
   factory ReportStatusLogModel.fromJson(Map<String, dynamic> json) {

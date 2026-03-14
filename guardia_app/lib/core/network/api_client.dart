@@ -1,9 +1,8 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/network/endpoints.dart';
 
 class ApiClient {
-  final Dio dio;
 
   ApiClient({required this.dio}) {
     dio.options.baseUrl = Endpoints.baseUrl;
@@ -19,14 +18,15 @@ class ApiClient {
       responseBody: true,
     ));
   }
+  final Dio dio;
 
-  Future<Response> get(
+  Future<Response<dynamic>> get(
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
     try {
-      return await dio.get(
+      return await dio.get<dynamic>(
         path,
         queryParameters: queryParameters,
         options: options,
@@ -36,32 +36,14 @@ class ApiClient {
     }
   }
 
-  Future<Response> post(
+  Future<Response<dynamic>> post(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
     try {
-      return await dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    }
-  }
-
-  Future<Response> put(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    try {
-      return await dio.put(
+      return await dio.post<dynamic>(
         path,
         data: data,
         queryParameters: queryParameters,
@@ -72,14 +54,32 @@ class ApiClient {
     }
   }
 
-  Future<Response> delete(
+  Future<Response<dynamic>> put(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
     try {
-      return await dio.delete(
+      return await dio.put<dynamic>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response<dynamic>> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      return await dio.delete<dynamic>(
         path,
         data: data,
         queryParameters: queryParameters,
@@ -92,7 +92,11 @@ class ApiClient {
 
   Exception _handleDioError(DioException error) {
     if (error.response?.statusCode != null) {
-      return ServerException(error.response?.data?['message'] ?? 'Server Error');
+      final dynamic data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        return ServerException(data['message']?.toString() ?? 'Server Error');
+      }
+      return ServerException('Server Error');
     }
     return NetworkException();
   }

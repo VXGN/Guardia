@@ -1,12 +1,10 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/domain/usecases/risk/get_area_risk_summary.dart';
 import 'package:guardia_app/domain/usecases/risk/get_heatmap_clusters.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_event.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_state.dart';
 
 class RiskBloc extends Bloc<RiskEvent, RiskState> {
-  final GetHeatmapClusters getHeatmapUseCase;
-  final GetAreaRiskSummary getRiskSummaryUseCase;
 
   RiskBloc({
     required this.getHeatmapUseCase,
@@ -15,6 +13,8 @@ class RiskBloc extends Bloc<RiskEvent, RiskState> {
     on<LoadHeatmapRequested>(_onLoadHeatmapRequested);
     on<LoadAreaRiskSummaryRequested>(_onLoadAreaRiskSummaryRequested);
   }
+  final GetHeatmapClusters getHeatmapUseCase;
+  final GetAreaRiskSummary getRiskSummaryUseCase;
 
   Future<void> _onLoadHeatmapRequested(
     LoadHeatmapRequested event,

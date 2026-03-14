@@ -1,10 +1,10 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/domain/entities/user.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, User>> login({
-    required String Identifier, // email or phone
+    required String identifier, // email or phone
     required String password,
   });
 

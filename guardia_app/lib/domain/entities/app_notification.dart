@@ -1,6 +1,15 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 class AppNotification extends Equatable {
+
+  const AppNotification({
+    required this.id,
+    required this.notificationType, required this.title, required this.body, required this.isSent, required this.createdAt, this.recipientUserId,
+    this.recipientPhone,
+    this.relatedJourneyId,
+    this.relatedReportId,
+    this.sentAt,
+  });
   final String id;
   final String? recipientUserId;
   final String? recipientPhone;
@@ -12,20 +21,6 @@ class AppNotification extends Equatable {
   final bool isSent;
   final DateTime? sentAt;
   final DateTime createdAt;
-
-  const AppNotification({
-    required this.id,
-    this.recipientUserId,
-    this.recipientPhone,
-    required this.notificationType,
-    required this.title,
-    required this.body,
-    this.relatedJourneyId,
-    this.relatedReportId,
-    required this.isSent,
-    this.sentAt,
-    required this.createdAt,
-  });
 
   @override
   List<Object?> get props => [

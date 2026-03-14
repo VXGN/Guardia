@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -9,30 +9,31 @@ import 'package:guardia_app/domain/entities/user.dart';
 import 'package:guardia_app/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  final ApiClient apiClient;
-  final SecureStorageService storageService;
 
   AuthRepositoryImpl({
     required this.apiClient,
     required this.storageService,
   });
+  final ApiClient apiClient;
+  final SecureStorageService storageService;
 
   @override
   Future<Either<Failure, User>> login({
-    required String Identifier,
+    required String identifier,
     required String password,
   }) async {
     try {
       final response = await apiClient.post(
         Endpoints.login,
         data: {
-          'identifier': Identifier,
+          'identifier': identifier,
           'password': password,
         },
       );
 
-      final user = UserModel.fromJson(response.data['data']);
-      final token = response.data['token'] as String;
+      final dynamic responseData = response.data;
+      final user = UserModel.fromJson(responseData['data'] as Map<String, dynamic>);
+      final token = responseData['token'] as String;
 
       await storageService.saveToken(token);
 
@@ -64,8 +65,9 @@ class AuthRepositoryImpl implements AuthRepository {
         },
       );
 
-      final user = UserModel.fromJson(response.data['data']);
-      final token = response.data['token'] as String;
+      final dynamic responseData = response.data;
+      final user = UserModel.fromJson(responseData['data'] as Map<String, dynamic>);
+      final token = responseData['token'] as String;
 
       await storageService.saveToken(token);
 
@@ -94,7 +96,8 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> getCurrentUser() async {
     try {
       final response = await apiClient.get(Endpoints.me);
-      final user = UserModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final user = UserModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(user);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to get current user'));

@@ -1,4 +1,4 @@
-import 'package:guardia_app/data/models/journey_contact_model.dart';
+﻿import 'package:guardia_app/data/models/journey_contact_model.dart';
 import 'package:guardia_app/data/models/journey_location_log_model.dart';
 import 'package:guardia_app/domain/entities/journey.dart';
 
@@ -8,16 +8,12 @@ class JourneyModel extends Journey {
     required super.userId,
     required super.status,
     required super.startedAt,
-    super.endedAt,
+    required super.safeArrivalConfirmed, required super.createdAt, required super.contacts, required super.locationLogs, super.endedAt,
     super.originLat,
     super.originLng,
     super.destinationLat,
     super.destinationLng,
-    required super.safeArrivalConfirmed,
-    required super.createdAt,
     super.updatedAt,
-    required super.contacts,
-    required super.locationLogs,
   });
 
   factory JourneyModel.fromJson(Map<String, dynamic> json) {

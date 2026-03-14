@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
@@ -14,18 +14,14 @@ import 'package:guardia_app/domain/entities/report_status_log.dart';
 import 'package:guardia_app/domain/repositories/report_repository.dart';
 
 class ReportRepositoryImpl implements ReportRepository {
-  final ApiClient apiClient;
 
   ReportRepositoryImpl({required this.apiClient});
+  final ApiClient apiClient;
 
   @override
   Future<Either<Failure, IncidentReport>> createReport({
     required String incidentType,
-    String? description,
-    required DateTime incidentAt,
-    required double latitude,
-    required double longitude,
-    required bool isAnonymous,
+    required DateTime incidentAt, required double latitude, required double longitude, required bool isAnonymous, String? description,
     String? locationLabel,
   }) async {
     try {
@@ -42,7 +38,8 @@ class ReportRepositoryImpl implements ReportRepository {
         },
       );
 
-      final report = IncidentReportModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final report = IncidentReportModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(report);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to create report'));
@@ -72,7 +69,8 @@ class ReportRepositoryImpl implements ReportRepository {
         data: formData,
       );
 
-      final media = ReportMediaModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final media = ReportMediaModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(media);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to upload media'));
@@ -85,8 +83,9 @@ class ReportRepositoryImpl implements ReportRepository {
   Future<Either<Failure, List<IncidentReport>>> getMyReports() async {
     try {
       final response = await apiClient.get(Endpoints.reports);
-      final reports = (response.data['data'] as List)
-          .map((e) => IncidentReportModel.fromJson(e))
+      final dynamic responseData = response.data;
+      final reports = (responseData['data'] as List)
+          .map((e) => IncidentReportModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return Right(reports);
     } on ServerException catch (e) {
@@ -100,7 +99,8 @@ class ReportRepositoryImpl implements ReportRepository {
   Future<Either<Failure, IncidentReport>> getReportDetail(String id) async {
     try {
       final response = await apiClient.get(Endpoints.reportDetail(id));
-      final report = IncidentReportModel.fromJson(response.data['data']);
+      final dynamic responseData = response.data;
+      final report = IncidentReportModel.fromJson(responseData['data'] as Map<String, dynamic>);
       return Right(report);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to load report detail'));
@@ -113,8 +113,9 @@ class ReportRepositoryImpl implements ReportRepository {
   Future<Either<Failure, List<ReportStatusLog>>> getReportStatusLogs(String reportId) async {
     try {
       final response = await apiClient.get(Endpoints.reportStatusLogs(reportId));
-      final logs = (response.data['data'] as List)
-          .map((e) => ReportStatusLogModel.fromJson(e))
+      final dynamic responseData = response.data;
+      final logs = (responseData['data'] as List)
+          .map((e) => ReportStatusLogModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return Right(logs);
     } on ServerException catch (e) {

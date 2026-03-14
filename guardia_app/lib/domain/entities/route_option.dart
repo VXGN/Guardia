@@ -1,12 +1,6 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
-class RouteOption extends Equatable {
-  final String id;
-  final String polyline;
-  final int distanceMeters;
-  final int durationSeconds;
-  final double safetyScore;
-  final String label; // fastest, safest, balanced
+class RouteOption extends Equatable { // fastest, safest, balanced
 
   const RouteOption({
     required this.id,
@@ -16,6 +10,12 @@ class RouteOption extends Equatable {
     required this.safetyScore,
     required this.label,
   });
+  final String id;
+  final String polyline;
+  final int distanceMeters;
+  final int durationSeconds;
+  final double safetyScore;
+  final String label;
 
   @override
   List<Object?> get props => [

@@ -1,4 +1,4 @@
-/// UI string constants for the Guardia app.
+﻿/// UI string constants for the Guardia app.
 class AppStrings {
   AppStrings._();
 

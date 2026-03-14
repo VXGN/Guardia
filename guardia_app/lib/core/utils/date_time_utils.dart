@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+﻿import 'package:intl/intl.dart';
 
 /// Date and time formatting utilities.
 class DateTimeUtils {

@@ -1,6 +1,15 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 class TrustedContact extends Equatable {
+
+  const TrustedContact({
+    required this.id,
+    required this.userId,
+    required this.contactName,
+    required this.contactPhone,
+    required this.isActive, required this.createdAt, this.contactEmail,
+    this.updatedAt,
+  });
   final String id;
   final String userId;
   final String contactName;
@@ -9,17 +18,6 @@ class TrustedContact extends Equatable {
   final bool isActive;
   final DateTime createdAt;
   final DateTime? updatedAt;
-
-  const TrustedContact({
-    required this.id,
-    required this.userId,
-    required this.contactName,
-    required this.contactPhone,
-    this.contactEmail,
-    required this.isActive,
-    required this.createdAt,
-    this.updatedAt,
-  });
 
   @override
   List<Object?> get props => [

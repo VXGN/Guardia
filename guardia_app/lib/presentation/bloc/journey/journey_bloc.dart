@@ -1,4 +1,4 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/domain/usecases/journey/cancel_journey.dart';
 import 'package:guardia_app/domain/usecases/journey/finish_journey.dart';
 import 'package:guardia_app/domain/usecases/journey/get_active_journey.dart';
@@ -8,11 +8,6 @@ import 'package:guardia_app/presentation/bloc/journey/journey_event.dart';
 import 'package:guardia_app/presentation/bloc/journey/journey_state.dart';
 
 class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
-  final StartJourney startJourneyUseCase;
-  final GetActiveJourney getActiveJourneyUseCase;
-  final UpdateJourneyLocation updateJourneyLocationUseCase;
-  final FinishJourney finishJourneyUseCase;
-  final CancelJourney cancelJourneyUseCase;
 
   JourneyBloc({
     required this.startJourneyUseCase,
@@ -27,6 +22,11 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
     on<JourneyFinishRequested>(_onJourneyFinishRequested);
     on<JourneyCancelRequested>(_onJourneyCancelRequested);
   }
+  final StartJourney startJourneyUseCase;
+  final GetActiveJourney getActiveJourneyUseCase;
+  final UpdateJourneyLocation updateJourneyLocationUseCase;
+  final FinishJourney finishJourneyUseCase;
+  final CancelJourney cancelJourneyUseCase;
 
   Future<void> _onJourneyStartRequested(
     JourneyStartRequested event,
@@ -63,7 +63,7 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
     Emitter<JourneyState> emit,
   ) async {
     // We don't necessarily want to emit JourneyLoading here to avoid UI flickering during tracking
-    final result = await updateJourneyLocationUseCase(
+    await updateJourneyLocationUseCase(
       journeyId: event.journeyId,
       latitude: event.latitude,
       longitude: event.longitude,

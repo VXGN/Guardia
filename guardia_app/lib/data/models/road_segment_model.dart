@@ -1,19 +1,11 @@
-import 'package:guardia_app/domain/entities/road_segment.dart';
+﻿import 'package:guardia_app/domain/entities/road_segment.dart';
 
 class RoadSegmentModel extends RoadSegment {
   const RoadSegmentModel({
     required super.id,
-    super.segmentName,
-    required super.startLat,
-    required super.startLng,
-    required super.endLat,
-    required super.endLng,
+    required super.startLat, required super.startLng, required super.endLat, required super.endLng, required super.hasStreetLight, required super.isMainRoad, required super.nearSecurityPost, required super.createdAt, super.segmentName,
     super.lengthMeters,
-    required super.hasStreetLight,
-    required super.isMainRoad,
-    required super.nearSecurityPost,
     super.osmWayId,
-    required super.createdAt,
     super.updatedAt,
   });
 

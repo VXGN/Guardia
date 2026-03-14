@@ -1,4 +1,4 @@
-class Endpoints {
+﻿class Endpoints {
   static const String baseUrl = 'https://api.guardia.app/v1'; // TODO: Update with actual URL
 
   // Auth

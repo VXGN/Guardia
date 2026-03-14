@@ -1,4 +1,4 @@
-import 'package:guardia_app/domain/entities/risk_score.dart';
+﻿import 'package:guardia_app/domain/entities/risk_score.dart';
 
 class RiskScoreModel extends RiskScore {
   const RiskScoreModel({
@@ -7,8 +7,7 @@ class RiskScoreModel extends RiskScore {
     required super.timeSlot,
     required super.riskScore,
     required super.incidentCount,
-    super.dominantIncidentType,
-    required super.calculatedAt,
+    required super.calculatedAt, super.dominantIncidentType,
     super.validUntil,
   });
 

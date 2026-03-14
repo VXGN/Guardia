@@ -1,8 +1,8 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:guardia_app/domain/usecases/contacts/add_trusted_contact.dart';
-import 'package:guardia_app/domain/usecases/contacts/delete_trusted_contact.dart';
-import 'package:guardia_app/domain/usecases/contacts/get_trusted_contacts.dart';
-import 'package:guardia_app/domain/usecases/contacts/update_trusted_contact.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:guardia_app/domain/usecases/trusted_contacts/add_trusted_contact.dart';
+import 'package:guardia_app/domain/usecases/trusted_contacts/delete_trusted_contact.dart';
+import 'package:guardia_app/domain/usecases/trusted_contacts/get_trusted_contacts.dart';
+import 'package:guardia_app/domain/usecases/trusted_contacts/update_trusted_contact.dart';
 import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_event.dart';
 import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_state.dart';
 
@@ -48,7 +48,7 @@ class TrustedContactBloc extends Bloc<TrustedContactEvent, TrustedContactState> 
     );
     result.fold(
       (failure) => emit(TrustedContactError(failure.message)),
-      (_) => add<LoadTrustedContactsRequested>(),
+      (_) => add(const LoadTrustedContactsRequested()),
     );
   }
 
@@ -66,7 +66,7 @@ class TrustedContactBloc extends Bloc<TrustedContactEvent, TrustedContactState> 
     );
     result.fold(
       (failure) => emit(TrustedContactError(failure.message)),
-      (_) => add<LoadTrustedContactsRequested>(),
+      (_) => add(const LoadTrustedContactsRequested()),
     );
   }
 
@@ -78,7 +78,7 @@ class TrustedContactBloc extends Bloc<TrustedContactEvent, TrustedContactState> 
     final result = await deleteContactUseCase(event.id);
     result.fold(
       (failure) => emit(TrustedContactError(failure.message)),
-      (_) => add<LoadTrustedContactsRequested>(),
+      (_) => add(const LoadTrustedContactsRequested()),
     );
   }
 }

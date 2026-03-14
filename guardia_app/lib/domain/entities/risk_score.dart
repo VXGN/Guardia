@@ -1,6 +1,16 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 class RiskScore extends Equatable {
+
+  const RiskScore({
+    required this.id,
+    required this.segmentId,
+    required this.timeSlot,
+    required this.riskScore,
+    required this.incidentCount,
+    required this.calculatedAt, this.dominantIncidentType,
+    this.validUntil,
+  });
   final String id;
   final String segmentId;
   final String timeSlot; // morning, afternoon, evening, night
@@ -9,17 +19,6 @@ class RiskScore extends Equatable {
   final String? dominantIncidentType;
   final DateTime calculatedAt;
   final DateTime? validUntil;
-
-  const RiskScore({
-    required this.id,
-    required this.segmentId,
-    required this.timeSlot,
-    required this.riskScore,
-    required this.incidentCount,
-    this.dominantIncidentType,
-    required this.calculatedAt,
-    this.validUntil,
-  });
 
   @override
   List<Object?> get props => [

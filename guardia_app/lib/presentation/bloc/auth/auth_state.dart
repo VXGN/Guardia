@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 import 'package:guardia_app/domain/entities/user.dart';
 
 abstract class AuthState extends Equatable {
@@ -13,9 +13,9 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class Authenticated extends AuthState {
-  final User user;
 
   const Authenticated(this.user);
+  final User user;
 
   @override
   List<Object?> get props => [user];
@@ -24,9 +24,9 @@ class Authenticated extends AuthState {
 class Unauthenticated extends AuthState {}
 
 class AuthError extends AuthState {
-  final String message;
 
   const AuthError(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];

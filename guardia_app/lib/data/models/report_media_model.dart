@@ -1,4 +1,4 @@
-import 'package:guardia_app/domain/entities/report_media.dart';
+﻿import 'package:guardia_app/domain/entities/report_media.dart';
 
 class ReportMediaModel extends ReportMedia {
   const ReportMediaModel({
@@ -6,9 +6,7 @@ class ReportMediaModel extends ReportMedia {
     required super.reportId,
     required super.mediaType,
     required super.storageUrl,
-    super.fileSizeKb,
-    required super.isEncrypted,
-    required super.createdAt,
+    required super.isEncrypted, required super.createdAt, super.fileSizeKb,
   });
 
   factory ReportMediaModel.fromJson(Map<String, dynamic> json) {

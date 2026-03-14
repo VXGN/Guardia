@@ -1,6 +1,14 @@
-import 'package:equatable/equatable.dart';
+﻿import 'package:equatable/equatable.dart';
 
 class RoadSegment extends Equatable {
+
+  const RoadSegment({
+    required this.id,
+    required this.startLat, required this.startLng, required this.endLat, required this.endLng, required this.hasStreetLight, required this.isMainRoad, required this.nearSecurityPost, required this.createdAt, this.segmentName,
+    this.lengthMeters,
+    this.osmWayId,
+    this.updatedAt,
+  });
   final String id;
   final String? segmentName;
   final double startLat;
@@ -14,22 +22,6 @@ class RoadSegment extends Equatable {
   final int? osmWayId;
   final DateTime createdAt;
   final DateTime? updatedAt;
-
-  const RoadSegment({
-    required this.id,
-    this.segmentName,
-    required this.startLat,
-    required this.startLng,
-    required this.endLat,
-    required this.endLng,
-    this.lengthMeters,
-    required this.hasStreetLight,
-    required this.isMainRoad,
-    required this.nearSecurityPost,
-    this.osmWayId,
-    required this.createdAt,
-    this.updatedAt,
-  });
 
   @override
   List<Object?> get props => [

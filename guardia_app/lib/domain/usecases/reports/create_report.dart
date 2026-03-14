@@ -1,23 +1,19 @@
-import 'package:dartz/dartz.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/domain/entities/incident_report.dart';
 import 'package:guardia_app/domain/repositories/report_repository.dart';
 
 class CreateReport {
-  final ReportRepository repository;
 
   CreateReport(this.repository);
+  final ReportRepository repository;
 
   Future<Either<Failure, IncidentReport>> call({
     required String incidentType,
-    String? description,
-    required DateTime incidentAt,
-    required double latitude,
-    required double longitude,
-    required bool isAnonymous,
+    required DateTime incidentAt, required double latitude, required double longitude, required bool isAnonymous, String? description,
     String? locationLabel,
   }) async {
-    return await repository.createReport(
+    return repository.createReport(
       incidentType: incidentType,
       description: description,
       incidentAt: incidentAt,

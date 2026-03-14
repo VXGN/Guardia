@@ -1,12 +1,10 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/domain/usecases/panic/cancel_panic.dart';
 import 'package:guardia_app/domain/usecases/panic/trigger_panic.dart';
 import 'package:guardia_app/presentation/bloc/panic/panic_event.dart';
 import 'package:guardia_app/presentation/bloc/panic/panic_state.dart';
 
 class PanicBloc extends Bloc<PanicEvent, PanicState> {
-  final TriggerPanic triggerPanicUseCase;
-  final CancelPanic cancelPanicUseCase;
 
   PanicBloc({
     required this.triggerPanicUseCase,
@@ -15,6 +13,8 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     on<PanicTriggerRequested>(_onPanicTriggerRequested);
     on<PanicCancelRequested>(_onPanicCancelRequested);
   }
+  final TriggerPanic triggerPanicUseCase;
+  final CancelPanic cancelPanicUseCase;
 
   Future<void> _onPanicTriggerRequested(
     PanicTriggerRequested event,
