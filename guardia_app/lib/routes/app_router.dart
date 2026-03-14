@@ -8,6 +8,8 @@ import 'package:guardia_app/presentation/pages/onboarding/permission_request_pag
 import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_success_page.dart';
 import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
+import 'package:guardia_app/presentation/pages/reports/report_detail_page.dart';
+import 'package:guardia_app/domain/entities/incident_report.dart';
 import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
 import 'package:guardia_app/presentation/pages/profile/notifications_page.dart';
 import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
@@ -19,6 +21,7 @@ import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
 /// GoRouter instance for Guardia app navigation.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
+  debugLogDiagnostics: true,
   routes: [
     GoRoute(
       path: '/',
@@ -71,13 +74,13 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const AuthorityLoginPage(),
     ),
     GoRoute(
-      path: '/report-success',
-      name: 'report-success',
+      path: '/report_success',
+      name: 'report_success',
       builder: (context, state) => const ReportSuccessPage(),
     ),
     GoRoute(
-      path: '/report',
-      name: 'report',
+      path: '/report_incident',
+      name: 'report_incident',
       builder: (context, state) => const ReportIncidentPage(),
     ),
     GoRoute(
@@ -89,6 +92,14 @@ final GoRouter appRouter = GoRouter(
       path: '/my_reports',
       name: 'my_reports',
       builder: (context, state) => const MyReportsPage(),
+    ),
+    GoRoute(
+      path: '/report_detail',
+      name: 'report_detail',
+      builder: (context, state) {
+        final report = state.extra as IncidentReport;
+        return ReportDetailPage(report: report);
+      },
     ),
     GoRoute(
       path: '/notifications',

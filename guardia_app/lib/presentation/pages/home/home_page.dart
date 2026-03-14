@@ -166,7 +166,7 @@ class _HomePageState extends State<HomePage> {
                       color: AppColors.textSecondary,
                     ),
                     suffixIcon: GestureDetector(
-                      onTap: () => context.push('/profile'),
+                    onTap: () => context.pushNamed('profile'),
                       child: Container(
                         width: 40,
                         height: 40,

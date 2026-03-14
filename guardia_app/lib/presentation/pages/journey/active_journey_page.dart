@@ -64,11 +64,11 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Perjalanan selesai. Selamat tiba dengan selamat! 🎉'), backgroundColor: AppColors.success),
           );
-          context.go('/home');
+          context.goNamed('home');
         }
         if (state is JourneyCancelled) {
           _elapsedTimer?.cancel();
-          context.go('/home');
+          context.goNamed('home');
         }
       },
       builder: (context, state) {
@@ -329,7 +329,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
             Text('Start a journey from the Home screen to track it here.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.goNamed('home'),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: const Text('Go to Home', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),

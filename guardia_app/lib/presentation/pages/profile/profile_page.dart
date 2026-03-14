@@ -76,7 +76,7 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildImpactCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/impact_dashboard'),
+      onTap: () => context.pushNamed('impact_dashboard'),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -84,7 +84,7 @@ class ProfilePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -136,11 +136,11 @@ class ProfilePage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildListTile(Icons.history, 'My Reports', onTap: () => context.push('/my_reports')),
+          _buildListTile(Icons.history, 'My Reports', onTap: () => context.pushNamed('my_reports')),
           const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildListTile(Icons.people_outline, 'Trusted Contacts', onTap: () => context.push('/trusted_contacts')),
+          _buildListTile(Icons.people_outline, 'Trusted Contacts', onTap: () => context.pushNamed('trusted_contacts')),
           const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildListTile(Icons.notifications_active, 'Notification Inbox', onTap: () => context.push('/notifications')),
+          _buildListTile(Icons.notifications_active, 'Notification Inbox', onTap: () => context.pushNamed('notifications')),
           const Divider(height: 1, indent: 20, endIndent: 20),
           _buildSwitchTile(Icons.notifications_outlined, 'Push Notifications', true),
           const Divider(height: 1, indent: 20, endIndent: 20),

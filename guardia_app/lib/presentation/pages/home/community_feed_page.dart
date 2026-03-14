@@ -69,7 +69,7 @@ class CommunityFeedPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'community_add_fab',
-        onPressed: () => context.push('/report'),
+        onPressed: () => context.pushNamed('report_incident'),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),

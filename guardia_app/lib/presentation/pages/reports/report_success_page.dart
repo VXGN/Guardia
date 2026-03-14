@@ -64,10 +64,7 @@ class ReportSuccessPage extends StatelessWidget {
               // Track Status Link
               InkWell(
                 onTap: () {
-                  // TODO: Navigate to Status Tracker (17B)
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Status tracker coming soon!')),
-                  );
+                  context.pushNamed('my_reports');
                 },
                 child: const Text(
                   'Track Report Status',
@@ -82,7 +79,7 @@ class ReportSuccessPage extends StatelessWidget {
               CustomButton(
                 text: 'Back to Home',
                 onPressed: () {
-                  context.go('/home');
+                  context.goNamed('home');
                 },
                 backgroundColor: AppColors.primary,
               ),
