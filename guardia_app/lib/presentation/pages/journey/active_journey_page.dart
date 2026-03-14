@@ -7,7 +7,7 @@ import 'package:guardia_app/domain/entities/journey.dart';
 import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
 import 'package:guardia_app/presentation/bloc/journey/journey_event.dart';
 import 'package:guardia_app/presentation/bloc/journey/journey_state.dart';
-import 'package:guardia_app/domain/entities/journey.dart';
+
 
 class ActiveJourneyPage extends StatefulWidget {
   const ActiveJourneyPage({super.key});
@@ -154,9 +154,11 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           const SizedBox(height: 20),
           Text(
             _formatDuration(_elapsed),
-            style: TextStyle(
-            fontWeight: FontWeight.w300,
-          )),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 44,
+              fontWeight: FontWeight.w300,
+            ),
           ),
           const SizedBox(height: 4),
           Text('Elapsed Time', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
@@ -200,8 +202,8 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
                   backgroundColor: AppColors.primary,
                   child: Icon(Icons.person, color: Colors.white, size: 20),
                 ),
-                title: Text(contact.contactName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(contact.contactPhone, style: TextStyle(color: Colors.grey[600])),
+                title: Text('Companion ${contact.trustedContactId}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('ID: ${contact.trustedContactId}', style: TextStyle(color: Colors.grey[600])),
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
