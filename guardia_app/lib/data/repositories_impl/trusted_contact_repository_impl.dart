@@ -16,6 +16,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
       contactName: 'Bapa (Emergency)',
       contactPhone: '+62 812-3456-7890',
       contactEmail: 'bapa@example.com',
+      relationship: 'Father',
       isActive: true,
       createdAt: DateTime.now().subtract(const Duration(days: 30)),
     ),
@@ -25,6 +26,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
       contactName: 'Mama',
       contactPhone: '+62 811-9876-5432',
       contactEmail: 'mama@example.com',
+      relationship: 'Mother',
       isActive: true,
       createdAt: DateTime.now().subtract(const Duration(days: 25)),
     ),
@@ -42,6 +44,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
     required String contactName,
     required String contactPhone,
     String? contactEmail,
+    String? relationship,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
     final newContact = TrustedContact(
@@ -50,6 +53,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
       contactName: contactName,
       contactPhone: contactPhone,
       contactEmail: contactEmail,
+      relationship: relationship,
       isActive: true,
       createdAt: DateTime.now(),
     );
@@ -63,6 +67,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
     String? contactName,
     String? contactPhone,
     String? contactEmail,
+    String? relationship,
     bool? isActive,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -75,6 +80,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
         contactName: contactName ?? old.contactName,
         contactPhone: contactPhone ?? old.contactPhone,
         contactEmail: contactEmail ?? old.contactEmail,
+        relationship: relationship ?? old.relationship,
         isActive: isActive ?? old.isActive,
         createdAt: old.createdAt,
         updatedAt: DateTime.now(),

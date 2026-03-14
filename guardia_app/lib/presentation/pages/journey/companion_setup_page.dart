@@ -207,7 +207,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      contact.contactPhone,
+                      '${contact.relationship ?? "No relation"} • ${contact.contactPhone}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
@@ -267,7 +267,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
   void _showEditContactBottomSheet(BuildContext context, TrustedContact contact) {
     _nameController.text = contact.contactName;
     _phoneController.text = contact.contactPhone;
-    _relationController.text = ''; // Relation is not in the entity yet, but we use it for dummy flow
+    _relationController.text = contact.relationship ?? '';
 
     showModalBottomSheet<void>(
       context: context,
@@ -301,6 +301,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
                       id: contact.id,
                       contactName: _nameController.text,
                       contactPhone: _phoneController.text,
+                      relationship: _relationController.text,
                     ));
                     _nameController.clear();
                     _phoneController.clear();
@@ -349,6 +350,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
                     context.read<TrustedContactBloc>().add(AddTrustedContactRequested(
                       contactName: _nameController.text,
                       contactPhone: _phoneController.text,
+                      relationship: _relationController.text,
                       contactEmail: null,
                     ));
                     _nameController.clear();

@@ -9,6 +9,7 @@ abstract class TrustedContactRepository {
     required String contactName,
     required String contactPhone,
     String? contactEmail,
+    String? relationship,
   });
 
   Future<Either<Failure, TrustedContact>> updateTrustedContact({
@@ -16,6 +17,7 @@ abstract class TrustedContactRepository {
     String? contactName,
     String? contactPhone,
     String? contactEmail,
+    String? relationship,
     bool? isActive,
   });
 

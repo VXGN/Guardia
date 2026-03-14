@@ -12,11 +12,13 @@ class AddTrustedContact {
     required String contactName,
     required String contactPhone,
     String? contactEmail,
+    String? relationship,
   }) async {
     return repository.addTrustedContact(
       contactName: contactName,
       contactPhone: contactPhone,
       contactEmail: contactEmail,
+      relationship: relationship,
     );
   }
 }
