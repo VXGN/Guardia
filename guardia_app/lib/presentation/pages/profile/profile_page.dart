@@ -134,6 +134,8 @@ class ProfilePage extends StatelessWidget {
         children: [
           _buildListTile(Icons.history, 'My Reports', onTap: () => context.push('/my_reports')),
           const Divider(height: 1, indent: 20, endIndent: 20),
+          _buildListTile(Icons.notifications_active, 'Notification Inbox', onTap: () => context.push('/notifications')),
+          const Divider(height: 1, indent: 20, endIndent: 20),
           _buildSwitchTile(Icons.notifications_outlined, 'Push Notifications', true),
           const Divider(height: 1, indent: 20, endIndent: 20),
           _buildListTile(Icons.language, 'Language', trailing: const Text('English', style: TextStyle(color: Colors.grey))),

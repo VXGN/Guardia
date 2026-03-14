@@ -8,6 +8,7 @@ import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart
 import 'package:guardia_app/presentation/pages/reports/report_success_page.dart';
 import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
 import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
+import 'package:guardia_app/presentation/pages/profile/notifications_page.dart';
 import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
 
 
@@ -64,6 +65,11 @@ final GoRouter appRouter = GoRouter(
       path: '/my_reports',
       name: 'my_reports',
       builder: (context, state) => const MyReportsPage(),
+    ),
+    GoRoute(
+      path: '/notifications',
+      name: 'notifications',
+      builder: (context, state) => const NotificationsPage(),
     ),
   ],
 );
