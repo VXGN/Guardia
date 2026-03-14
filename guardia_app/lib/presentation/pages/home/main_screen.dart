@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/presentation/pages/home/community_feed_page.dart';
 import 'package:guardia_app/presentation/pages/home/home_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_setup_page.dart';
-import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
+import 'package:guardia_app/features/reports/presentation/pages/report_tab_page.dart';
 import 'package:guardia_app/presentation/widgets/panic/sos_active_overlay.dart';
 import 'package:guardia_app/presentation/widgets/panic/sos_countdown_overlay.dart';
 
@@ -23,8 +22,8 @@ class _MainScreenState extends State<MainScreen> {
   // List of standard pages for the bottom navigation
   final List<Widget> _pages = [
     const HomePage(),
-    const CommunityFeedPage(),
-    const MyReportsPage(),
+    const Center(child: Text('Safety Zone: Nearby Safe Spaces')), // Placeholder for now
+    const ReportTabPage(),
     const CompanionSetupPage(),
   ];
 

@@ -5,7 +5,9 @@ import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/domain/entities/incident_report.dart';
 
 class MyReportsPage extends StatefulWidget {
-  const MyReportsPage({super.key});
+  final bool isEmbedded;
+
+  const MyReportsPage({super.key, this.isEmbedded = false});
 
   @override
   State<MyReportsPage> createState() => _MyReportsPageState();
@@ -56,6 +58,10 @@ class _MyReportsPageState extends State<MyReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isEmbedded) {
+      return _buildBody();
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -71,33 +77,32 @@ class _MyReportsPageState extends State<MyReportsPage> {
           const SizedBox(width: 8),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.pushNamed('report_incident'),
-        backgroundColor: AppColors.error,
-        icon: const Icon(Icons.report_problem_outlined, color: Colors.white),
-        label: const Text('REPORT INCIDENT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
-      body: Column(
-        children: [
-          _buildFilterBar(),
-          Expanded(
-            child: _mockReports.isEmpty 
-              ? _buildEmptyState() 
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  itemCount: _mockReports.length,
-                  itemBuilder: (context, index) {
-                    return InkWell(
-                      onTap: () => context.pushNamed('report_detail', extra: _mockReports[index]),
-                      child: _buildReportCard(_mockReports[index]),
-                    );
-                  },
-                ),
-          ),
-        ],
-      ),
+      body: _buildBody(),
     );
   }
+
+  Widget _buildBody() {
+    return Column(
+      children: [
+        _buildFilterBar(),
+        Expanded(
+          child: _mockReports.isEmpty 
+            ? _buildEmptyState() 
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                itemCount: _mockReports.length,
+                itemBuilder: (context, index) {
+                  return InkWell(
+                    onTap: () => context.pushNamed('report_detail', extra: _mockReports[index]),
+                    child: _buildReportCard(_mockReports[index]),
+                  );
+                },
+              ),
+        ),
+      ],
+    );
+  }
+
 
   Widget _buildFilterBar() {
     final filters = ['All', 'Received', 'In Progress', 'Resolved'];
