@@ -13,6 +13,7 @@ class UpdateTrustedContact {
     String? contactName,
     String? contactPhone,
     String? contactEmail,
+    String? relationship,
     bool? isActive,
   }) async {
     return repository.updateTrustedContact(
@@ -20,6 +21,7 @@ class UpdateTrustedContact {
       contactName: contactName,
       contactPhone: contactPhone,
       contactEmail: contactEmail,
+      relationship: relationship,
       isActive: isActive,
     );
   }

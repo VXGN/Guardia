@@ -204,13 +204,18 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
                 ),
                 title: Text('Companion ${contact.trustedContactId}', style: const TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text('ID: ${contact.trustedContactId}', style: TextStyle(color: Colors.grey[600])),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text('Watching', style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 11)),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chat_outlined, color: AppColors.primary, size: 22),
+                      onPressed: () => context.pushNamed('companion_chat', pathParameters: {'companionId': contact.trustedContactId}),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.phone_outlined, color: AppColors.primary, size: 22),
+                      onPressed: () => context.pushNamed('companion_call', pathParameters: {'companionId': contact.trustedContactId}),
+                    ),
+                  ],
                 ),
               )),
         ],

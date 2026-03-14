@@ -16,6 +16,8 @@ import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
 import 'package:guardia_app/presentation/pages/journey/active_journey_page.dart';
 import 'package:guardia_app/presentation/pages/contacts/trusted_contacts_page.dart';
 import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
+import 'package:guardia_app/presentation/pages/journey/companion_chat_page.dart';
+import 'package:guardia_app/presentation/pages/journey/companion_call_page.dart';
 
 
 /// GoRouter instance for Guardia app navigation.
@@ -105,6 +107,22 @@ final GoRouter appRouter = GoRouter(
       path: '/notifications',
       name: 'notifications',
       builder: (context, state) => const NotificationsPage(),
+    ),
+    GoRoute(
+      path: '/companion_chat/:companionId',
+      name: 'companion_chat',
+      builder: (context, state) {
+        final id = state.pathParameters['companionId'] ?? '1';
+        return CompanionChatPage(companionId: id);
+      },
+    ),
+    GoRoute(
+      path: '/companion_call/:companionId',
+      name: 'companion_call',
+      builder: (context, state) {
+        final id = state.pathParameters['companionId'] ?? '1';
+        return CompanionCallPage(companionId: id);
+      },
     ),
   ],
 );
