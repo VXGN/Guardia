@@ -12,11 +12,11 @@ class ReportMediaModel extends ReportMedia {
   factory ReportMediaModel.fromJson(Map<String, dynamic> json) {
     return ReportMediaModel(
       id: json['id'] as String,
-      reportId: json['report_id'] as String,
+      reportId: (json['report_id'] as String?) ?? '',
       mediaType: json['media_type'] as String,
       storageUrl: json['storage_url'] as String,
       fileSizeKb: json['file_size_kb'] as int?,
-      isEncrypted: json['is_encrypted'] as bool,
+      isEncrypted: (json['is_encrypted'] as bool?) ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
