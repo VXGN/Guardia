@@ -63,13 +63,6 @@ class _MyReportsPageState extends State<MyReportsPage> {
         backgroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
-            onPressed: () => context.pushNamed('report_incident'),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.pushNamed('report_incident'),

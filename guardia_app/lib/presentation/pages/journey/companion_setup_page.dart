@@ -165,11 +165,11 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
               ),
               IconButton(
                 icon: const Icon(Icons.message_outlined, color: Color(0xFF61EBCF)),
-                onPressed: () => context.pushNamed('companion_chat', pathParameters: {'companionId': (index + 1).toString()}),
+                onPressed: () => GoRouter.of(context).pushNamed('companion_chat', pathParameters: {'companionId': (index + 1).toString()}),
               ),
               IconButton(
                 icon: const Icon(Icons.call_outlined, color: Color(0xFF6366F1)),
-                onPressed: () => context.pushNamed('companion_call', pathParameters: {'companionId': (index + 1).toString()}),
+                onPressed: () => GoRouter.of(context).pushNamed('companion_call', pathParameters: {'companionId': (index + 1).toString()}),
               )
             ],
           ),
