@@ -1,5 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/common/widgets/custom_text_field.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
@@ -67,8 +71,12 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // TODO: Handle registration logic via Auth Cubit/Bloc
-    context.goNamed('home'); 
+    context.read<AuthBloc>().add(
+      AuthRegisterRequested(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      ),
+    );
   }
 
   void _onPinChanged(String value, int index) {
@@ -115,32 +123,46 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leadingWidth: 120,
-        leading: TextButton.icon(
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.goNamed('login');
-            }
-          },
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          label: const Text(
-            'Back',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+    return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status || current.message != previous.message,
+      listener: (context, state) {
+        if (state.status == AuthStatus.failure && state.message != null) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(state.message!)));
+        } else if (state.status == AuthStatus.authenticated) {
+          context.goNamed('home');
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state.status == AuthStatus.loading;
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leadingWidth: 120,
+            leading: TextButton.icon(
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.goNamed('login');
+                }
+              },
+              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+              label: const Text(
+                'Back',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-      body: SafeArea(
+          body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
@@ -344,14 +366,16 @@ class _RegisterPageState extends State<RegisterPage> {
 
               // Register Button
               CustomButton(
-                text: 'Register',
-                onPressed: _onRegister,
+                text: isLoading ? 'Loading...' : 'Register',
+                onPressed: isLoading ? () {} : _onRegister,
               ),
               const SizedBox(height: 48), // Bottom padding
             ],
           ),
         ),
       ),
+        );
+      },
     );
   }
 }

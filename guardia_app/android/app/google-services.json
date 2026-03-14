@@ -12,7 +12,20 @@
           "package_name": "com.example.guardia_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "57902038315-qi04f2kh48d4s00ij43rid0pnpcm0a4v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.guardia_app",
+            "certificate_hash": "751768f0351ad07f6d04548d47d115180305696e"
+          }
+        },
+        {
+          "client_id": "57902038315-uhgpi18btugbk0u2hajt8o3sq2rnve5a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC4H1BvabtNUCHMdC7ysaoZuM8dgpKYza4"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "57902038315-uhgpi18btugbk0u2hajt8o3sq2rnve5a.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "57902038315-gq0u6gd4rc5ilkia1kbdnk0gkj8128c0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.guardiaApp"
+              }
+            }
+          ]
         }
       }
     }

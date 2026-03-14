@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/presentation/bloc/auth/auth_bloc.dart';
-import 'package:guardia_app/presentation/bloc/auth/auth_event.dart';
-import 'package:guardia_app/presentation/bloc/auth/auth_state.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -21,14 +21,14 @@ class ProfilePage extends StatelessWidget {
       ),
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          if (state is Authenticated) {
-            final user = state.user;
+          if (state.status == AuthStatus.authenticated && state.user != null) {
+            final user = state.user!;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildProfileHeader(user.fullName ?? 'Citizen', user.email ?? 'No associated email'),
+                  _buildProfileHeader(user.name ?? 'Citizen', user.email),
                   const SizedBox(height: 32),
                   _buildImpactCard(context),
                   const SizedBox(height: 32),
@@ -176,7 +176,8 @@ class ProfilePage extends StatelessWidget {
   Widget _buildLogoutButton(BuildContext context) {
     return OutlinedButton.icon(
       onPressed: () {
-        context.read<AuthBloc>().add(LogoutRequested());
+        context.read<AuthBloc>().add(AuthLogoutRequested());
+        context.goNamed('login');
       },
       icon: const Icon(Icons.logout, color: AppColors.error),
       label: const Text('Sign Out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),

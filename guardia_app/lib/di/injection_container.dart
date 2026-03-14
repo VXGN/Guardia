@@ -1,4 +1,5 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -6,7 +7,8 @@ import 'package:guardia_app/core/network/auth_interceptor.dart';
 import 'package:guardia_app/core/services/secure_storage_service.dart';
 
 // Repositories
-import 'package:guardia_app/data/repositories_impl/auth_repository_impl.dart';
+import 'package:guardia_app/features/auth/data/datasources/firebase_auth_data_source.dart';
+import 'package:guardia_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/journey_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/notification_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/panic_repository_impl.dart';
@@ -15,7 +17,7 @@ import 'package:guardia_app/data/repositories_impl/risk_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/routing_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/trusted_contact_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/user_repository_impl.dart';
-import 'package:guardia_app/domain/repositories/auth_repository.dart';
+import 'package:guardia_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:guardia_app/domain/repositories/journey_repository.dart';
 import 'package:guardia_app/domain/repositories/notification_repository.dart';
 import 'package:guardia_app/domain/repositories/panic_repository.dart';
@@ -25,11 +27,7 @@ import 'package:guardia_app/domain/repositories/routing_repository.dart';
 import 'package:guardia_app/domain/repositories/trusted_contact_repository.dart';
 import 'package:guardia_app/domain/repositories/user_repository.dart';
 
-// UseCases - Auth
-import 'package:guardia_app/domain/usecases/auth/get_current_user.dart';
-import 'package:guardia_app/domain/usecases/auth/login.dart';
-import 'package:guardia_app/domain/usecases/auth/logout.dart';
-import 'package:guardia_app/domain/usecases/auth/register.dart';
+// UseCases - Auth (Removed)
 // UseCases - Journey
 import 'package:guardia_app/domain/usecases/journey/cancel_journey.dart';
 import 'package:guardia_app/domain/usecases/journey/finish_journey.dart';
@@ -59,7 +57,7 @@ import 'package:guardia_app/domain/usecases/user/get_profile.dart';
 import 'package:guardia_app/domain/usecases/user/update_profile.dart';
 
 // Blocs
-import 'package:guardia_app/presentation/bloc/auth/auth_bloc.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_bloc.dart';
 import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
 import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
@@ -69,18 +67,25 @@ import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
 import 'package:guardia_app/presentation/bloc/routing/routing_bloc.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:google_sign_in/google_sign_in.dart';
+
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
+  // External
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
+  sl.registerLazySingleton(() => const FlutterSecureStorage());
+  sl.registerLazySingleton(Dio.new);
+  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
+  sl.registerLazySingleton<GoogleSignIn>(() => GoogleSignIn());
+
   // Features - Auth
   // Bloc
   sl.registerFactory(
-    () => AuthBloc(
-      loginUser: sl(),
-      registerUser: sl(),
-      logoutUser: sl(),
-      getCurrentUser: sl(),
-    ),
+    () => AuthBloc(authRepository: sl()),
   );
   sl.registerFactory(
     () => ReportBloc(
@@ -136,10 +141,7 @@ Future<void> init() async {
   );
 
   // Usecases
-  sl.registerLazySingleton(() => Login(sl()));
-  sl.registerLazySingleton(() => Register(sl()));
-  sl.registerLazySingleton(() => Logout(sl()));
-  sl.registerLazySingleton(() => GetCurrentUser(sl()));
+  // Auth UseCases removed, directly using AuthRepository in Bloc
   sl.registerLazySingleton(() => CreateReport(sl()));
   sl.registerLazySingleton(() => GetMyReports(sl()));
   sl.registerLazySingleton(() => GetReportDetail(sl()));
@@ -162,11 +164,11 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetNotifications(sl()));
 
   // Repository
+  sl.registerLazySingleton<FirebaseAuthDataSource>(
+    () => FirebaseAuthDataSourceImpl(sl(), sl()),
+  );
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
-      apiClient: sl(),
-      storageService: sl(),
-    ),
+    () => AuthRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(
@@ -209,16 +211,12 @@ Future<void> init() async {
     ),
   );
 
-  // Core
-  sl.registerLazySingleton(() => ApiClient(dio: sl()));
-  sl.registerLazySingleton(() => AuthInterceptor(sl()));
-
   // Services
   sl.registerLazySingleton(() => SecureStorageService(sl()));
 
-  // External
-  sl.registerLazySingleton(() => const FlutterSecureStorage());
-  sl.registerLazySingleton(Dio.new);
+  // Core
+  sl.registerLazySingleton(() => ApiClient(dio: sl()));
+  sl.registerLazySingleton(() => AuthInterceptor(sl()));
 
   // Add interceptor to Dio
   sl<Dio>().interceptors.add(sl<AuthInterceptor>());
