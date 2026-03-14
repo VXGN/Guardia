@@ -1,67 +1,103 @@
-import 'package:dio/dio.dart';
-import 'package:guardia_app/core/config/app_config.dart';
+﻿import 'package:dio/dio.dart';
+import 'package:guardia_app/core/errors/exceptions.dart';
+import 'package:guardia_app/core/network/endpoints.dart';
 
-/// Dio HTTP client wrapper for API calls.
 class ApiClient {
-  ApiClient() : _dio = Dio(_baseOptions);
 
-  final Dio _dio;
-
-  static final BaseOptions _baseOptions = BaseOptions(
-    baseUrl: AppConfig.baseUrl,
-    connectTimeout: AppConfig.connectTimeout,
-    receiveTimeout: AppConfig.receiveTimeout,
-    headers: {
+  ApiClient({required this.dio}) {
+    dio.options.baseUrl = Endpoints.baseUrl;
+    dio.options.connectTimeout = const Duration(seconds: 15);
+    dio.options.receiveTimeout = const Duration(seconds: 15);
+    dio.options.headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-    },
-  );
+    };
 
-  /// Access the underlying Dio instance for advanced usage.
-  Dio get dio => _dio;
-
-  /// Set the authorization token for authenticated requests.
-  void setAuthToken(String token) {
-    _dio.options.headers['Authorization'] = 'Bearer $token';
+    dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+    ));
   }
+  final Dio dio;
 
-  /// Remove the authorization token.
-  void clearAuthToken() {
-    _dio.options.headers.remove('Authorization');
-  }
-
-  /// GET request.
-  Future<Response<T>> get<T>(
+  Future<Response<dynamic>> get(
     String path, {
     Map<String, dynamic>? queryParameters,
-  }) {
-    return _dio.get<T>(path, queryParameters: queryParameters);
+    Options? options,
+  }) async {
+    try {
+      return await dio.get<dynamic>(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
   }
 
-  /// POST request.
-  Future<Response<T>> post<T>(
+  Future<Response<dynamic>> post(
     String path, {
-    Object? data,
+    dynamic data,
     Map<String, dynamic>? queryParameters,
-  }) {
-    return _dio.post<T>(path, data: data, queryParameters: queryParameters);
+    Options? options,
+  }) async {
+    try {
+      return await dio.post<dynamic>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
   }
 
-  /// PUT request.
-  Future<Response<T>> put<T>(
+  Future<Response<dynamic>> put(
     String path, {
-    Object? data,
+    dynamic data,
     Map<String, dynamic>? queryParameters,
-  }) {
-    return _dio.put<T>(path, data: data, queryParameters: queryParameters);
+    Options? options,
+  }) async {
+    try {
+      return await dio.put<dynamic>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
   }
 
-  /// DELETE request.
-  Future<Response<T>> delete<T>(
+  Future<Response<dynamic>> delete(
     String path, {
-    Object? data,
+    dynamic data,
     Map<String, dynamic>? queryParameters,
-  }) {
-    return _dio.delete<T>(path, data: data, queryParameters: queryParameters);
+    Options? options,
+  }) async {
+    try {
+      return await dio.delete<dynamic>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Exception _handleDioError(DioException error) {
+    if (error.response?.statusCode != null) {
+      final dynamic data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        return ServerException(data['message']?.toString() ?? 'Server Error');
+      }
+      return ServerException('Server Error');
+    }
+    return NetworkException();
   }
 }

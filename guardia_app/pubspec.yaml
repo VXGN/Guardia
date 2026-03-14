@@ -12,37 +12,44 @@ dependencies:
 
   # UI
   cupertino_icons: ^1.0.8
+  flutter_svg: ^2.2.4
 
   # State Management
-  flutter_bloc: any
-  equatable: any
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.8
+  dartz: any
 
   # Dependency Injection
-  get_it: any
+  get_it: ^9.2.1
 
   # Routing
-  go_router: any
+  go_router: ^17.1.0
 
   # Network
-  dio: any
+  dio: ^5.9.2
 
   # Maps & Location
-  google_maps_flutter: any
-  geolocator: any
-  geocoding: any
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
 
   # Firebase
-  firebase_core: any
-  firebase_auth: any
-  firebase_messaging: any
-  firebase_storage: any
+  firebase_core: ^4.5.0
+  firebase_auth: ^6.0.0
+  firebase_messaging: ^16.1.2
+  firebase_storage: ^13.0.0
 
   # Utilities
-  intl: any
-  json_annotation: any
+  intl: ^0.20.2
+  json_annotation: ^4.9.0
 
-  # Notifications
-  flutter_local_notifications: any
+  # Notifications/Storage
+  flutter_secure_storage: ^10.0.0
+  shared_preferences: ^2.5.4
+  flutter_local_notifications: ^21.0.0
+  google_sign_in: ^7.2.0
+  permission_handler: 11.4.0
 
 dev_dependencies:
   flutter_test:
@@ -64,3 +71,9 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/logo/
+
+dependency_overrides:
+  google_sign_in: 6.2.1
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 
 /// Guardia App Theme Configuration
