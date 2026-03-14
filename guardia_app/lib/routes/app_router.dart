@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
-import 'package:guardia_app/presentation/pages/auth/authority_login_page.dart';
-import 'package:guardia_app/presentation/pages/auth/login_page.dart';
-import 'package:guardia_app/presentation/pages/auth/register_page.dart';
+import 'package:guardia_app/features/auth/presentation/pages/authority_login_page.dart';
+import 'package:guardia_app/features/auth/presentation/pages/login_page.dart';
+import 'package:guardia_app/features/auth/presentation/pages/register_page.dart';
 import 'package:guardia_app/presentation/pages/home/main_screen.dart';
 import 'package:guardia_app/presentation/pages/onboarding/onboarding_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart';

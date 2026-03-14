@@ -1,10 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/domain/entities/onboarding_item.dart';
 import 'package:guardia_app/presentation/bloc/onboarding/onboarding_cubit.dart';
 import 'package:guardia_app/presentation/widgets/onboarding/onboarding_content.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:guardia_app/di/injection_container.dart';
 
 /// Onboarding page with 4 swipeable slides â€” English for international competition.
 class OnboardingPage extends StatefulWidget {
@@ -58,8 +60,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   /// Navigate after completing onboarding.
-  void _onOnboardingComplete() {
-    context.goNamed('login');
+  Future<void> _onOnboardingComplete() async {
+    final prefs = sl<SharedPreferences>();
+    await prefs.setBool('has_seen_onboarding', true);
+
+    if (mounted) {
+      context.goNamed('login');
+    }
   }
 
   /// Background color varies per page to match the design.

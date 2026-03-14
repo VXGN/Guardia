@@ -1,7 +1,11 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/common/widgets/custom_text_field.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
@@ -26,13 +30,17 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _onLoginGoogle() {
-    // TODO: Implement Google Login
+    context.read<AuthBloc>().add(AuthGoogleLoginRequested());
   }
 
   void _onLogin() {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement Login action
-      context.goNamed('home');
+      context.read<AuthBloc>().add(
+        AuthLoginRequested(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+        ),
+      );
     }
   }
 
@@ -42,9 +50,23 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+    return BlocConsumer<AuthBloc, AuthState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status || current.message != previous.message,
+      listener: (context, state) {
+        if (state.status == AuthStatus.failure && state.message != null) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(state.message!)));
+        } else if (state.status == AuthStatus.authenticated) {
+          context.goNamed('home');
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state.status == AuthStatus.loading;
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
@@ -157,8 +179,8 @@ class _LoginPageState extends State<LoginPage> {
 
               // Login Button
               CustomButton(
-                text: 'Login',
-                onPressed: _onLogin,
+                text: isLoading ? 'Loading...' : 'Login',
+                onPressed: isLoading ? () {} : _onLogin,
               ),
               const SizedBox(height: 24),
 
@@ -207,7 +229,9 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
         ),
-      ),
+        ),
+      );
+    },
     );
   }
 }

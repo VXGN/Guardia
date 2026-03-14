@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/presentation/pages/home/community_feed_page.dart';
 import 'package:guardia_app/presentation/pages/home/home_page.dart';
@@ -58,6 +58,7 @@ class _MainScreenState extends State<MainScreen> {
               shape: BoxShape.circle,
             ),
             child: FloatingActionButton(
+              heroTag: 'sos_fab',
               onPressed: _onSosPressed,
               backgroundColor: AppColors.error,
               elevation: 4,
