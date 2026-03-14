@@ -1,40 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/domain/entities/app_notification.dart';
+import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
+import 'package:guardia_app/presentation/bloc/notifications/notification_event.dart';
+import 'package:guardia_app/presentation/bloc/notifications/notification_state.dart';
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Dummy notifications for UI presentation
-    final List<AppNotification> notifications = [
-      AppNotification(
-        id: '1',
-        title: 'Community Alert',
-        body: 'A flood warning has been issued near Monjok.',
-        notificationType: 'alert',
-        isSent: false,
-        createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
-      ),
-      AppNotification(
-        id: '2',
-        title: 'Report Verified',
-        body: 'Your report regarding broken streetlights has been verified.',
-        notificationType: 'report_status_update',
-        isSent: false,
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      AppNotification(
-        id: '3',
-        title: 'Impact Level Up!',
-        body: 'Congratulations! You have reached Level 2: Trusted Citizen.',
-        notificationType: 'system',
-        isSent: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-    ];
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
 
+class _NotificationsPageState extends State<NotificationsPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<NotificationBloc>().add(LoadNotificationsRequested());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -43,11 +30,45 @@ class NotificationsPage extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      body: ListView.builder(
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final notification = notifications[index];
-          return _buildNotificationTile(notification);
+      body: BlocBuilder<NotificationBloc, NotificationState>(
+        builder: (context, state) {
+          if (state is NotificationLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is NotificationError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(state.message, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () =>
+                        context.read<NotificationBloc>().add(LoadNotificationsRequested()),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final notifications =
+              state is NotificationsLoaded ? state.notifications : const <AppNotification>[];
+
+          if (notifications.isEmpty) {
+            return const Center(
+              child: Text('No notifications yet.'),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              final notification = notifications[index];
+              return _buildNotificationTile(notification);
+            },
+          );
         },
       ),
     );
@@ -61,6 +82,22 @@ class NotificationsPage extends StatelessWidget {
       case 'alert':
         icon = Icons.warning_rounded;
         iconColor = AppColors.error;
+        break;
+      case 'panic_alert':
+        icon = Icons.warning_rounded;
+        iconColor = AppColors.error;
+        break;
+      case 'journey_alert':
+        icon = Icons.warning_rounded;
+        iconColor = AppColors.error;
+        break;
+      case 'journey_start':
+        icon = Icons.directions_walk;
+        iconColor = AppColors.primary;
+        break;
+      case 'journey_safe_arrival':
+        icon = Icons.check_circle_rounded;
+        iconColor = AppColors.success;
         break;
       case 'report_status_update':
         icon = Icons.assignment_turned_in;

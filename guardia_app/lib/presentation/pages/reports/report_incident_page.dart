@@ -1,7 +1,11 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
+import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/presentation/bloc/report/report_event.dart';
+import 'package:guardia_app/presentation/bloc/report/report_state.dart';
 
 class ReportIncidentPage extends StatefulWidget {
   const ReportIncidentPage({super.key});
@@ -33,28 +37,44 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   @override
   Widget build(BuildContext context) {
     debugPrint('DEBUG: Building ReportIncidentPage');
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: CircleAvatar(
-            backgroundColor: Colors.grey[100],
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
-              onPressed: () => context.pop(),
+    return BlocConsumer<ReportBloc, ReportState>(
+      listener: (context, state) {
+        if (state is ReportCreatedSuccess) {
+          context.pushNamed('report_success');
+        } else if (state is ReportError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
             ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is ReportLoading;
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: CircleAvatar(
+                backgroundColor: Colors.grey[100],
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
+                  onPressed: () => context.pop(),
+                ),
+              ),
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            toolbarHeight: 80,
           ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 80,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             const Text(
               'Report an Incident',
               style: TextStyle(
@@ -301,8 +321,12 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                 ],
               ),
               child: CustomButton(
-                text: 'SUBMIT INCIDENT REPORT',
+                text: isLoading ? 'SUBMITTING...' : 'SUBMIT INCIDENT REPORT',
                 onPressed: () {
+                  if (isLoading) {
+                    return;
+                  }
+
                   if (_selectedCategory == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -312,15 +336,28 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                     );
                     return;
                   }
-                  context.pushNamed('report_success');
+
+                  context.read<ReportBloc>().add(
+                        CreateReportRequested(
+                          incidentType: _selectedCategory!,
+                          description: _descriptionController.text.trim(),
+                          incidentAt: DateTime.now(),
+                          latitude: -8.5830695,
+                          longitude: 116.1155455,
+                          isAnonymous: _isAnonymous,
+                          locationLabel: '1240 Market St, San Francisco',
+                        ),
+                      );
                 },
                 backgroundColor: AppColors.error,
               ),
             ),
             const SizedBox(height: 120),
-          ],
+              ],
+            ),
+          ),
         ),
-      ),
+      },
     );
   }
 }

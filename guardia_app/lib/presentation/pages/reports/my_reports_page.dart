@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/domain/entities/incident_report.dart';
+import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/presentation/bloc/report/report_event.dart';
+import 'package:guardia_app/presentation/bloc/report/report_state.dart';
 
 class MyReportsPage extends StatefulWidget {
   final bool isEmbedded;
@@ -17,44 +21,8 @@ class _MyReportsPageState extends State<MyReportsPage> {
   @override
   void initState() {
     super.initState();
-    // context.read<ReportBloc>().add(LoadMyReportsRequested()); // Disabled API call
+    context.read<ReportBloc>().add(LoadMyReportsRequested());
   }
-
-  // Hardcoded mockup data to bypass API
-  final List<IncidentReport> _mockReports = [
-    IncidentReport(
-      id: 'REP-001-2024',
-      incidentType: 'Harassment',
-      incidentAt: DateTime.now().subtract(const Duration(days: 2)),
-      latitude: -8.5833,
-      longitude: 116.1167,
-      latitudeBlurred: -8.58,
-      longitudeBlurred: 116.12,
-      isAnonymous: false,
-      status: 'resolved',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      media: const [],
-      statusLogs: const [],
-      locationLabel: 'Kebon Roek, Mataram',
-      description: 'Being harassed by a group of individuals while waiting for public transport.',
-    ),
-    IncidentReport(
-      id: 'REP-002-2024',
-      incidentType: 'Poor Lighting',
-      incidentAt: DateTime.now().subtract(const Duration(days: 5)),
-      latitude: -8.5900,
-      longitude: 116.1000,
-      latitudeBlurred: -8.59,
-      longitudeBlurred: 116.10,
-      isAnonymous: true,
-      status: 'in_progress',
-      createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      media: const [],
-      statusLogs: const [],
-      locationLabel: 'Jalan Udayana',
-      description: 'Street lights are broken in this area for more than a week, making it dangerous at night.',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -75,24 +43,51 @@ class _MyReportsPageState extends State<MyReportsPage> {
   }
 
   Widget _buildBody() {
-    return Column(
-      children: [
-        _buildFilterBar(),
-        Expanded(
-          child: _mockReports.isEmpty 
-            ? _buildEmptyState() 
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                itemCount: _mockReports.length,
-                itemBuilder: (context, index) {
-                  return InkWell(
-                    onTap: () => context.pushNamed('report_detail', extra: _mockReports[index]),
-                    child: _buildReportCard(_mockReports[index]),
-                  );
-                },
-              ),
-        ),
-      ],
+    return BlocBuilder<ReportBloc, ReportState>(
+      builder: (context, state) {
+        if (state is ReportLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is ReportError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(state.message, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () => context.read<ReportBloc>().add(LoadMyReportsRequested()),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final reports = state is MyReportsLoaded ? state.reports : const <IncidentReport>[];
+
+        return Column(
+          children: [
+            _buildFilterBar(),
+            Expanded(
+              child: reports.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      itemCount: reports.length,
+                      itemBuilder: (context, index) {
+                        return InkWell(
+                          onTap: () =>
+                              context.pushNamed('report_detail', extra: reports[index]),
+                          child: _buildReportCard(reports[index]),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 
