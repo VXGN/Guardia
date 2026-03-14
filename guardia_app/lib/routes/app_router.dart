@@ -10,6 +10,7 @@ import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
 import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
 import 'package:guardia_app/presentation/pages/profile/notifications_page.dart';
 import 'package:guardia_app/presentation/pages/journey/active_journey_page.dart';
+import 'package:guardia_app/presentation/pages/contacts/trusted_contacts_page.dart';
 import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
 
 
@@ -76,6 +77,11 @@ final GoRouter appRouter = GoRouter(
       path: '/active_journey',
       name: 'active_journey',
       builder: (context, state) => const ActiveJourneyPage(),
+    ),
+    GoRoute(
+      path: '/trusted_contacts',
+      name: 'trusted_contacts',
+      builder: (context, state) => const TrustedContactsPage(),
     ),
   ],
 );
