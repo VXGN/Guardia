@@ -1,40 +1,225 @@
+import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:guardia_app/core/network/api_client.dart';
+import 'package:guardia_app/core/network/auth_interceptor.dart';
+import 'package:guardia_app/core/services/permission_service.dart';
+import 'package:guardia_app/core/services/secure_storage_service.dart';
 
-/// Global GetIt instance for dependency injection.
+// Repositories
+import 'package:guardia_app/features/auth/data/datasources/firebase_auth_data_source.dart';
+import 'package:guardia_app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/journey_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/notification_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/panic_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/report_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/risk_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/routing_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/trusted_contact_repository_impl.dart';
+import 'package:guardia_app/data/repositories_impl/user_repository_impl.dart';
+import 'package:guardia_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:guardia_app/domain/repositories/journey_repository.dart';
+import 'package:guardia_app/domain/repositories/notification_repository.dart';
+import 'package:guardia_app/domain/repositories/panic_repository.dart';
+import 'package:guardia_app/domain/repositories/report_repository.dart';
+import 'package:guardia_app/domain/repositories/risk_repository.dart';
+import 'package:guardia_app/domain/repositories/routing_repository.dart';
+import 'package:guardia_app/domain/repositories/trusted_contact_repository.dart';
+import 'package:guardia_app/domain/repositories/user_repository.dart';
+
+// UseCases - Auth (Removed)
+// UseCases - Journey
+import 'package:guardia_app/domain/usecases/journey/cancel_journey.dart';
+import 'package:guardia_app/domain/usecases/journey/finish_journey.dart';
+import 'package:guardia_app/domain/usecases/journey/get_active_journey.dart';
+import 'package:guardia_app/domain/usecases/journey/start_journey.dart';
+import 'package:guardia_app/domain/usecases/journey/update_journey_location.dart';
+// UseCases - Notifications
+import 'package:guardia_app/domain/usecases/notifications/get_notifications.dart';
+// UseCases - Panic
+import 'package:guardia_app/domain/usecases/panic/cancel_panic.dart';
+import 'package:guardia_app/domain/usecases/panic/trigger_panic.dart';
+// UseCases - Reports
+import 'package:guardia_app/domain/usecases/reports/create_report.dart';
+import 'package:guardia_app/domain/usecases/reports/get_my_reports.dart';
+import 'package:guardia_app/domain/usecases/reports/get_report_detail.dart';
+// UseCases - Risk/Routing
+import 'package:guardia_app/domain/usecases/risk/get_area_risk_summary.dart';
+import 'package:guardia_app/domain/usecases/risk/get_heatmap_clusters.dart';
+import 'package:guardia_app/domain/usecases/routing/get_safe_routes.dart';
+// UseCases - Contacts
+import 'package:guardia_app/domain/usecases/trusted_contacts/add_trusted_contact.dart';
+import 'package:guardia_app/domain/usecases/trusted_contacts/delete_trusted_contact.dart';
+import 'package:guardia_app/domain/usecases/trusted_contacts/get_trusted_contacts.dart';
+import 'package:guardia_app/domain/usecases/trusted_contacts/update_trusted_contact.dart';
+// UseCases - User
+import 'package:guardia_app/domain/usecases/user/get_profile.dart';
+import 'package:guardia_app/domain/usecases/user/update_profile.dart';
+
+// Blocs
+import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_bloc.dart';
+import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
+import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
+import 'package:guardia_app/presentation/bloc/panic/panic_bloc.dart';
+import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
+import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
+import 'package:guardia_app/presentation/bloc/routing/routing_bloc.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:google_sign_in/google_sign_in.dart';
+
 final GetIt sl = GetIt.instance;
 
-/// Initialize all dependencies.
-/// Called once at app startup before runApp().
 Future<void> init() async {
-  //
-  // ─── Core ────────────────────────────────────────────────────────
-  //
+  // External
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
+  sl.registerLazySingleton(() => const FlutterSecureStorage());
+  sl.registerLazySingleton(Dio.new);
+  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
+  sl.registerLazySingleton<GoogleSignIn>(() => GoogleSignIn());
 
-  // Network
-  sl.registerLazySingleton<ApiClient>(ApiClient.new);
+  // Features - Auth
+  // Bloc
+  sl.registerFactory(
+    () => AuthBloc(authRepository: sl()),
+  );
+  sl.registerFactory(
+    () => ReportBloc(
+      createReportUseCase: sl(),
+      getMyReportsUseCase: sl(),
+      getReportDetailUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => JourneyBloc(
+      startJourneyUseCase: sl(),
+      getActiveJourneyUseCase: sl(),
+      updateJourneyLocationUseCase: sl(),
+      finishJourneyUseCase: sl(),
+      cancelJourneyUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => PanicBloc(
+      triggerPanicUseCase: sl(),
+      cancelPanicUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => TrustedContactBloc(
+      getContactsUseCase: sl(),
+      addContactUseCase: sl(),
+      updateContactUseCase: sl(),
+      deleteContactUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => RiskBloc(
+      getHeatmapUseCase: sl(),
+      getRiskSummaryUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => RoutingBloc(
+      getSafeRoutesUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => ProfileBloc(
+      getProfileUseCase: sl(),
+      updateProfileUseCase: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => NotificationBloc(
+      getNotificationsUseCase: sl(),
+    ),
+  );
 
-  //
-  // ─── Features ────────────────────────────────────────────────────
-  //
+  // Usecases
+  // Auth UseCases removed, directly using AuthRepository in Bloc
+  sl.registerLazySingleton(() => CreateReport(sl()));
+  sl.registerLazySingleton(() => GetMyReports(sl()));
+  sl.registerLazySingleton(() => GetReportDetail(sl()));
+  sl.registerLazySingleton(() => StartJourney(sl()));
+  sl.registerLazySingleton(() => GetActiveJourney(sl()));
+  sl.registerLazySingleton(() => UpdateJourneyLocation(sl()));
+  sl.registerLazySingleton(() => FinishJourney(sl()));
+  sl.registerLazySingleton(() => CancelJourney(sl()));
+  sl.registerLazySingleton(() => TriggerPanic(sl()));
+  sl.registerLazySingleton(() => CancelPanic(sl()));
+  sl.registerLazySingleton(() => GetTrustedContacts(sl()));
+  sl.registerLazySingleton(() => AddTrustedContact(sl()));
+  sl.registerLazySingleton(() => UpdateTrustedContact(sl()));
+  sl.registerLazySingleton(() => DeleteTrustedContact(sl()));
+  sl.registerLazySingleton(() => GetHeatmapClusters(sl()));
+  sl.registerLazySingleton(() => GetAreaRiskSummary(sl()));
+  sl.registerLazySingleton(() => GetSafeRoutes(sl()));
+  sl.registerLazySingleton(() => GetProfile(sl()));
+  sl.registerLazySingleton(() => UpdateProfile(sl()));
+  sl.registerLazySingleton(() => GetNotifications(sl()));
 
-  // TODO: Register feature dependencies here as they are implemented.
-  //
-  // Example pattern for a feature:
-  //
-  // // BLoC
-  // sl.registerFactory(() => AuthBloc(loginUseCase: sl()));
-  //
-  // // Use Cases
-  // sl.registerLazySingleton(() => LoginUseCase(repository: sl()));
-  //
-  // // Repositories
-  // sl.registerLazySingleton<AuthRepository>(
-  //   () => AuthRepositoryImpl(remoteDataSource: sl()),
-  // );
-  //
-  // // Data Sources
-  // sl.registerLazySingleton<AuthRemoteDataSource>(
-  //   () => AuthRemoteDataSourceImpl(client: sl()),
-  // );
+  // Repository
+  sl.registerLazySingleton<FirebaseAuthDataSource>(
+    () => FirebaseAuthDataSourceImpl(sl(), sl()),
+  );
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<ReportRepository>(
+    () => ReportRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<JourneyRepository>(
+    () => JourneyRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<PanicRepository>(
+    () => PanicRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<TrustedContactRepository>(
+    () => TrustedContactRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<RiskRepository>(
+    () => RiskRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<RoutingRepository>(
+    () => RoutingRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<UserRepository>(
+    () => UserRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(
+      apiClient: sl(),
+    ),
+  );
+
+  // Services
+  sl.registerLazySingleton(() => SecureStorageService(sl()));
+  sl.registerLazySingleton(() => PermissionService());
+
+  // Core
+  sl.registerLazySingleton(() => ApiClient(dio: sl()));
+  sl.registerLazySingleton(() => AuthInterceptor(sl()));
+
+  // Add interceptor to Dio
+  sl<Dio>().interceptors.add(sl<AuthInterceptor>());
 }

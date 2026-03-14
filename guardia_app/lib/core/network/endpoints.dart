@@ -1,7 +1,5 @@
-/// API endpoint constants.
-/// Centralized endpoint management for clean maintenance.
 class Endpoints {
-  Endpoints._();
+  static const String baseUrl = 'https://api.guardia.app/api/v1/'; // Updated to include /api/ prefix
 
   // Auth
   static const String authVerify = '/auth/verify';

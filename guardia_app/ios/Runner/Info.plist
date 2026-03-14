@@ -4,6 +4,16 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Guardia needs your location to provide safety monitoring and help you find safe routes.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Guardia needs your location to protect you even when the app is in the background.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Guardia needs camera access to capture evidence of incidents.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Guardia needs access to your photos to upload evidence and safety reports.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Guardia needs access to your contacts to let you easily add Trusted Contacts.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

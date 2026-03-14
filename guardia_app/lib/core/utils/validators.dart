@@ -1,4 +1,4 @@
-/// Form and input validators.
+﻿/// Form and input validators.
 class Validators {
   Validators._();
 

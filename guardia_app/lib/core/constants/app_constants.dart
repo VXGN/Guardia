@@ -1,4 +1,4 @@
-/// Guardia App Constants
+﻿/// Guardia App Constants
 class AppConstants {
   AppConstants._();
 
