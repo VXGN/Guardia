@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { hashEmergencyPin } from "../src/utils/emergency-pin";
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,7 @@ async function main() {
     data: {
       full_name: "Admin Guardia",
       email: "admin@guardia.id",
+      emergency_pin_hash: hashEmergencyPin("123456"),
       role: "admin",
       is_anonymous_mode: false,
       is_verified: true,
@@ -18,6 +20,7 @@ async function main() {
       full_name: "Siti Nurhaliza",
       email: "siti@example.com",
       phone_number: "+6281234567890",
+      emergency_pin_hash: hashEmergencyPin("654321"),
       role: "user",
       is_anonymous_mode: false,
       is_verified: true,
@@ -26,6 +29,7 @@ async function main() {
 
   const anonUser = await prisma.user.create({
     data: {
+      emergency_pin_hash: hashEmergencyPin("111111"),
       role: "user",
       is_anonymous_mode: true,
       is_verified: false,

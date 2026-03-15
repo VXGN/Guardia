@@ -411,6 +411,43 @@ CREATE INDEX heatmap_time_slot_idx ON heatmap_clusters (time_slot);
 CREATE INDEX heatmap_center_idx ON heatmap_clusters (center_lat_blurred, center_lng_blurred);
 
 -- =============================================================================
+-- TABLE: panic_alerts
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS panic_alerts (
+    id                UUID               NOT NULL DEFAULT gen_random_uuid(),
+    user_id           UUID               NOT NULL,
+    latitude          DECIMAL(10,8)      NOT NULL,
+    longitude         DECIMAL(11,8)      NOT NULL,
+    emergency_code    VARCHAR(6)         NOT NULL,
+    message           TEXT,
+    is_active         BOOLEAN            NOT NULL DEFAULT TRUE,
+    triggered_at      TIMESTAMPTZ        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    cancelled_at      TIMESTAMPTZ,
+    created_at        TIMESTAMPTZ        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMPTZ        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_panic_alerts PRIMARY KEY (id),
+    CONSTRAINT fk_panic_alerts_user_id
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT chk_panic_lat CHECK (latitude BETWEEN -90 AND 90),
+    CONSTRAINT chk_panic_lng CHECK (longitude BETWEEN -180 AND 180)
+);
+
+COMMENT ON TABLE panic_alerts IS 'Panic/SOS alerts triggered by users';
+COMMENT ON COLUMN panic_alerts.emergency_code IS '6-digit code to cancel the panic alert';
+COMMENT ON COLUMN panic_alerts.is_active IS 'Whether the panic alert is still active';
+
+CREATE INDEX panic_alerts_user_id_idx ON panic_alerts (user_id);
+CREATE INDEX panic_alerts_active_idx ON panic_alerts (user_id, is_active);
+CREATE INDEX panic_alerts_triggered_at_idx ON panic_alerts (triggered_at);
+
+CREATE TRIGGER trg_panic_alerts_set_updated_at
+BEFORE UPDATE ON panic_alerts
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+-- =============================================================================
 -- TABLE: notifications
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS notifications (
