@@ -19,8 +19,48 @@ class ReportModel extends ReportEntity {
     required super.mediaUrls,
   });
 
-  factory ReportModel.fromJson(Map<String, dynamic> json) =>
-      _$ReportModelFromJson(json);
+  /// Custom fromJson that handles both local format and backend API format
+  factory ReportModel.fromJson(Map<String, dynamic> json) {
+    // Handle backend API format (incident_type, incident_at, etc.)
+    if (json.containsKey('incident_type') || json.containsKey('incident_at')) {
+      final latitude = (json['latitude_blurred'] ??
+          json['latitude'] ??
+          json['latitude_exact'] ?? 0) as num;
+      final longitude = (json['longitude_blurred'] ??
+          json['longitude'] ??
+          json['longitude_exact'] ?? 0) as num;
+
+      // Parse timestamp from incident_at or created_at
+      final timestampStr = json['incident_at'] ?? json['created_at'];
+      final timestamp = timestampStr != null
+          ? DateTime.parse(timestampStr as String)
+          : DateTime.now();
+
+      // Extract media URLs from report_media if available
+      final mediaList = json['report_media'] as List<dynamic>? ?? [];
+      final mediaUrls = mediaList
+          .map((m) => (m as Map<String, dynamic>)['storage_url'] as String? ?? '')
+          .where((url) => url.isNotEmpty)
+          .toList();
+
+      return ReportModel(
+        id: json['id'] as String,
+        userId: json['user_id'] as String?,
+        category: json['incident_type'] as String? ?? 'other',
+        description: json['description'] as String?,
+        latitude: latitude.toDouble(),
+        longitude: longitude.toDouble(),
+        locationLabel: json['location_label'] as String? ?? '',
+        timestamp: timestamp,
+        isAnonymous: json['is_anonymous'] as bool? ?? false,
+        status: (json['status'] as String? ?? 'received').toUpperCase(),
+        mediaUrls: mediaUrls,
+      );
+    }
+
+    // Fallback to generated parser for local format
+    return _$ReportModelFromJson(json);
+  }
 
   Map<String, dynamic> toJson() => _$ReportModelToJson(this);
 

@@ -176,7 +176,7 @@ Future<void> init() async {
     () => AuthRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<ReportRemoteDataSource>(
-    () => ReportRemoteDataSourceImpl(),
+    () => ReportRemoteDataSourceImpl(apiClient: sl()),
   );
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(sl()),
@@ -223,7 +223,7 @@ Future<void> init() async {
 
   // Core
   sl.registerLazySingleton(() => ApiClient(dio: sl()));
-  sl.registerLazySingleton(() => AuthInterceptor(sl()));
+  sl.registerLazySingleton(() => AuthInterceptor(sl<FirebaseAuth>(), sl<Dio>()));
 
   // Add interceptor to Dio
   sl<Dio>().interceptors.add(sl<AuthInterceptor>());

@@ -14,39 +14,14 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
   @override
   Future<Either<Failure, List<TrustedContact>>> getTrustedContacts() async {
     try {
-      // Mock data for testing purposes
-      final contacts = [
-        TrustedContactModel(
-          id: '1',
-          userId: 'user123',
-          contactName: 'John Doe',
-          contactPhone: '+1234567890',
-          contactEmail: 'john@example.com',
-          relationship: 'Family',
-          isActive: true,
-          createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        ),
-        TrustedContactModel(
-          id: '2',
-          userId: 'user123',
-          contactName: 'Jane Smith',
-          contactPhone: '+0987654321',
-          contactEmail: 'jane@example.com',
-          relationship: 'Friend',
-          isActive: true,
-          createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        ),
-        TrustedContactModel(
-          id: '3',
-          userId: 'user123',
-          contactName: 'Emergency Contact',
-          contactPhone: '911',
-          relationship: 'Emergency',
-          isActive: true,
-          createdAt: DateTime.now().subtract(const Duration(days: 365)),
-        ),
-      ];
+      final response = await apiClient.get(Endpoints.trustedContacts);
+      final dynamic responseData = response.data;
+      final contacts = (responseData['data'] as List<dynamic>)
+          .map((e) => TrustedContactModel.fromJson(e as Map<String, dynamic>))
+          .toList();
       return Right(contacts);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Failed to load trusted contacts'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
