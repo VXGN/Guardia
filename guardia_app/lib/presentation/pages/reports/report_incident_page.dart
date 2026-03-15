@@ -368,5 +368,5 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
     );
   },
 );
-}
+  }
 }

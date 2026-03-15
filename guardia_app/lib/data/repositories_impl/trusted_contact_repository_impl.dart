@@ -66,6 +66,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
           'contact_name': contactName,
           'contact_phone': contactPhone,
           if (contactEmail != null) 'contact_email': contactEmail,
+          if (relationship != null) 'relationship': relationship,
         },
       );
 
@@ -93,6 +94,7 @@ class TrustedContactRepositoryImpl implements TrustedContactRepository {
       final payload = <String, dynamic>{
         if (contactName != null) 'contact_name': contactName,
         if (contactPhone != null) 'contact_phone': contactPhone,
+        if (relationship != null) 'relationship': relationship,
         if (isActive != null) 'is_active': isActive,
       };
 
