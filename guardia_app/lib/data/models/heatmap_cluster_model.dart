@@ -15,11 +15,11 @@ class HeatmapClusterModel extends HeatmapCluster {
   factory HeatmapClusterModel.fromJson(Map<String, dynamic> json) {
     return HeatmapClusterModel(
       id: json['id'] as String,
-      centerLatBlurred: (json['center_lat_blurred'] as num).toDouble(),
-      centerLngBlurred: (json['center_lng_blurred'] as num).toDouble(),
-      radiusMeters: json['radius_meters'] as int,
+      centerLatBlurred: _toDouble(json['center_lat_blurred']),
+      centerLngBlurred: _toDouble(json['center_lng_blurred']),
+      radiusMeters: _toInt(json['radius_meters']),
       intensity: json['intensity'] as String,
-      incidentCount: json['incident_count'] as int,
+      incidentCount: _toInt(json['incident_count']),
       dominantType: json['dominant_type'] as String?,
       timeSlot: json['time_slot'] as String?,
       validFrom: DateTime.parse(json['valid_from'] as String),
@@ -42,5 +42,28 @@ class HeatmapClusterModel extends HeatmapCluster {
       'valid_until': validUntil.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
     };
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
   }
 }

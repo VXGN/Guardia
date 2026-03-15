@@ -19,8 +19,8 @@ class RiskScoreModel extends RiskScore {
       id: json['id'] as String,
       segmentId: json['segment_id'] as String,
       timeSlot: json['time_slot'] as String,
-      riskScore: (json['risk_score'] as num).toDouble(),
-      incidentCount: json['incident_count'] as int,
+      riskScore: _toDouble(json['risk_score']),
+      incidentCount: _toInt(json['incident_count']),
       dominantIncidentType: json['dominant_incident_type'] as String?,
       calculatedAt: calculatedAtRaw != null
           ? DateTime.parse(calculatedAtRaw)
@@ -40,5 +40,28 @@ class RiskScoreModel extends RiskScore {
       'calculated_at': calculatedAt.toIso8601String(),
       'valid_until': validUntil?.toIso8601String(),
     };
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
   }
 }
