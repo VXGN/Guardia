@@ -1,15 +1,32 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 
+import 'package:guardia_app/features/routing/domain/entities/route_option_entity.dart';
+
 class ActiveNavigationOverlay extends StatelessWidget {
+  final RouteOptionEntity? route;
+  final VoidCallback onFinish;
 
   const ActiveNavigationOverlay({
-    required this.onFinish, super.key,
+    required this.onFinish,
+    this.route,
+    super.key,
   });
-  final VoidCallback onFinish;
 
   @override
   Widget build(BuildContext context) {
+    final firstStep = (route?.steps.isNotEmpty ?? false) ? route!.steps.first : null;
+    final instruction = firstStep?.instruction ?? 'Proceed to route';
+    final distanceText = firstStep != null 
+        ? (firstStep.distanceMeters < 1000 
+            ? '${firstStep.distanceMeters}m' 
+            : '${(firstStep.distanceMeters / 1000).toStringAsFixed(1)}km')
+        : '---';
+        
+    final totalDistanceKm = ((route?.distanceMeters ?? 0) / 1000).toStringAsFixed(1);
+    final totalDurationMin = ((route?.durationSeconds ?? 0) / 60).toStringAsFixed(0);
+    final safetyScore = (route?.safetyScore ?? 0).toStringAsFixed(0);
+
     return Stack(
       children: [
         // Top Instruction Banner
@@ -38,28 +55,28 @@ class ActiveNavigationOverlay extends StatelessWidget {
                     color: AppColors.secondary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.turn_left,
+                  child: Icon(
+                    _getInstructionIcon(firstStep?.modifier),
                     color: AppColors.secondary,
                     size: 32,
                   ),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'In 200m',
-                        style: TextStyle(
+                        'In $distanceText',
+                        style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.secondary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Turn Left to Jl. Langko',
-                        style: TextStyle(
+                        instruction,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -128,9 +145,9 @@ class ActiveNavigationOverlay extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStatCol('12 min', 'Remaining'),
-                    _buildStatCol('3.2 km', 'Distance'),
-                    _buildStatCol('85', 'Safety Score', isSafety: true),
+                    _buildStatCol('$totalDurationMin min', 'Remaining'),
+                    _buildStatCol('$totalDistanceKm km', 'Distance'),
+                    _buildStatCol(safetyScore, 'Safety Score', isSafety: true),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -163,6 +180,18 @@ class ActiveNavigationOverlay extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  IconData _getInstructionIcon(String? modifier) {
+    if (modifier == null) return Icons.navigation;
+    if (modifier.contains('left')) return Icons.turn_left;
+    if (modifier.contains('right')) return Icons.turn_right;
+    if (modifier.contains('sharp_left')) return Icons.turn_sharp_left;
+    if (modifier.contains('sharp_right')) return Icons.turn_sharp_right;
+    if (modifier.contains('slight_left')) return Icons.turn_slight_left;
+    if (modifier.contains('slight_right')) return Icons.turn_slight_right;
+    if (modifier.contains('straight')) return Icons.straight;
+    return Icons.navigation;
   }
 
   Widget _buildStatCol(String value, String label, {bool isSafety = false}) {

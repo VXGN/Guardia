@@ -53,23 +53,36 @@ import 'package:guardia_app/features/reports/presentation/bloc/report/report_blo
 
 // Features - Other (Core/Old Structure)
 import 'package:guardia_app/data/repositories_impl/notification_repository_impl.dart';
-import 'package:guardia_app/data/repositories_impl/risk_repository_impl.dart';
-import 'package:guardia_app/data/repositories_impl/routing_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/user_repository_impl.dart';
 import 'package:guardia_app/domain/repositories/notification_repository.dart';
-import 'package:guardia_app/domain/repositories/risk_repository.dart';
-import 'package:guardia_app/domain/repositories/routing_repository.dart';
 import 'package:guardia_app/domain/repositories/user_repository.dart';
 import 'package:guardia_app/domain/usecases/notifications/get_notifications.dart';
-import 'package:guardia_app/domain/usecases/risk/get_area_risk_summary.dart';
-import 'package:guardia_app/domain/usecases/risk/get_heatmap_clusters.dart';
-import 'package:guardia_app/domain/usecases/routing/get_safe_routes.dart';
 import 'package:guardia_app/domain/usecases/user/get_profile.dart';
 import 'package:guardia_app/domain/usecases/user/update_profile.dart';
 import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
+import 'package:guardia_app/data/repositories_impl/risk_repository_impl.dart';
+import 'package:guardia_app/domain/repositories/risk_repository.dart';
+import 'package:guardia_app/domain/usecases/risk/get_area_risk_summary.dart';
+import 'package:guardia_app/domain/usecases/risk/get_heatmap_clusters.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
-import 'package:guardia_app/presentation/bloc/routing/routing_bloc.dart';
+
+// Features - Risk (New)
+import 'package:guardia_app/features/risk/domain/repositories/risk_repository.dart' as new_risk_repo;
+import 'package:guardia_app/features/risk/data/repositories/risk_repository_impl.dart' as new_risk_repo_impl;
+import 'package:guardia_app/features/risk/data/datasources/risk_remote_data_source.dart';
+import 'package:guardia_app/features/risk/domain/usecases/get_risk_heatmap.dart';
+import 'package:guardia_app/features/risk/presentation/bloc/risk/risk_bloc.dart' as new_risk_bloc;
+
+// Features - Routing (New)
+import 'package:guardia_app/features/routing/domain/repositories/routing_repository.dart' as new_routing_repo;
+import 'package:guardia_app/features/routing/data/repositories/routing_repository_impl.dart' as new_routing_repo_impl;
+import 'package:guardia_app/features/routing/data/datasources/routing_remote_data_source.dart';
+import 'package:guardia_app/features/routing/domain/usecases/get_safe_routes.dart' as new_routing_uc;
+import 'package:guardia_app/features/routing/domain/usecases/start_navigation.dart';
+import 'package:guardia_app/features/routing/domain/usecases/stop_navigation.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_bloc.dart' as new_routing_bloc;
+
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -181,30 +194,27 @@ Future<void> init() async {
 
   // Features - Other
   sl.registerFactory(
-    () => RiskBloc(
-      getHeatmapUseCase: sl(),
-      getRiskSummaryUseCase: sl(),
-    ),
-  );
-  sl.registerFactory(() => RoutingBloc(getSafeRoutesUseCase: sl()));
-  sl.registerFactory(
     () => ProfileBloc(
       getProfileUseCase: sl(),
       updateProfileUseCase: sl(),
     ),
   );
+  sl.registerFactory(
+    () => RiskBloc(
+      getHeatmapUseCase: sl(),
+      getRiskSummaryUseCase: sl(),
+    ),
+  );
   sl.registerFactory(() => NotificationBloc(getNotificationsUseCase: sl()));
 
-  sl.registerLazySingleton(() => GetHeatmapClusters(sl()));
-  sl.registerLazySingleton(() => GetAreaRiskSummary(sl()));
-  sl.registerLazySingleton(() => GetSafeRoutes(sl()));
   sl.registerLazySingleton(() => GetProfile(sl()));
   sl.registerLazySingleton(() => UpdateProfile(sl()));
+  sl.registerLazySingleton(() => GetHeatmapClusters(sl()));
+  sl.registerLazySingleton(() => GetAreaRiskSummary(sl()));
   sl.registerLazySingleton(() => GetNotifications(sl()));
 
-  sl.registerLazySingleton<RiskRepository>(() => RiskRepositoryImpl(apiClient: sl()));
-  sl.registerLazySingleton<RoutingRepository>(() => RoutingRepositoryImpl(apiClient: sl()));
   sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(apiClient: sl()));
+  sl.registerLazySingleton<RiskRepository>(() => RiskRepositoryImpl(apiClient: sl()));
   sl.registerLazySingleton<NotificationRepository>(
     () => NotificationRepositoryImpl(apiClient: sl()),
   );
@@ -214,6 +224,20 @@ Future<void> init() async {
   sl.registerLazySingleton(() => PermissionService());
   sl.registerLazySingleton(() => ApiClient(dio: sl()));
   sl.registerLazySingleton(() => AuthInterceptor(sl<FirebaseAuth>(), sl<Dio>()));
+
+  // Features - Risk (New DI)
+  sl.registerFactory(() => new_risk_bloc.RiskBloc(getRiskHeatmap: sl()));
+  sl.registerLazySingleton(() => GetRiskHeatmap(sl()));
+  sl.registerLazySingleton<new_risk_repo.RiskRepository>(() => new_risk_repo_impl.RiskRepositoryImpl(remoteDataSource: sl()));
+  sl.registerLazySingleton<RiskRemoteDataSource>(() => RiskRemoteDataSourceImpl(apiClient: sl()));
+
+  // Features - Routing (New DI)
+  sl.registerFactory(() => new_routing_bloc.RoutingBloc(getSafeRoutes: sl(), startNavigation: sl(), stopNavigation: sl()));
+  sl.registerLazySingleton(() => new_routing_uc.GetSafeRoutes(sl()));
+  sl.registerLazySingleton(() => StartNavigation());
+  sl.registerLazySingleton(() => StopNavigation());
+  sl.registerLazySingleton<new_routing_repo.RoutingRepository>(() => new_routing_repo_impl.RoutingRepositoryImpl(remoteDataSource: sl()));
+  sl.registerLazySingleton<RoutingRemoteDataSource>(() => RoutingRemoteDataSourceImpl(apiClient: sl()));
 
   sl.registerLazySingleton(() => PanicAlertService());
   sl<Dio>().interceptors.add(sl<AuthInterceptor>());

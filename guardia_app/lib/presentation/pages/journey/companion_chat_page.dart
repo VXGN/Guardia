@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/core/utils/phone_utils.dart';
 import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
 import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
 import 'package:guardia_app/features/companion/domain/entities/companion_message_entity.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_bloc.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_event.dart';
 
 class CompanionChatPage extends StatefulWidget {
   final String companionId;
@@ -204,8 +205,24 @@ class _CompanionChatPageState extends State<CompanionChatPage> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          final url = 'https://www.google.com/maps/search/?api=1&query=${msg.latitude},${msg.longitude}';
-                          PhoneUtils.makePhoneCall(url); // Hijacking PhoneUtils or use url_launcher directly
+                          // 0. Set default origin (Mataram city center as used in HomePage)
+                          context.read<RoutingBloc>().add(const RoutingOriginChanged(
+                            -8.5830695, 
+                            116.1155455,
+                          ));
+
+                          // 1. Alert Routing Bloc about new destination
+                          context.read<RoutingBloc>().add(RoutingDestinationChanged(
+                            query: 'Shared Location',
+                            lat: msg.latitude!,
+                            lng: msg.longitude!,
+                          ));
+
+                          // 2. Request routes automatically
+                          context.read<RoutingBloc>().add(const RoutingRequested());
+
+                          // 3. Move to Home Page where RoutingBloc listener will show options
+                          context.goNamed('home');
                         },
                         icon: const Icon(Icons.map, size: 14),
                         label: const Text('View on Map', style: TextStyle(fontSize: 12)),

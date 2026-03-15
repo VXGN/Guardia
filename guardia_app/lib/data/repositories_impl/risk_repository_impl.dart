@@ -6,9 +6,9 @@ import 'package:guardia_app/data/models/risk_score_model.dart';
 import 'package:guardia_app/domain/entities/heatmap_cluster.dart';
 import 'package:guardia_app/domain/entities/risk_score.dart';
 import 'package:guardia_app/domain/repositories/risk_repository.dart';
+import 'package:guardia_app/core/utils/location_utils.dart';
 
 class RiskRepositoryImpl implements RiskRepository {
-
   RiskRepositoryImpl({required this.apiClient});
   final ApiClient apiClient;
 
@@ -30,35 +30,35 @@ class RiskRepositoryImpl implements RiskRepository {
         '/api/risk-areas', // Heatmap Clusters endpoint
         queryParameters: queryParameters.isEmpty ? null : queryParameters,
       );
-      
+
       final dynamic responseData = response.data;
-      final clusters = ((responseData['data'] as Map<String, dynamic>)['heatmap_clusters']
-              as List<dynamic>? ??
-          const <dynamic>[])
-          .map((e) => HeatmapClusterModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final clusters =
+          ((responseData['data'] as Map<String, dynamic>)['heatmap_clusters']
+                      as List<dynamic>? ??
+                  const <dynamic>[])
+              .map(
+                (e) => HeatmapClusterModel.fromJson(e as Map<String, dynamic>),
+              )
+              .toList();
       return Right(clusters);
     } catch (e) {
       print('Falling back to mock HeatmapClusters due to error: $e');
+      
+      final originLat = latitude ?? -8.5830695;
+      final originLng = longitude ?? 116.1155455;
+      
+      final mockHazard = LocationUtils.getMockHazardLocation(originLat, originLng);
+      final hazardLat = mockHazard['lat']!;
+      final hazardLng = mockHazard['lng']!;
+
       final clusters = [
         HeatmapClusterModel(
           id: 'mock_cluster_1',
-          centerLatBlurred: (latitude ?? -8.5830695) + 0.001,
-          centerLngBlurred: (longitude ?? 116.1155455) + 0.001,
-          intensity: '0.8',
-          radiusMeters: 150,
-          incidentCount: 5,
-          validFrom: DateTime.now(),
-          validUntil: DateTime.now().add(const Duration(hours: 24)),
-          createdAt: DateTime.now(),
-        ),
-        HeatmapClusterModel(
-          id: 'mock_cluster_2',
-          centerLatBlurred: (latitude ?? -8.5830695) - 0.002,
-          centerLngBlurred: (longitude ?? 116.1155455) + 0.002,
-          intensity: '0.5',
-          radiusMeters: 200,
-          incidentCount: 3,
+          centerLatBlurred: hazardLat,
+          centerLngBlurred: hazardLng,
+          intensity: '0.9',
+          radiusMeters: 400, // Large hazard area
+          incidentCount: 15,
           validFrom: DateTime.now(),
           validUntil: DateTime.now().add(const Duration(hours: 24)),
           createdAt: DateTime.now(),
@@ -84,17 +84,19 @@ class RiskRepositoryImpl implements RiskRepository {
           'radius': radiusMeters ?? 3000,
         },
       );
-      
+
       final dynamic responseData = response.data;
       final data = responseData['data'] as Map<String, dynamic>;
-      final heatmapClusters = (data['heatmap_clusters'] as List<dynamic>? ?? const []);
+      final heatmapClusters =
+          (data['heatmap_clusters'] as List<dynamic>? ?? const []);
       final riskScores = (data['risk_scores'] as List<dynamic>? ?? const []);
 
       double maxRiskScore = 0.0;
       for (final score in riskScores) {
         final value = (score as Map<String, dynamic>)['risk_score'];
-        final double parsed =
-            value is num ? value.toDouble() : double.tryParse('$value') ?? 0.0;
+        final double parsed = value is num
+            ? value.toDouble()
+            : double.tryParse('$value') ?? 0.0;
         if (parsed > maxRiskScore) {
           maxRiskScore = parsed;
         }
@@ -119,17 +121,24 @@ class RiskRepositoryImpl implements RiskRepository {
   }
 
   @override
-  Future<Either<Failure, List<RiskScore>>> getRiskScores(String segmentId) async {
+  Future<Either<Failure, List<RiskScore>>> getRiskScores(
+    String segmentId,
+  ) async {
     try {
       // Try real API first
-      final response = await apiClient.get('/api/risk-areas'); // Risk Scores endpoint
+      final response = await apiClient.get(
+        '/api/risk-areas',
+      ); // Risk Scores endpoint
       final dynamic responseData = response.data;
-      final rawScores = ((responseData['data'] as Map<String, dynamic>)['risk_scores']
+      final rawScores =
+          ((responseData['data'] as Map<String, dynamic>)['risk_scores']
               as List<dynamic>? ??
           const <dynamic>[]);
       final filteredScores = segmentId.isEmpty
           ? rawScores
-          : rawScores.where((e) => (e as Map<String, dynamic>)['segment_id'] == segmentId);
+          : rawScores.where(
+              (e) => (e as Map<String, dynamic>)['segment_id'] == segmentId,
+            );
       final scores = filteredScores
           .map((e) => RiskScoreModel.fromJson(e as Map<String, dynamic>))
           .toList();

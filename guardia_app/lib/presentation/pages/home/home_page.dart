@@ -9,7 +9,11 @@ import 'package:guardia_app/presentation/bloc/risk/risk_event.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_state.dart';
 import 'package:guardia_app/presentation/widgets/journey/active_navigation_overlay.dart';
 import 'package:guardia_app/presentation/widgets/journey/routing_options_sheet.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_bloc.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_event.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_state.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geocoding/geocoding.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,11 +30,13 @@ class _HomePageState extends State<HomePage> {
 
   final List<CircleMarker> _riskZones = [];
   bool _isNavigationActive = false;
+  // Route polyline decoding is now handled by the data layer (RouteOptionModel).
   int _clusterCount = 0;
   int _riskScoreCount = 0;
   double _maxRiskScore = 0.0;
   String? _riskError;
   final TextEditingController _searchController = TextEditingController();
+
 
   @override
   void initState() {
@@ -102,26 +108,72 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<RiskBloc, RiskState>(
-      listener: (context, state) {
-        if (state is HeatmapLoaded) {
-          setState(() {
-            _riskError = null;
-            _setHeatmapClusters(state.clusters);
-          });
-        } else if (state is AreaRiskSummaryLoaded) {
-          setState(() {
-            _riskError = null;
-            _riskScoreCount = (state.summary['risk_score_count'] as num?)?.toInt() ?? 0;
-            _maxRiskScore = (state.summary['max_risk_score'] as num?)?.toDouble() ?? 0.0;
-            _clusterCount = (state.summary['heatmap_cluster_count'] as num?)?.toInt() ?? _clusterCount;
-          });
-        } else if (state is RiskError) {
-          setState(() {
-            _riskError = state.message;
-          });
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<RiskBloc, RiskState>(
+          listener: (context, state) {
+            if (state is HeatmapLoaded) {
+              setState(() {
+                _riskError = null;
+                _setHeatmapClusters(state.clusters);
+              });
+            } else if (state is AreaRiskSummaryLoaded) {
+              setState(() {
+                _riskError = null;
+                _riskScoreCount = (state.summary['risk_score_count'] as num?)?.toInt() ?? 0;
+                _maxRiskScore = (state.summary['max_risk_score'] as num?)?.toDouble() ?? 0.0;
+                _clusterCount = (state.summary['heatmap_cluster_count'] as num?)?.toInt() ?? _clusterCount;
+              });
+            } else if (state is RiskError) {
+              setState(() {
+                _riskError = state.message;
+              });
+            }
+          },
+        ),
+        BlocListener<RoutingBloc, RoutingState>(
+          listener: (context, state) {
+            // Show options sheet when routes are loaded and not already navigating
+            if (!state.isRequestingRoutes &&
+                state.routes.isNotEmpty &&
+                !state.isNavigating &&
+                ModalRoute.of(context)?.isCurrent == true) { // check if sheet is already open
+                 
+                // Only show if we just finished requesting (and error is null)
+                // This prevents it from re-opening on hot reloads or state rebuilds
+                // To be safe we should check if bottom sheet is shown, but for simplicity:
+                showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => RoutingOptionsSheet(
+                      onStart: () {
+                        context.read<RoutingBloc>().add(const NavigationStarted());
+                      },
+                    ),
+                  );
+            }
+
+            if (state.isNavigating && state.selectedRoute != null) {
+              setState(() {
+                _isNavigationActive = true;
+              });
+            } else if (!state.isNavigating && !state.isRequestingRoutes) {
+              setState(() {
+                _isNavigationActive = false;
+                _searchController.clear();
+              });
+            }
+
+            // Handle Errors
+            if (state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.errorMessage!), backgroundColor: AppColors.error),
+              );
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         body: Stack(
           children: [
@@ -137,33 +189,68 @@ class _HomePageState extends State<HomePage> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.guardia_app',
               ),
+              BlocBuilder<RoutingBloc, RoutingState>(
+                builder: (context, routingState) {
+                  return routingState.selectedRoute != null
+                    ? PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: routingState.selectedRoute!.points,
+                            strokeWidth: 6.0, // Thicker blue line as requested
+                            color: Colors.blueAccent,
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink();
+                },
+              ),
               CircleLayer(
                 circles: _riskZones,
               ),
-              // Current Location Marker placeholder
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: _initialCenter,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withAlpha(50),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: Colors.blue,
-                            shape: BoxShape.circle,
+              // Current Location and Destination Markers
+              BlocBuilder<RoutingBloc, RoutingState>(
+                builder: (context, routingState) {
+                  final markers = <Marker>[
+                    // Current Location Marker
+                    Marker(
+                      point: _initialCenter,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withAlpha(50),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              color: Colors.blue,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ];
+
+                  // Add Destination Marker if available
+                  if (routingState.destinationLat != null && routingState.destinationLng != null) {
+                    markers.add(
+                      Marker(
+                        point: LatLng(routingState.destinationLat!, routingState.destinationLng!),
+                        alignment: Alignment.topCenter,
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return MarkerLayer(markers: markers);
+                },
               ),
             ],
           ),
@@ -195,20 +282,37 @@ class _HomePageState extends State<HomePage> {
                   onTap: () {
                     // Interaction logic
                   },
-                  onSubmitted: (value) {
+                  onSubmitted: (value) async {
                     if (value.isNotEmpty) {
-                      showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => RoutingOptionsSheet(
-                          onStart: () {
-                            setState(() {
-                              _isNavigationActive = true;
-                            });
-                          },
-                        ),
-                      );
+                      try {
+                        List<Location> locations = await locationFromAddress(value);
+                        if (locations.isNotEmpty) {
+                          final loc = locations.first;
+                          // 1. Set Origin
+                          if (context.mounted) {
+                            context.read<RoutingBloc>().add(RoutingOriginChanged(
+                               _initialCenter.latitude,
+                               _initialCenter.longitude,
+                            ));
+                            
+                            // 2. Set Real Destination
+                            context.read<RoutingBloc>().add(RoutingDestinationChanged(
+                              query: value,
+                              lat: loc.latitude, 
+                              lng: loc.longitude,
+                            ));
+
+                            // 3. Request Routes
+                            context.read<RoutingBloc>().add(const RoutingRequested());
+                          }
+                        }
+                      } catch (e) {
+                         if (context.mounted) {
+                           ScaffoldMessenger.of(context).showSnackBar(
+                             SnackBar(content: Text('Lokasi tidak ditemukan')),
+                           );
+                         }
+                      }
                     }
                   },
                   decoration: InputDecoration(
@@ -251,18 +355,22 @@ class _HomePageState extends State<HomePage> {
             ),
 
           if (_isNavigationActive)
-            ActiveNavigationOverlay(
-              onFinish: () {
-                setState(() {
-                  _isNavigationActive = false;
-                });
+            BlocBuilder<RoutingBloc, RoutingState>(
+              builder: (context, state) {
+                return ActiveNavigationOverlay(
+                  route: state.selectedRoute,
+                  onFinish: () {
+                    context.read<RoutingBloc>().add(const NavigationStopped());
+                  },
+                );
               },
             ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: _RiskSummaryCard(
+          if (!_isNavigationActive)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 110,
+              child: _RiskSummaryCard(
               clusterCount: _clusterCount,
               riskScoreCount: _riskScoreCount,
               maxRiskScore: _maxRiskScore,

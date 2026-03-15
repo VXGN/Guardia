@@ -24,9 +24,7 @@ class LocationUtils {
   /// Get the current device position.
   static Future<Position> getCurrentPosition() async {
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
 
@@ -48,5 +46,14 @@ class LocationUtils {
         distanceFilter: 5, // Update every 5 meters moved
       ),
     );
+  }
+
+  /// Helper to generate a consistent dummy hazard zone for offline safe-routing testing.
+  /// Given an origin, it places a hazard slightly offset so routing can simulate avoiding it.
+  static Map<String, double> getMockHazardLocation(double originLat, double originLng) {
+    return {
+      'lat': originLat + 0.004,
+      'lng': originLng + 0.004,
+    };
   }
 }

@@ -1,5 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_bloc.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_event.dart';
+import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_state.dart';
 
 class RoutingOptionsSheet extends StatelessWidget {
 
@@ -43,29 +47,43 @@ class RoutingOptionsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Fastest Route Card
-          _buildRouteCard(
-            title: 'Fastest Route',
-            duration: '12 min',
-            distance: '3.4 km',
-            onTap: () {},
-          ),
-          
-          const SizedBox(height: 16),
+          // Routes List
+          BlocBuilder<RoutingBloc, RoutingState>(
+            builder: (context, state) {
+              if (state.routes.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: Text('Tidak ada rute tersedia.')),
+                );
+              }
 
-          // Safe Guardia Card (Selected by Default)
-          _buildRouteCard(
-            title: 'Safe Guardia',
-            duration: '14 min',
-            distance: '3.8 km',
-            isSelected: true,
-            isSafe: true,
-            features: [
-              'High Lighting',
-              'Monitored Zone',
-              'Avoids 3 Risk Zones'
-            ],
-            onTap: () {},
+              return Column(
+                children: state.routes.map((route) {
+                  final isSelected = state.selectedRoute?.id == route.id;
+                  final isSafe = route.safetyScore >= 80; // Example threshold
+                  final durationMin = (route.durationSeconds / 60).round();
+                  final distanceKm = (route.distanceMeters / 1000).toStringAsFixed(1);
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildRouteCard(
+                      title: route.displayName,
+                      duration: '$durationMin min',
+                      distance: '$distanceKm km',
+                      isSelected: isSelected,
+                      isSafe: isSafe,
+                      features: isSafe ? [
+                        'Safety Score: ${route.safetyScore.toStringAsFixed(1)}',
+                        'Avoids High Risk'
+                      ] : null,
+                      onTap: () {
+                        context.read<RoutingBloc>().add(RoutingOptionSelected(route.id));
+                      },
+                    ),
+                  );
+                }).toList(),
+              );
+            },
           ),
 
           const SizedBox(height: 32),

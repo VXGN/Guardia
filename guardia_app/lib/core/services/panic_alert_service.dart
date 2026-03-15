@@ -8,8 +8,6 @@ class PanicAlertService {
     if (_isAlerting) return;
     _isAlerting = true;
 
-    // Start vibration with a repeating emergency pattern
-    // [wait, vibrate, wait, vibrate, ...]
     _startVibration();
   }
 
