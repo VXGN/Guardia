@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 from app.core.database import async_session
-from app.services.news_scraper import scrape_all_sources
+from app.services.news_scraper import scrape_all_sources, enrich_articles_with_first_paragraph
 from app.services.crime_scorer import analyze_article
 from app.repositories.news_repos import NewsArticleRepository, AreaCrimeScoreRepository
 
@@ -23,6 +23,7 @@ async def run_scrape_job() -> dict:
     logger.info("Starting news scrape...")
 
     raw_articles = await scrape_all_sources()
+    raw_articles, enriched_count = await enrich_articles_with_first_paragraph(raw_articles)
     total_scraped = len(raw_articles)
 
     scored_articles: list[dict] = []
@@ -56,6 +57,7 @@ async def run_scrape_job() -> dict:
         "total_scraped": total_scraped,
         "new_articles": new_count,
         "crime_articles": len(scored_articles),
+        "enriched_snippets": enriched_count,
     }
     logger.info(
         "Scrape complete: %d scraped, %d crime-related, %d new",
