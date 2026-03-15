@@ -5,10 +5,9 @@ import 'package:guardia_app/core/theme/app_theme.dart';
 import 'package:guardia_app/di/injection_container.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
-import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_bloc.dart';
-import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
+import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
+import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_bloc.dart';
 import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
-import 'package:guardia_app/presentation/bloc/panic/panic_bloc.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
@@ -23,9 +22,8 @@ class GuardiaApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => sl<AuthBloc>()..add(AuthStatusSubscriptionRequested())),
-        BlocProvider(create: (_) => sl<TrustedContactBloc>()),
+        BlocProvider(create: (_) => sl<CompanionBloc>()..add(const CompanionStarted())),
         BlocProvider(create: (_) => sl<ReportBloc>()),
-        BlocProvider(create: (_) => sl<JourneyBloc>()),
         BlocProvider(create: (_) => sl<PanicBloc>()),
         BlocProvider(create: (_) => sl<RiskBloc>()),
         BlocProvider(create: (_) => sl<RoutingBloc>()),

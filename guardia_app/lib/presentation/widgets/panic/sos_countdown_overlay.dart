@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -81,118 +81,122 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
         ),
       ),
       child: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 48),
-            const Text(
-              'SOS akan diaktifkan',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 48),
-              child: Text(
-                'Jika ini tidak sengaja, masukkan PIN Darurat untuk membatalkan.',
-                textAlign: TextAlign.center,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 48),
+              const Text(
+                'SOS akan diaktifkan',
                 style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            const SizedBox(height: 40),
-            // Countdown Circle
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.15),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Center(
+              const SizedBox(height: 8),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 48),
                 child: Text(
-                  '$_secondsRemaining',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 72,
-                    fontWeight: FontWeight.bold,
+                  'Jika ini tidak sengaja, masukkan PIN Darurat untuk membatalkan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              'PIN DARURAT',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // PIN Dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(4, (index) {
-                final isFilled = index < _enteredPin.length;
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isFilled ? Colors.white : Colors.white.withValues(alpha: 0.3),
-                  ),
-                );
-              }),
-            ),
-            const Spacer(),
-            // Numeric Keypad
-            _buildKeypad(),
-            const SizedBox(height: 24),
-            const Text(
-              'Jika tidak ada tindakan, SOS aktif otomatis.',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+              const SizedBox(height: 40),
+              // Countdown Circle
+              Container(
+                width: 140,
+                height: 140,
                 decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    'Masukkan PIN untuk membatalkan',
-                    style: TextStyle(
+                    '$_secondsRemaining',
+                    style: const TextStyle(
                       color: Colors.white,
+                      fontSize: 72,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 40),
+              const Text(
+                'PIN DARURAT',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // PIN Dots
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) {
+                  final isFilled = index < _enteredPin.length;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isFilled ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 32),
+              // Numeric Keypad
+              _buildKeypad(),
+              const SizedBox(height: 24),
+              const Text(
+                'Jika tidak ada tindakan, SOS aktif otomatis.',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Masukkan PIN untuk membatalkan',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

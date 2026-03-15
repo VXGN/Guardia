@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-
-class Message {
-  final String text;
-  final bool isMe;
-  final bool isSystem;
-  final DateTime time;
-
-  Message({required this.text, this.isMe = false, this.isSystem = false, DateTime? time}) 
-    : time = time ?? DateTime.now();
-}
+import 'package:guardia_app/core/utils/phone_utils.dart';
+import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
+import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
+import 'package:guardia_app/features/companion/domain/entities/companion_message_entity.dart';
 
 class CompanionChatPage extends StatefulWidget {
   final String companionId;
@@ -24,37 +19,13 @@ class CompanionChatPage extends StatefulWidget {
 class _CompanionChatPageState extends State<CompanionChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Message> _messages = [
-    Message(text: 'Journey started at 02:45 PM', isSystem: true),
-    Message(text: 'Hey, I see you started your journey. I\'m monitoring your location now.', isMe: false),
-    Message(text: 'Thanks! I\'m heading home now.', isMe: true),
-    Message(text: 'The area you\'re passing through seems a bit quiet. Stay safe!', isMe: false),
-    Message(text: 'Shared location update: Near Bundaran HI', isSystem: true),
-  ];
 
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
 
-    setState(() {
-      _messages.add(Message(text: _controller.text, isMe: true));
-    });
-
-    final sentText = _controller.text;
+    context.read<CompanionBloc>().add(CompanionMessageSent(text: _controller.text));
     _controller.clear();
     _scrollToBottom();
-
-    // Simulate auto-reply
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _messages.add(Message(
-            text: 'Okay, I\'ve received your message: "$sentText". Stay alert!',
-            isMe: false,
-          ));
-        });
-        _scrollToBottom();
-      }
-    });
   }
 
   void _scrollToBottom() {
@@ -78,111 +49,181 @@ class _CompanionChatPageState extends State<CompanionChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
-          onPressed: () => context.pop(),
-        ),
-        title: Row(
-          children: [
-            const CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.primary,
-              child: Icon(Icons.person, color: Colors.white, size: 18),
+    return BlocConsumer<CompanionBloc, CompanionState>(
+      listener: (context, state) {
+        _scrollToBottom();
+      },
+      builder: (context, state) {
+        TrustedContactEntity? contact;
+        try {
+          contact = state.contacts.firstWhere((c) => c.id == widget.companionId);
+        } catch (_) {
+          contact = null;
+        }
+        final companionName = contact?.contactName ?? 'Companion ${widget.companionId}';
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
+              onPressed: () => context.pop(),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Companion ${widget.companionId}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
+            title: Row(
+              children: [
+                const CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.primary,
+                  child: Icon(Icons.person, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
+                      Text(
+                        companionName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 4),
-                      const Flexible(
-                        child: Text(
-                          'Actively Monitoring',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(width: 4),
+                          const Flexible(
+                            child: Text(
+                              'Actively Monitoring',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.info_outline, color: Color(0xFF64748B)),
+                onPressed: () {},
               ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Color(0xFF64748B)),
-            onPressed: () {},
+            ],
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(20),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                if (msg.isSystem) {
-                  return _buildSystemMessage(msg.text);
-                } else if (msg.isMe) {
-                  return _buildMyMessage(msg.text);
-                } else {
-                  return _buildCompanionMessage(msg.text);
-                }
-              },
-            ),
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(20),
+                  itemCount: state.messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = state.messages[index];
+                    if (msg.isSystem) {
+                      return _buildSystemMessage(msg);
+                    } else if (msg.isMe) {
+                      return _buildMyMessage(msg.text);
+                    } else {
+                      return _buildCompanionMessage(msg.text);
+                    }
+                  },
+                ),
+              ),
+              _buildInputArea(),
+            ],
           ),
-          _buildInputArea(),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildSystemMessage(String text) {
+  Widget _buildSystemMessage(CompanionMessageEntity msg) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE2E8F0),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
-          ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                msg.text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (msg.isLocation && msg.latitude != null && msg.longitude != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 40),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.location_on, color: AppColors.error, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${msg.latitude!.toStringAsFixed(6)}, ${msg.longitude!.toStringAsFixed(6)}',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          final url = 'https://www.google.com/maps/search/?api=1&query=${msg.latitude},${msg.longitude}';
+                          PhoneUtils.makePhoneCall(url); // Hijacking PhoneUtils or use url_launcher directly
+                        },
+                        icon: const Icon(Icons.map, size: 14),
+                        label: const Text('View on Map', style: TextStyle(fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

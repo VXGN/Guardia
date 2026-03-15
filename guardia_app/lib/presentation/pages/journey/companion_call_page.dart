@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:guardia_app/core/utils/phone_utils.dart';
+import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
+import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
 
 class CompanionCallPage extends StatelessWidget {
   final String companionId;
@@ -8,47 +12,61 @@ class CompanionCallPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const Spacer(),
-              _buildPulsingAvatar(),
-              const SizedBox(height: 32),
-              Text(
-                'Calling Companion $companionId',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                ),
+    return BlocBuilder<CompanionBloc, CompanionState>(
+      builder: (context, state) {
+        TrustedContactEntity? contact;
+        try {
+          contact = state.contacts.firstWhere((c) => c.id == companionId);
+        } catch (_) {
+          contact = null;
+        }
+        
+        final companionName = contact?.contactName ?? 'Companion $companionId';
+        final companionPhone = contact?.contactPhone ?? '';
+
+        return Scaffold(
+          body: Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Guardia Secure Call',
-                style: TextStyle(
-                  color: Color(0xFF94A3B8),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  const Spacer(),
+                  _buildPulsingAvatar(),
+                  const SizedBox(height: 32),
+                  Text(
+                    companionName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    companionPhone.isNotEmpty ? companionPhone : 'Guardia Secure Call',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  _buildCallActions(context, companionPhone),
+                  const SizedBox(height: 60),
+                ],
               ),
-              const Spacer(),
-              _buildCallActions(context),
-              const SizedBox(height: 60),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -93,11 +111,41 @@ class CompanionCallPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCallActions(BuildContext context) {
+  Widget _buildCallActions(BuildContext context, String phoneNumber) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildCircleButton(Icons.mic_off, 'Mute', Colors.white.withValues(alpha: 0.1)),
+        Column(
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (phoneNumber.isNotEmpty) {
+                  PhoneUtils.makePhoneCall(phoneNumber);
+                }
+              },
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF22C55E),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.phone, color: Colors.white, size: 32),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'CALL',
+              style: TextStyle(
+                color: Color(0xFF22C55E),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
         GestureDetector(
           onTap: () => context.pop(),
           child: Column(
@@ -109,11 +157,11 @@ class CompanionCallPage extends StatelessWidget {
                   color: Color(0xFFEF4444),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.call_end, color: Colors.white, size: 32),
+                child: const Icon(Icons.close, color: Colors.white, size: 32),
               ),
               const SizedBox(height: 12),
               const Text(
-                'END CALL',
+                'CANCEL',
                 style: TextStyle(
                   color: Color(0xFFEF4444),
                   fontSize: 12,
@@ -124,7 +172,6 @@ class CompanionCallPage extends StatelessWidget {
             ],
           ),
         ),
-        _buildCircleButton(Icons.volume_up, 'Speaker', Colors.white.withValues(alpha: 0.1)),
       ],
     );
   }

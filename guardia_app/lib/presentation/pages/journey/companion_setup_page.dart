@@ -1,12 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/domain/entities/trusted_contact.dart';
-import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_bloc.dart';
-import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_event.dart';
-import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_state.dart';
+import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
+import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
 
 class CompanionSetupPage extends StatefulWidget {
   const CompanionSetupPage({super.key});
@@ -23,7 +21,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
   @override
   void initState() {
     super.initState();
-    context.read<TrustedContactBloc>().add(const LoadTrustedContactsRequested());
+    context.read<CompanionBloc>().add(const CompanionStarted());
   }
 
   @override
@@ -36,95 +34,137 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<TrustedContactBloc, TrustedContactState>(
+    return BlocConsumer<CompanionBloc, CompanionState>(
       listener: (context, state) {
-        if (state is TrustedContactError) {
+        if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: AppColors.error,
+            ),
           );
+          // Auto reset error after showing
+          context.read<CompanionBloc>().add(const CompanionResetError());
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text(
-            'Temani (Companion)',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+      builder: (context, state) {
+        final bool isJourneyActive = state.isJourneyActive;
+
+        return Scaffold(
           backgroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-        ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-              child: InkWell(
-                onTap: () => _showAddContactBottomSheet(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.person_add_outlined, color: AppColors.primary),
-                      SizedBox(width: 16),
-                      Text(
-                        'Add New Trusted Contact',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+          appBar: AppBar(
+            title: const Text(
+              'Temani (Companion)',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+          ),
+          body: Column(
+            children: [
+              if (isJourneyActive) _buildActiveJourneyBanner(),
+              
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: InkWell(
+                  onTap: () => _showAddContactBottomSheet(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.person_add_outlined, color: AppColors.primary),
+                        SizedBox(width: 16),
+                        Text(
+                          'Add New Trusted Contact',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
-                      ),
-                      Spacer(),
-                      Icon(Icons.add_circle_outline, color: AppColors.primary, size: 20),
-                    ],
+                        Spacer(),
+                        Icon(Icons.add_circle_outline, color: AppColors.primary, size: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            Expanded(
-              child: BlocBuilder<TrustedContactBloc, TrustedContactState>(
-                builder: (context, state) {
-                  if (state is TrustedContactLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is TrustedContactsLoaded) {
-                    if (state.contacts.isEmpty) {
-                      return _buildEmptyState();
-                    }
-                    return _buildContactsList(state.contacts);
-                  } else if (state is TrustedContactError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                          const SizedBox(height: 16),
-                          Text(state.message),
-                          TextButton(
-                            onPressed: () => context.read<TrustedContactBloc>().add(const LoadTrustedContactsRequested()),
-                            child: const Text('Try Again'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
+              
+              if (!isJourneyActive && state.selectedContactIds.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: CustomButton(
+                    text: 'Start Journey with ${state.selectedContactIds.length} Contacts',
+                    onPressed: state.isLoading ? null : _onStartJourney,
+                    backgroundColor: AppColors.primary,
+                  ),
+                ),
+              
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              
+              Expanded(
+                child: state.isLoadingContacts && state.contacts.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : state.contacts.isEmpty
+                        ? _buildEmptyState()
+                        : _buildContactsList(state.contacts, state.selectedContactIds, isJourneyActive),
               ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveJourneyBanner() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.directions_run, color: AppColors.success),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Journey is Active',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.success),
+                ),
+                Text(
+                  'Your location is being shared.',
+                  style: TextStyle(fontSize: 12, color: AppColors.success),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          TextButton(
+            onPressed: () => context.pushNamed('active_journey'),
+            child: const Text('View Details'),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _onStartJourney() async {
+    context.read<CompanionBloc>().add(const JourneyStartRequested());
   }
 
   Widget _buildEmptyState() {
@@ -171,75 +211,124 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
     );
   }
 
-  Widget _buildContactsList(List<TrustedContact> contacts) {
+  Widget _buildContactsList(
+    List<TrustedContactEntity> contacts,
+    Set<String> selectedIds,
+    bool isJourneyActive,
+  ) {
     return ListView.separated(
       padding: const EdgeInsets.all(24),
       itemCount: contacts.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final contact = contacts[index];
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                radius: 24,
-                child: const Icon(Icons.person, color: AppColors.primary),
+        final bool isSelected = selectedIds.contains(contact.id);
+
+        return InkWell(
+          onTap: isJourneyActive 
+            ? null 
+            : () => context.read<CompanionBloc>().add(TrustedContactToggled(contact.id)),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected ? AppColors.primary.withValues(alpha: 0.3) : const Color(0xFFF1F5F9),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      contact.contactName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${contact.relationship ?? "No relation"} • ${contact.contactPhone}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
+            ),
+            child: Row(
+              children: [
+                if (!isJourneyActive)
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (val) {
+                      context.read<CompanionBloc>().add(TrustedContactToggled(contact.id));
+                    },
+                    activeColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  ),
+                CircleAvatar(
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  radius: 24,
+                  child: const Icon(Icons.person, color: AppColors.primary),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.message_outlined, color: Color(0xFF61EBCF)),
-                onPressed: () => GoRouter.of(context).pushNamed('companion_chat', pathParameters: {'companionId': contact.id}),
-              ),
-              IconButton(
-                icon: const Icon(Icons.call_outlined, color: Color(0xFF6366F1)),
-                onPressed: () => GoRouter.of(context).pushNamed('companion_call', pathParameters: {'companionId': contact.id}),
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit_outlined, color: Colors.amber),
-                onPressed: () => _showEditContactBottomSheet(context, contact),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                onPressed: () => _showDeleteConfirm(context, contact),
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        contact.contactName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${contact.relationship ?? "No relation"} • ${contact.contactPhone}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isSelected && !isJourneyActive) ...[
+                  IconButton(
+                    icon: const Icon(Icons.message_outlined, color: Color(0xFF61EBCF)),
+                    onPressed: () => context.pushNamed('companion_chat', pathParameters: {'companionId': contact.id}),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.call_outlined, color: Color(0xFF6366F1)),
+                    onPressed: () => context.pushNamed('companion_call', pathParameters: {'companionId': contact.id}),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _showEditContactBottomSheet(context, contact);
+                      } else if (value == 'delete') {
+                        _showDeleteConfirm(context, contact);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, color: Colors.amber, size: 20),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+                            SizedBox(width: 8),
+                            Text('Hapus'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  void _showDeleteConfirm(BuildContext context, TrustedContact contact) {
+  void _showDeleteConfirm(BuildContext context, TrustedContactEntity contact) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -250,7 +339,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              context.read<TrustedContactBloc>().add(DeleteTrustedContactRequested(contact.id));
+              context.read<CompanionBloc>().add(TrustedContactDeleted(contact.id));
               Navigator.pop(ctx);
             },
             style: ElevatedButton.styleFrom(
@@ -264,7 +353,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
     );
   }
 
-  void _showEditContactBottomSheet(BuildContext context, TrustedContact contact) {
+  void _showEditContactBottomSheet(BuildContext context, TrustedContactEntity contact) {
     _nameController.text = contact.contactName;
     _phoneController.text = contact.contactPhone;
     _relationController.text = contact.relationship ?? '';
@@ -297,11 +386,12 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
                 text: 'Update Contact', 
                 onPressed: () {
                   if (_nameController.text.isNotEmpty && _phoneController.text.isNotEmpty) {
-                    context.read<TrustedContactBloc>().add(UpdateTrustedContactRequested(
-                      id: contact.id,
-                      contactName: _nameController.text,
-                      contactPhone: _phoneController.text,
-                      relationship: _relationController.text,
+                    context.read<CompanionBloc>().add(TrustedContactUpdated(
+                      contact.copyWith(
+                        contactName: _nameController.text,
+                        contactPhone: _phoneController.text,
+                        relationship: _relationController.text,
+                      ),
                     ));
                     _nameController.clear();
                     _phoneController.clear();
@@ -319,6 +409,10 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
   }
 
   void _showAddContactBottomSheet(BuildContext context) {
+    _nameController.clear();
+    _phoneController.clear();
+    _relationController.clear();
+    
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -347,15 +441,11 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
                 text: 'Save Contact', 
                 onPressed: () {
                   if (_nameController.text.isNotEmpty && _phoneController.text.isNotEmpty) {
-                    context.read<TrustedContactBloc>().add(AddTrustedContactRequested(
+                    context.read<CompanionBloc>().add(TrustedContactAdded(
                       contactName: _nameController.text,
                       contactPhone: _phoneController.text,
                       relationship: _relationController.text,
-                      contactEmail: null,
                     ));
-                    _nameController.clear();
-                    _phoneController.clear();
-                    _relationController.clear();
                     Navigator.pop(ctx);
                   }
                 },

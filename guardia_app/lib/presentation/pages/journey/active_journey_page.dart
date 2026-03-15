@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/domain/entities/journey.dart';
-import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
-import 'package:guardia_app/presentation/bloc/journey/journey_event.dart';
-import 'package:guardia_app/presentation/bloc/journey/journey_state.dart';
-
+import 'package:guardia_app/core/utils/phone_utils.dart';
+import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
+import 'package:guardia_app/features/companion/domain/entities/journey_session_entity.dart';
+import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
 
 class ActiveJourneyPage extends StatefulWidget {
   const ActiveJourneyPage({super.key});
@@ -24,7 +23,14 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
   @override
   void initState() {
     super.initState();
-    context.read<JourneyBloc>().add(JourneyLoadActiveRequested());
+    // Journey status is already requested in CompanionStarted at app level.
+    // Ensure timer starts if a journey is already active.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = context.read<CompanionBloc>().state;
+      if (state.activeJourney != null && _startTime == null) {
+        _startTimer(state.activeJourney!.startedAt);
+      }
+    });
   }
 
   void _startTimer(DateTime startTime) {
@@ -52,44 +58,76 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
     return '$h:$m:$s';
   }
 
+  void _showSosSentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('SOS Terkirim'),
+          ],
+        ),
+        content: const Text('Lokasi dan peringatan darurat Anda telah berhasil dikirim ke semua kontak terpercaya.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<JourneyBloc, JourneyState>(
+    return BlocConsumer<CompanionBloc, CompanionState>(
       listener: (context, state) {
-        if (state is JourneyActive && _startTime == null) {
-          _startTimer(state.journey.startedAt);
+        if (state.activeJourney != null && _startTime == null) {
+          _startTimer(state.activeJourney!.startedAt);
         }
-        if (state is JourneyCompleted) {
+        
+        if (state.activeJourney == null && _startTime != null) {
+          // Journey was ended
           _elapsedTimer?.cancel();
+          _startTime = null;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Perjalanan selesai. Selamat tiba dengan selamat! 🎉'), backgroundColor: AppColors.success),
+            const SnackBar(
+              content: Text('Perjalanan selesai. Selamat tiba dengan selamat! 🎉'),
+              backgroundColor: AppColors.success,
+            ),
           );
           context.goNamed('home');
         }
-        if (state is JourneyCancelled) {
-          _elapsedTimer?.cancel();
-          context.goNamed('home');
+
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!), backgroundColor: AppColors.error),
+          );
+          context.read<CompanionBloc>().add(const CompanionResetError());
+        }
+
+        if (state.alertSent) {
+          _showSosSentDialog(context);
+          context.read<CompanionBloc>().add(const CompanionResetAlert());
         }
       },
       builder: (context, state) {
-        if (state is JourneyLoading) {
+        if (state.isLoading) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-        if (state is JourneyActive) {
-          return _buildActiveJourneyUI(context, state.journey);
+        
+        if (state.activeJourney != null) {
+          return _buildActiveJourneyUI(context, state, state.activeJourney!);
         }
-        if (state is JourneyInitial) {
-          return _buildNoActiveJourneyUI(context);
-        }
-        if (state is JourneyError) {
-          return Scaffold(body: Center(child: Text('Error: ${state.message}')));
-        }
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        
+        return _buildNoActiveJourneyUI(context);
       },
     );
   }
 
-  Widget _buildActiveJourneyUI(BuildContext context, Journey journey) {
+  Widget _buildActiveJourneyUI(BuildContext context, CompanionState state, JourneySessionEntity journey) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -111,22 +149,19 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
             _buildStatusCard(journey),
             const SizedBox(height: 20),
             // Companion Contacts
-            if (journey.contacts.isNotEmpty) ...[
-              _buildCompanionsCard(journey),
-              const SizedBox(height: 20),
-            ],
+            _buildCompanionsCard(journey, state),
+            const SizedBox(height: 20),
             // Quick actions
             _buildQuickActions(context, journey),
             const SizedBox(height: 80),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomActions(context, journey),
+      bottomNavigationBar: _buildBottomActions(context, state, journey),
     );
   }
 
-  Widget _buildStatusCard(Journey journey) {
-    final bool hasDestination = journey.destinationLat != null && journey.destinationLng != null;
+  Widget _buildStatusCard(JourneySessionEntity journey) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -150,7 +185,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           const SizedBox(height: 12),
           const Text('Journey Active', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text('Your companion can see your location', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14)),
+          Text('Your companions can see your location', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14)),
           const SizedBox(height: 20),
           Text(
             _formatDuration(_elapsed),
@@ -162,28 +197,12 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           ),
           const SizedBox(height: 4),
           Text('Elapsed Time', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
-          if (hasDestination) ...[
-            const SizedBox(height: 16),
-            const Divider(color: Colors.white24),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.location_on, color: Colors.white70, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  'Destination set at ${journey.destinationLat!.toStringAsFixed(4)}, ${journey.destinationLng!.toStringAsFixed(4)}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildCompanionsCard(Journey journey) {
+  Widget _buildCompanionsCard(JourneySessionEntity journey, CompanionState state) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -196,34 +215,52 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
         children: [
           const Text('Monitoring Companions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 12),
-          ...journey.contacts.map((contact) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(
-                  backgroundColor: AppColors.primary,
-                  child: Icon(Icons.person, color: Colors.white, size: 20),
-                ),
-                title: Text('Companion ${contact.trustedContactId}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('ID: ${contact.trustedContactId}', style: TextStyle(color: Colors.grey[600])),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chat_outlined, color: AppColors.primary, size: 22),
-                      onPressed: () => context.pushNamed('companion_chat', pathParameters: {'companionId': contact.trustedContactId}),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.phone_outlined, color: AppColors.primary, size: 22),
-                      onPressed: () => context.pushNamed('companion_call', pathParameters: {'companionId': contact.trustedContactId}),
-                    ),
-                  ],
-                ),
-              )),
+          ...journey.contactIds.map((contactId) {
+            TrustedContactEntity? contact;
+            try {
+              contact = state.contacts.firstWhere((c) => c.id == contactId);
+            } catch (_) {
+              contact = null;
+            }
+
+            final displayName = contact?.contactName ?? 'Companion';
+            final displayPhone = contact?.contactPhone ?? '';
+
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const CircleAvatar(
+                backgroundColor: AppColors.primary,
+                child: Icon(Icons.person, color: Colors.white, size: 20),
+              ),
+              title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(displayPhone.isNotEmpty ? displayPhone : 'ID: $contactId', style: TextStyle(color: Colors.grey[600])),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chat_outlined, color: AppColors.primary, size: 22),
+                    onPressed: () => context.pushNamed('companion_chat', pathParameters: {'companionId': contactId}),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.phone_outlined, color: AppColors.primary, size: 22),
+                    onPressed: () {
+                      if (displayPhone.isNotEmpty) {
+                        PhoneUtils.makePhoneCall(displayPhone);
+                      } else {
+                        context.pushNamed('companion_call', pathParameters: {'companionId': contactId});
+                      }
+                    },
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, Journey journey) {
+  Widget _buildQuickActions(BuildContext context, JourneySessionEntity journey) {
     return Row(
       children: [
         Expanded(
@@ -232,6 +269,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
             label: 'Share Location',
             color: AppColors.primary,
             onTap: () {
+              context.read<CompanionBloc>().add(const CompanionLocationShared());
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Location shared to companions.')),
               );
@@ -277,7 +315,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
     );
   }
 
-  Widget _buildBottomActions(BuildContext context, Journey journey) {
+  Widget _buildBottomActions(BuildContext context, CompanionState state, JourneySessionEntity journey) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
@@ -287,27 +325,17 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
       child: Row(
         children: [
           Expanded(
-            child: OutlinedButton(
-              onPressed: () => _showCancelDialog(context, journey),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: AppColors.error),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Cancel Journey', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => _showFinishDialog(context, journey),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Safe Arrival ✓', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
+            child: state.isEndingJourney 
+              ? const Center(child: CircularProgressIndicator())
+              : ElevatedButton(
+                  onPressed: () => _showFinishDialog(context, journey),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Safe Arrival ✓', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
           ),
         ],
       ),
@@ -331,7 +359,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
             const SizedBox(height: 20),
             const Text('No active journey', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text('Start a journey from the Home screen to track it here.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
+            Text('Start a journey from the Companion screen to track it here.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () => context.goNamed('home'),
@@ -344,7 +372,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
     );
   }
 
-  void _showFinishDialog(BuildContext context, Journey journey) {
+  void _showFinishDialog(BuildContext context, JourneySessionEntity journey) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -356,7 +384,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<JourneyBloc>().add(JourneyFinishRequested(journey.id));
+              context.read<CompanionBloc>().add(const JourneyEndRequested());
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
             child: const Text('Confirm', style: TextStyle(color: Colors.white)),
@@ -366,29 +394,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
     );
   }
 
-  void _showCancelDialog(BuildContext context, Journey journey) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Journey'),
-        content: const Text('This will stop location sharing with your companions. Are you sure?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Back')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<JourneyBloc>().add(JourneyCancelRequested(journey.id));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Cancel Journey', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAlertConfirmDialog(BuildContext context, Journey journey) {
+  void _showAlertConfirmDialog(BuildContext context, JourneySessionEntity journey) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -400,6 +406,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
+              context.read<CompanionBloc>().add(const CompanionAlertTriggered());
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('🚨 Alert sent to companions!'), backgroundColor: AppColors.error),
               );

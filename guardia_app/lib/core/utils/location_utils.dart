@@ -1,4 +1,4 @@
-﻿import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// Location utility functions using Geolocator.
 class LocationUtils {
@@ -38,5 +38,15 @@ class LocationUtils {
     required double endLng,
   }) {
     return Geolocator.distanceBetween(startLat, startLng, endLat, endLng);
+  }
+
+  /// Get a stream of the device's position.
+  static Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5, // Update every 5 meters moved
+      ),
+    );
   }
 }
