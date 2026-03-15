@@ -10,10 +10,12 @@ class GetAreaRiskSummary {
   Future<Either<Failure, Map<String, dynamic>>> call({
     required double latitude,
     required double longitude,
+    double? radiusMeters,
   }) async {
     return repository.getAreaRiskSummary(
       latitude: latitude,
       longitude: longitude,
+      radiusMeters: radiusMeters,
     );
   }
 }

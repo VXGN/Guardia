@@ -8,7 +8,15 @@ class GetHeatmapClusters {
   GetHeatmapClusters(this.repository);
   final RiskRepository repository;
 
-  Future<Either<Failure, List<HeatmapCluster>>> call() async {
-    return repository.getHeatmapClusters();
+  Future<Either<Failure, List<HeatmapCluster>>> call({
+    double? latitude,
+    double? longitude,
+    double? radiusMeters,
+  }) async {
+    return repository.getHeatmapClusters(
+      latitude: latitude,
+      longitude: longitude,
+      radiusMeters: radiusMeters,
+    );
   }
 }
