@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -72,24 +72,51 @@ model User {
   email             String?   @unique @db.VarChar(150)
   phone_number      String?   @unique @db.VarChar(20)
   password_hash     String?   @db.Text
+  emergency_pin_hash String?  @db.Text
   role              UserRole  @default(user)
   is_anonymous_mode Boolean   @default(true)
   is_verified       Boolean   @default(false)
+  panic_is_active   Boolean   @default(false)
+  panic_triggered_at DateTime? @db.Timestamp(6)
+  panic_cancelled_at DateTime? @db.Timestamp(6)
+  panic_latitude    Decimal?  @db.Decimal(10, 8)
+  panic_longitude   Decimal?  @db.Decimal(11, 8)
+  panic_message     String?   @db.Text
   fcm_token         String?   @db.Text
-  created_at        DateTime  @default(now()) @db.DateTime(6)
-  updated_at        DateTime  @updatedAt @db.DateTime(6)
-  deleted_at        DateTime? @db.DateTime(6)
+  created_at        DateTime  @default(now()) @db.Timestamp(6)
+  updated_at        DateTime  @updatedAt @db.Timestamp(6)
+  deleted_at        DateTime? @db.Timestamp(6)
 
   trusted_contacts   TrustedContact[]
   incident_reports   IncidentReport[]
   journeys           Journey[]
+  messages_sent      Message[]  @relation("UserSentMessages")
+  messages_received  Message[]  @relation("UserReceivedMessages")
   report_status_logs ReportStatusLog[]
   notifications      Notification[]
 
   @@index([role], name: "users_role_idx")
   @@index([deleted_at], name: "users_deleted_at_idx")
   @@index([is_verified], name: "users_verified_idx")
+  @@index([panic_is_active], name: "users_panic_is_active_idx")
   @@map("users")
+}
+
+model Message {
+  id           String   @id @default(uuid()) @db.Char(36)
+  sender_uid   String   @db.Char(36)
+  receiver_uid String   @db.Char(36)
+  message      String   @db.Text
+  timestamp    DateTime @default(now()) @db.Timestamp(6)
+
+  sender   User @relation("UserSentMessages", fields: [sender_uid], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  receiver User @relation("UserReceivedMessages", fields: [receiver_uid], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([sender_uid], name: "messages_sender_uid_idx")
+  @@index([receiver_uid], name: "messages_receiver_uid_idx")
+  @@index([timestamp], name: "messages_timestamp_idx")
+  @@index([sender_uid, receiver_uid, timestamp], name: "messages_conversation_idx")
+  @@map("messages")
 }
 
 model TrustedContact {
@@ -99,8 +126,8 @@ model TrustedContact {
   contact_phone String    @db.VarChar(20)
   contact_email String?   @db.VarChar(150)
   is_active     Boolean   @default(true)
-  created_at    DateTime  @default(now()) @db.DateTime(6)
-  updated_at    DateTime  @updatedAt @db.DateTime(6)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
 
   user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   journey_contacts JourneyContact[]
@@ -115,7 +142,7 @@ model IncidentReport {
   user_id           String?      @db.Char(36)
   incident_type     IncidentType
   description       String?      @db.Text
-  incident_at       DateTime     @db.DateTime(6)
+  incident_at       DateTime     @db.Timestamp(6)
   latitude          Decimal      @db.Decimal(10, 8)
   longitude         Decimal      @db.Decimal(11, 8)
   latitude_blurred  Decimal      @db.Decimal(7, 5)
@@ -124,9 +151,9 @@ model IncidentReport {
   is_anonymous      Boolean      @default(true)
   status            ReportStatus @default(received)
   severity_score    Int?         @db.SmallInt
-  created_at        DateTime     @default(now()) @db.DateTime(6)
-  updated_at        DateTime     @updatedAt @db.DateTime(6)
-  deleted_at        DateTime?    @db.DateTime(6)
+  created_at        DateTime     @default(now()) @db.Timestamp(6)
+  updated_at        DateTime     @updatedAt @db.Timestamp(6)
+  deleted_at        DateTime?    @db.Timestamp(6)
 
   user               User?             @relation(fields: [user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
   report_media       ReportMedia[]
@@ -149,7 +176,7 @@ model ReportMedia {
   storage_url  String    @db.Text
   file_size_kb Int?
   is_encrypted Boolean   @default(true)
-  created_at   DateTime  @default(now()) @db.DateTime(6)
+  created_at   DateTime  @default(now()) @db.Timestamp(6)
 
   incident_report IncidentReport @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -165,7 +192,7 @@ model ReportStatusLog {
   old_status ReportStatus
   new_status ReportStatus
   notes      String?      @db.Text
-  changed_at DateTime     @default(now()) @db.DateTime(6)
+  changed_at DateTime     @default(now()) @db.Timestamp(6)
 
   incident_report IncidentReport @relation(fields: [report_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user            User?          @relation(fields: [changed_by], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -180,15 +207,15 @@ model Journey {
   id                     String        @id @default(uuid()) @db.Char(36)
   user_id                String        @db.Char(36)
   status                 JourneyStatus @default(active)
-  started_at             DateTime      @db.DateTime(6)
-  ended_at               DateTime?     @db.DateTime(6)
+  started_at             DateTime      @db.Timestamp(6)
+  ended_at               DateTime?     @db.Timestamp(6)
   origin_lat             Decimal?      @db.Decimal(10, 8)
   origin_lng             Decimal?      @db.Decimal(11, 8)
   destination_lat        Decimal?      @db.Decimal(10, 8)
   destination_lng        Decimal?      @db.Decimal(11, 8)
   safe_arrival_confirmed Boolean       @default(false)
-  created_at             DateTime      @default(now()) @db.DateTime(6)
-  updated_at             DateTime      @updatedAt @db.DateTime(6)
+  created_at             DateTime      @default(now()) @db.Timestamp(6)
+  updated_at             DateTime      @updatedAt @db.Timestamp(6)
 
   user                  User                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   journey_location_logs JourneyLocationLog[]
@@ -206,7 +233,7 @@ model JourneyLocationLog {
   journey_id         String   @db.Char(36)
   latitude           Decimal  @db.Decimal(10, 8)
   longitude          Decimal  @db.Decimal(11, 8)
-  recorded_at        DateTime @db.DateTime(6)
+  recorded_at        DateTime @db.Timestamp(6)
   is_anomaly_flagged Boolean  @default(false)
 
   journey Journey @relation(fields: [journey_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -221,8 +248,8 @@ model JourneyContact {
   id                 String    @id @default(uuid()) @db.Char(36)
   journey_id         String    @db.Char(36)
   trusted_contact_id String    @db.Char(36)
-  notified_at        DateTime? @db.DateTime(6)
-  alert_sent_at      DateTime? @db.DateTime(6)
+  notified_at        DateTime? @db.Timestamp(6)
+  alert_sent_at      DateTime? @db.Timestamp(6)
 
   journey         Journey        @relation(fields: [journey_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   trusted_contact TrustedContact @relation(fields: [trusted_contact_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -245,8 +272,8 @@ model RoadSegment {
   is_main_road       Boolean  @default(false)
   near_security_post Boolean  @default(false)
   osm_way_id         BigInt?  @unique
-  created_at         DateTime @default(now()) @db.DateTime(6)
-  updated_at         DateTime @updatedAt @db.DateTime(6)
+  created_at         DateTime @default(now()) @db.Timestamp(6)
+  updated_at         DateTime @updatedAt @db.Timestamp(6)
 
   risk_scores RiskScore[]
 
@@ -263,8 +290,8 @@ model RiskScore {
   risk_score             Decimal       @db.Decimal(5, 2)
   incident_count         Int           @default(0)
   dominant_incident_type IncidentType?
-  calculated_at          DateTime      @db.DateTime(6)
-  valid_until            DateTime?     @db.DateTime(6)
+  calculated_at          DateTime      @db.Timestamp(6)
+  valid_until            DateTime?     @db.Timestamp(6)
 
   road_segment RoadSegment @relation(fields: [segment_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -285,9 +312,9 @@ model HeatmapCluster {
   incident_count     Int
   dominant_type      IncidentType?
   time_slot          TimeSlot?
-  valid_from         DateTime         @db.DateTime(6)
-  valid_until        DateTime         @db.DateTime(6)
-  created_at         DateTime         @default(now()) @db.DateTime(6)
+  valid_from         DateTime         @db.Timestamp(6)
+  valid_until        DateTime         @db.Timestamp(6)
+  created_at         DateTime         @default(now()) @db.Timestamp(6)
 
   @@index([intensity], name: "heatmap_intensity_idx")
   @@index([valid_until], name: "heatmap_valid_until_idx")
@@ -306,8 +333,8 @@ model Notification {
   related_journey_id String?          @db.Char(36)
   related_report_id  String?          @db.Char(36)
   is_sent            Boolean          @default(false)
-  sent_at            DateTime?        @db.DateTime(6)
-  created_at         DateTime         @default(now()) @db.DateTime(6)
+  sent_at            DateTime?        @db.Timestamp(6)
+  created_at         DateTime         @default(now()) @db.Timestamp(6)
 
   recipient_user  User?           @relation(fields: [recipient_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
   related_journey Journey?        @relation(fields: [related_journey_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
