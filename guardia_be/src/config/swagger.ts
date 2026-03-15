@@ -181,7 +181,7 @@ const swaggerSpec = {
       post: {
         tags: ["Panic Alert"],
         summary: "Trigger panic alert",
-        description: "Sends emergency notifications to all active trusted contacts with user location",
+        description: "Activates panic mode for authenticated user and sends emergency notifications to active trusted contacts",
         requestBody: {
           required: true,
           content: {
@@ -202,6 +202,51 @@ const swaggerSpec = {
           "200": { description: "Panic alert triggered successfully" },
           "400": { description: "Validation error" },
           "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/api/panic/cancel": {
+      post: {
+        tags: ["Panic Alert"],
+        summary: "Cancel active panic",
+        description: "Cancels active panic mode after emergency PIN verification",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  emergency_pin: { type: "string", minLength: 6, maxLength: 6 },
+                  emergency_code: { type: "string", minLength: 6, maxLength: 6 },
+                },
+                anyOf: [{ required: ["emergency_pin"] }, { required: ["emergency_code"] }],
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Panic alert cancelled successfully" },
+          "400": { description: "Invalid emergency PIN" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "No active panic alert found" },
+        },
+      },
+    },
+    "/api/chat/history": {
+      get: {
+        tags: ["Companion Chat"],
+        summary: "Get chat history",
+        description: "Returns ordered conversation history for two users",
+        parameters: [
+          { name: "sender_uid", in: "query", required: true, schema: { type: "string" } },
+          { name: "receiver_uid", in: "query", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Chat history retrieved successfully" },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
         },
       },
     },

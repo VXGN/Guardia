@@ -8,4 +8,17 @@ export const triggerPanicSchema = z.object({
   }),
 });
 
+export const cancelPanicSchema = z.object({
+  body: z
+    .object({
+      emergency_code: z.string().length(6, "Emergency code must be 6 digits").optional(),
+      emergency_pin: z.string().length(6, "Emergency PIN must be 6 digits").optional(),
+    })
+    .refine((data) => Boolean(data.emergency_code || data.emergency_pin), {
+      message: "Emergency PIN is required",
+      path: ["emergency_pin"],
+    }),
+});
+
 export type TriggerPanicInput = z.infer<typeof triggerPanicSchema>["body"];
+export type CancelPanicInput = z.infer<typeof cancelPanicSchema>["body"];

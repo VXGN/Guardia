@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import cors from "cors";
 import helmet from "helmet";
 import { env } from "./config/env";
@@ -6,6 +7,7 @@ import { apiRouter } from "./routes";
 import { errorHandler } from "./middlewares/error.middleware";
 import { notFoundHandler } from "./middlewares/not-found.middleware";
 import { setupSwagger } from "./config/swagger";
+import { setupChatWebSocket } from "./websocket/chat.socket";
 
 const app = express();
 
@@ -44,10 +46,14 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-  app.listen(env.port, () => {
+  const server = http.createServer(app);
+  setupChatWebSocket(server);
+
+  server.listen(env.port, () => {
     console.log(
       `[Guardia] Server running on port ${env.port} in ${env.nodeEnv} mode`
     );
+    console.log("[Guardia] Chat websocket running at /ws/chat");
   });
 }
 

@@ -1,7 +1,8 @@
 import { prisma } from "../config/database";
-import { NotFoundError } from "../utils/errors";
+import { NotFoundError, BadRequestError } from "../utils/errors";
 import { TrustedContactService } from "./trusted-contact.service";
-import type { TriggerPanicInput } from "../validators/panic.validator";
+import type { TriggerPanicInput, CancelPanicInput } from "../validators/panic.validator";
+import { verifyEmergencyPin } from "../utils/emergency-pin";
 
 const trustedContactService = new TrustedContactService();
 
@@ -16,12 +17,28 @@ export class PanicService {
       throw new NotFoundError("User not found");
     }
 
+    const now = new Date();
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        panic_is_active: true,
+        panic_triggered_at: now,
+        panic_cancelled_at: null,
+        panic_latitude: data.latitude,
+        panic_longitude: data.longitude,
+        panic_message: data.message || null,
+      },
+    });
+
     const activeContacts = await trustedContactService.getActiveContacts(userId);
 
     if (activeContacts.length === 0) {
       return {
-        success: false,
-        message: "No active trusted contacts to notify",
+        success: true,
+        message: "Panic alert triggered but no contacts to notify",
+        panic_alert_id: userId,
+        triggered_at: now.toISOString(),
         notifications_sent: 0,
       };
     }
@@ -62,6 +79,8 @@ export class PanicService {
     return {
       success: true,
       message: `Panic alert sent to ${notifications.length} contacts`,
+      panic_alert_id: userId,
+      triggered_at: now.toISOString(),
       notifications_sent: notifications.length,
       contacts_notified: notifications,
       location: {
@@ -69,6 +88,81 @@ export class PanicService {
         longitude: data.longitude,
         maps_link: googleMapsLink,
       },
+    };
+  }
+
+  async cancelPanic(userId: string, data: CancelPanicInput) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId, deleted_at: null },
+      select: {
+        id: true,
+        panic_is_active: true,
+        emergency_pin_hash: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    if (!user.panic_is_active) {
+      throw new NotFoundError("No active panic alert found");
+    }
+
+    if (!user.emergency_pin_hash) {
+      throw new BadRequestError("Emergency PIN is not configured for this user");
+    }
+
+    const inputPin = data.emergency_pin ?? data.emergency_code;
+    if (!inputPin) {
+      throw new BadRequestError("Emergency PIN is required");
+    }
+
+    const isValidPin = verifyEmergencyPin(inputPin, user.emergency_pin_hash);
+    if (!isValidPin) {
+      throw new BadRequestError("Invalid emergency PIN");
+    }
+
+    const cancelledAt = new Date();
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        panic_is_active: false,
+        panic_cancelled_at: cancelledAt,
+      },
+    });
+
+    return {
+      success: true,
+      message: "Panic alert cancelled successfully",
+      cancelled_at: cancelledAt.toISOString(),
+    };
+  }
+
+  async getActivePanic(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId, deleted_at: null },
+      select: {
+        panic_is_active: true,
+        panic_triggered_at: true,
+        panic_cancelled_at: true,
+        panic_latitude: true,
+        panic_longitude: true,
+        panic_message: true,
+      },
+    });
+
+    if (!user || !user.panic_is_active) {
+      return null;
+    }
+
+    return {
+      is_active: user.panic_is_active,
+      triggered_at: user.panic_triggered_at,
+      cancelled_at: user.panic_cancelled_at,
+      latitude: user.panic_latitude,
+      longitude: user.panic_longitude,
+      message: user.panic_message,
     };
   }
 }

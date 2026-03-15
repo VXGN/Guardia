@@ -11,4 +11,9 @@ export class PanicController {
     const result = await panicService.triggerPanic(req.uid!, req.body);
     sendSuccess(res, result, result.message);
   });
+
+  cancel = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await panicService.cancelPanic(req.uid!, req.body);
+    sendSuccess(res, result, result.message);
+  });
 }
