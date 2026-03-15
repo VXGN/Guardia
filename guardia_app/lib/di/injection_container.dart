@@ -15,7 +15,6 @@ import 'package:guardia_app/features/companion/domain/repositories/trusted_conta
 import 'package:guardia_app/features/companion/data/repositories/journey_repository_impl.dart' as companion_impl;
 import 'package:guardia_app/features/companion/data/repositories/trusted_contact_repository_impl.dart' as companion_impl_contact;
 import 'package:guardia_app/features/companion/data/datasources/journey_remote_data_source.dart';
-import 'package:guardia_app/features/companion/data/datasources/trusted_contact_local_data_source.dart';
 import 'package:guardia_app/features/companion/domain/usecases/get_trusted_contacts.dart' as companion_uc;
 import 'package:guardia_app/features/companion/domain/usecases/add_trusted_contact.dart' as companion_uc_add;
 import 'package:guardia_app/features/companion/domain/usecases/update_trusted_contact.dart' as companion_uc_update;
@@ -144,13 +143,10 @@ Future<void> init() async {
     () => companion_impl.JourneyRepositoryImpl(remoteDataSource: sl()),
   );
   sl.registerLazySingleton<companion_repo_contact.TrustedContactRepository>(
-    () => companion_impl_contact.TrustedContactRepositoryImpl(localDataSource: sl()),
+    () => companion_impl_contact.TrustedContactRepositoryImpl(apiClient: sl()),
   );
   sl.registerLazySingleton<JourneyRemoteDataSource>(
     () => JourneyRemoteDataSourceImpl(apiClient: sl()),
-  );
-  sl.registerLazySingleton<TrustedContactLocalDataSource>(
-    () => TrustedContactLocalDataSourceImpl(sharedPreferences: sl()),
   );
 
   // Features - Auth

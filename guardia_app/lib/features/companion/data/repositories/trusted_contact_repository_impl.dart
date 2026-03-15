@@ -1,82 +1,89 @@
 import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/failures.dart';
-import 'package:guardia_app/features/companion/data/datasources/trusted_contact_local_data_source.dart';
-import 'package:guardia_app/features/companion/data/models/trusted_contact_model.dart';
+import 'package:guardia_app/core/network/api_client.dart';
+import 'package:guardia_app/core/network/endpoints.dart';
 import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
 import 'package:guardia_app/features/companion/domain/repositories/trusted_contact_repository.dart';
 
 class TrustedContactRepositoryImpl implements TrustedContactRepository {
-  final TrustedContactLocalDataSource localDataSource;
+  final ApiClient apiClient;
 
-  TrustedContactRepositoryImpl({required this.localDataSource});
+  TrustedContactRepositoryImpl({required this.apiClient});
 
   @override
   Future<Either<Failure, List<TrustedContactEntity>>> getContacts() async {
     try {
-      final contacts = await localDataSource.getContacts();
-      
-      // Migration: Ensure all contacts have unique IDs
-      bool hasUpdates = false;
-      for (int i = 0; i < contacts.length; i++) {
-        if (contacts[i].id.isEmpty) {
-          final newId = 'local_migrated_${i}_${DateTime.now().millisecondsSinceEpoch}';
-          contacts[i] = TrustedContactModel.fromEntity(contacts[i].copyWith(id: newId));
-          hasUpdates = true;
-        }
-      }
+      final response = await apiClient.get(Endpoints.trustedContacts);
+      final body = response.data;
+      final dynamic rawData = body is Map<String, dynamic> ? body['data'] : null;
+      final List<dynamic> items = rawData is List ? rawData : <dynamic>[];
 
-      if (hasUpdates) {
-        await localDataSource.saveContacts(contacts);
-      }
-      
-      return Right(contacts.cast<TrustedContactEntity>());
+      final contacts = items
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (item) => TrustedContactEntity(
+              id: (item['id'] ?? '').toString(),
+              userId: (item['user_id'] ?? '').toString(),
+              contactName: (item['contact_name'] ?? '').toString(),
+              contactPhone: (item['contact_phone'] ?? '').toString(),
+              contactEmail: item['contact_email']?.toString(),
+              relationship: item['relationship']?.toString(),
+              isActive: (item['is_active'] as bool?) ?? true,
+              createdAt: DateTime.tryParse((item['created_at'] ?? '').toString()) ?? DateTime.now(),
+              updatedAt: DateTime.tryParse((item['updated_at'] ?? '').toString()),
+            ),
+          )
+          .toList();
+
+      return Right(contacts);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, void>> addContact(TrustedContactEntity contact) async {
     try {
-      final contacts = await localDataSource.getContacts();
-      // Generate ID if missing (common for local/mock data)
-      final contactWithId = contact.id.isEmpty 
-          ? contact.copyWith(id: 'local_${DateTime.now().millisecondsSinceEpoch}')
-          : contact;
-      final model = TrustedContactModel.fromEntity(contactWithId);
-      contacts.add(model);
-      await localDataSource.saveContacts(contacts);
+      await apiClient.post(
+        Endpoints.trustedContacts,
+        data: {
+          'contact_name': contact.contactName,
+          'contact_phone': contact.contactPhone,
+          if (contact.contactEmail != null && contact.contactEmail!.isNotEmpty)
+            'contact_email': contact.contactEmail,
+        },
+      );
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, void>> updateContact(TrustedContactEntity contact) async {
     try {
-      final contacts = await localDataSource.getContacts();
-      final index = contacts.indexWhere((c) => c.id == contact.id);
-      if (index != -1) {
-        contacts[index] = TrustedContactModel.fromEntity(contact);
-        await localDataSource.saveContacts(contacts);
-        return const Right(null);
-      }
-      return const Left(CacheFailure('Contact not found'));
+      await apiClient.put(
+        '${Endpoints.trustedContacts}/${contact.id}',
+        data: {
+          'contact_name': contact.contactName,
+          'contact_phone': contact.contactPhone,
+          'contact_email': contact.contactEmail,
+          'is_active': contact.isActive,
+        },
+      );
+      return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, void>> deleteContact(String id) async {
     try {
-      final contacts = await localDataSource.getContacts();
-      contacts.removeWhere((c) => c.id == id);
-      await localDataSource.saveContacts(contacts);
+      await apiClient.delete('${Endpoints.trustedContacts}/$id');
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

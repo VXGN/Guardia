@@ -124,22 +124,20 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
        return;
     }
 
-    print('SOS Status: Cancelling session ${state.session!.id}...');
-    emit(state.copyWith(status: PanicStatus.cancelling));
+    final sessionId = state.session!.id;
+    print('SOS Status: Cancelling session $sessionId...');
+
+    // Close SOS immediately on UI while backend cancellation is processed.
+    _stopLocationStreaming();
+    panicAlertService.stop();
+    emit(state.copyWith(status: PanicStatus.idle, session: null));
 
     try {
-      await cancelPanicUseCase(sessionId: state.session!.id);
-      
+      await cancelPanicUseCase(sessionId: sessionId);
       print('SOS Session Cancelled successfully.');
-      _stopLocationStreaming();
-      panicAlertService.stop();
-      emit(state.copyWith(status: PanicStatus.idle, session: null));
     } catch (e) {
-      print('SOS Cancel Error: $e');
-      emit(state.copyWith(
-        status: PanicStatus.failure,
-        errorMessage: 'Gagal mengakhiri darurat: $e',
-      ));
+      // Keep the UI closed; backend/network failure should not re-open SOS session.
+      print('SOS Cancel Error (non-blocking): $e');
     }
   }
 
