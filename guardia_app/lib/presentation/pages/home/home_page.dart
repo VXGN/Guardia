@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
+import 'package:guardia_app/domain/entities/heatmap_cluster.dart';
+import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
+import 'package:guardia_app/presentation/bloc/risk/risk_event.dart';
+import 'package:guardia_app/presentation/bloc/risk/risk_state.dart';
 import 'package:guardia_app/presentation/widgets/journey/active_navigation_overlay.dart';
 import 'package:guardia_app/presentation/widgets/journey/routing_options_sheet.dart';
 import 'package:latlong2/latlong.dart';
@@ -16,16 +21,42 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // Mataram city center as default/initial location
   static const LatLng _initialCenter = LatLng(-8.5830695, 116.1155455);
+  static const double _riskRadiusMeters = 5000;
   final MapController _mapController = MapController();
 
   final List<CircleMarker> _riskZones = [];
   bool _isNavigationActive = false;
+  int _clusterCount = 0;
+  int _riskScoreCount = 0;
+  double _maxRiskScore = 0.0;
+  String? _riskError;
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _setupMockRiskZones();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      final riskBloc = context.read<RiskBloc>();
+      riskBloc.add(
+        LoadHeatmapRequested(
+          latitude: _initialCenter.latitude,
+          longitude: _initialCenter.longitude,
+          radiusMeters: _riskRadiusMeters,
+        ),
+      );
+      riskBloc.add(
+        LoadAreaRiskSummaryRequested(
+          _initialCenter.latitude,
+          _initialCenter.longitude,
+          radiusMeters: _riskRadiusMeters,
+        ),
+      );
+    });
   }
 
   @override
@@ -34,41 +65,66 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  /// Sets up mock heatmap zones to simulate the design.
-  void _setupMockRiskZones() {
-    _riskZones.addAll([
-      CircleMarker(
-        point: const LatLng(-8.5830695, 116.1155455),
-        radius: 300,
-        useRadiusInMeter: true,
-        color: Colors.orange.withValues(alpha: 0.25),
-        borderColor: Colors.orange.withValues(alpha: 0.4),
-        borderStrokeWidth: 1,
-      ),
-      CircleMarker(
-        point: const LatLng(-8.5700, 116.1200),
-        radius: 600,
-        useRadiusInMeter: true,
-        color: Colors.red.withValues(alpha: 0.20),
-        borderColor: Colors.red.withValues(alpha: 0.4),
-        borderStrokeWidth: 1,
-      ),
-      CircleMarker(
-        point: const LatLng(-8.5900, 116.1000),
-        radius: 400,
-        useRadiusInMeter: true,
-        color: Colors.yellow.withValues(alpha: 0.22),
-        borderColor: Colors.yellow.withValues(alpha: 0.45),
-        borderStrokeWidth: 1,
-      ),
-    ]);
+  void _setHeatmapClusters(List<HeatmapCluster> clusters) {
+    _riskZones
+      ..clear()
+      ..addAll(
+        clusters.map(
+          (cluster) {
+            final color = _colorForIntensity(cluster.intensity);
+            return CircleMarker(
+              point: LatLng(cluster.centerLatBlurred, cluster.centerLngBlurred),
+              radius: cluster.radiusMeters.toDouble(),
+              useRadiusInMeter: true,
+              color: color.withValues(alpha: 0.22),
+              borderColor: color.withValues(alpha: 0.45),
+              borderStrokeWidth: 1,
+            );
+          },
+        ),
+      );
+    _clusterCount = clusters.length;
+  }
+
+  Color _colorForIntensity(String intensity) {
+    switch (intensity.toLowerCase()) {
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.orange;
+      case 'medium':
+        return Colors.yellow.shade700;
+      case 'low':
+      default:
+        return Colors.green;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
+    return BlocListener<RiskBloc, RiskState>(
+      listener: (context, state) {
+        if (state is HeatmapLoaded) {
+          setState(() {
+            _riskError = null;
+            _setHeatmapClusters(state.clusters);
+          });
+        } else if (state is AreaRiskSummaryLoaded) {
+          setState(() {
+            _riskError = null;
+            _riskScoreCount = (state.summary['risk_score_count'] as num?)?.toInt() ?? 0;
+            _maxRiskScore = (state.summary['max_risk_score'] as num?)?.toDouble() ?? 0.0;
+            _clusterCount = (state.summary['heatmap_cluster_count'] as num?)?.toInt() ?? _clusterCount;
+          });
+        } else if (state is RiskError) {
+          setState(() {
+            _riskError = state.message;
+          });
+        }
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
           // 1. OpenStreetMap Background
           FlutterMap(
             mapController: _mapController,
@@ -202,6 +258,66 @@ class _HomePageState extends State<HomePage> {
                 });
               },
             ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+            child: _RiskSummaryCard(
+              clusterCount: _clusterCount,
+              riskScoreCount: _riskScoreCount,
+              maxRiskScore: _maxRiskScore,
+              errorMessage: _riskError,
+            ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+}
+
+class _RiskSummaryCard extends StatelessWidget {
+  const _RiskSummaryCard({
+    required this.clusterCount,
+    required this.riskScoreCount,
+    required this.maxRiskScore,
+    this.errorMessage,
+  });
+
+  final int clusterCount;
+  final int riskScoreCount;
+  final double maxRiskScore;
+  final String? errorMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.insights, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              errorMessage ??
+                  'Risk: ${maxRiskScore.toStringAsFixed(1)} | Zones: $clusterCount | Segments: $riskScoreCount',
+              style: TextStyle(
+                color: errorMessage != null ? AppColors.error : const Color(0xFF1E293B),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );

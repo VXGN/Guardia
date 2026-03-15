@@ -21,7 +21,11 @@ class RiskBloc extends Bloc<RiskEvent, RiskState> {
     Emitter<RiskState> emit,
   ) async {
     emit(RiskLoading());
-    final result = await getHeatmapUseCase();
+    final result = await getHeatmapUseCase(
+      latitude: event.latitude,
+      longitude: event.longitude,
+      radiusMeters: event.radiusMeters,
+    );
     result.fold(
       (failure) => emit(RiskError(failure.message)),
       (clusters) => emit(HeatmapLoaded(clusters)),
@@ -36,6 +40,7 @@ class RiskBloc extends Bloc<RiskEvent, RiskState> {
     final result = await getRiskSummaryUseCase(
       latitude: event.latitude,
       longitude: event.longitude,
+      radiusMeters: event.radiusMeters,
     );
     result.fold(
       (failure) => emit(RiskError(failure.message)),
