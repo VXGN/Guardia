@@ -1,5 +1,5 @@
 class Endpoints {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'https://guardia-be.vercel.app/';
   static const String _apiPrefix = '/api';
 
   // Auth
