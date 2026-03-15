@@ -12,8 +12,18 @@ export class PanicController {
     sendSuccess(res, result, result.message);
   });
 
+  start = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await panicService.triggerPanic(req.uid!, req.body);
+    sendSuccess(res, result, "Panic session started");
+  });
+
   cancel = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const result = await panicService.cancelPanic(req.uid!, req.body);
     sendSuccess(res, result, result.message);
+  });
+
+  updateLocation = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await panicService.updatePanicLocation(req.uid!, req.body);
+    sendSuccess(res, result, "Panic location updated");
   });
 }

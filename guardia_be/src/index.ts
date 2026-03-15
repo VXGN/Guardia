@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { env } from "./config/env";
 import { apiRouter } from "./routes";
+import { panicRoutes } from "./routes/panic.routes";
 import { errorHandler } from "./middlewares/error.middleware";
 import { notFoundHandler } from "./middlewares/not-found.middleware";
 import { setupSwagger } from "./config/swagger";
@@ -41,6 +42,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api", apiRouter);
+app.use("/panic", panicRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
