@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/domain/entities/trusted_contact.dart';
-import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_bloc.dart';
-import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_event.dart';
-import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_state.dart';
+import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
+import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
 
 class TrustedContactsPage extends StatefulWidget {
   const TrustedContactsPage({super.key});
@@ -18,7 +16,7 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
   @override
   void initState() {
     super.initState();
-    context.read<TrustedContactBloc>().add(const LoadTrustedContactsRequested());
+    context.read<CompanionBloc>().add(const TrustedContactsRequested());
   }
 
   @override
@@ -35,13 +33,13 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: BlocBuilder<TrustedContactBloc, TrustedContactState>(
+      body: BlocBuilder<CompanionBloc, CompanionState>(
         builder: (context, state) {
-          if (state is TrustedContactLoading) {
+          if (state.isLoadingContacts) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is TrustedContactError) {
-            return Center(child: Text('Error: ${state.message}'));
-          } else if (state is TrustedContactsLoaded) {
+          } else if (state.errorMessage != null && state.contacts.isEmpty) {
+            return Center(child: Text('Error: ${state.errorMessage}'));
+          } else {
             if (state.contacts.isEmpty) {
               return _buildEmptyState();
             }
@@ -53,7 +51,6 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
               },
             );
           }
-          return const Center(child: CircularProgressIndicator());
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -87,7 +84,7 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
     );
   }
 
-  Widget _buildContactCard(TrustedContact contact) {
+  Widget _buildContactCard(TrustedContactEntity contact) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -136,7 +133,7 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
           ElevatedButton(
             onPressed: () {
               if (nameController.text.isNotEmpty && phoneController.text.isNotEmpty) {
-                context.read<TrustedContactBloc>().add(AddTrustedContactRequested(
+                context.read<CompanionBloc>().add(TrustedContactAdded(
                       contactName: nameController.text,
                       contactPhone: phoneController.text,
                     ));
@@ -151,7 +148,7 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
     );
   }
 
-  void _showDeleteConfirm(BuildContext context, TrustedContact contact) {
+  void _showDeleteConfirm(BuildContext context, TrustedContactEntity contact) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -162,7 +159,7 @@ class _TrustedContactsPageState extends State<TrustedContactsPage> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              context.read<TrustedContactBloc>().add(DeleteTrustedContactRequested(contact.id));
+              context.read<CompanionBloc>().add(TrustedContactDeleted(contact.id));
               Navigator.pop(ctx);
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
