@@ -1,7 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_event.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_state.dart';
 
 class ReportIncidentPage extends StatefulWidget {
   const ReportIncidentPage({super.key});
@@ -32,28 +36,45 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: CircleAvatar(
-            backgroundColor: Colors.grey[100],
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
-              onPressed: () => context.pop(),
+    debugPrint('DEBUG: Building ReportIncidentPage');
+    return BlocConsumer<ReportBloc, ReportState>(
+      listener: (context, state) {
+        if (state.submitStatus == ReportStatus.success) {
+          context.pushNamed('report_success');
+        } else if (state.submitStatus == ReportStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? 'An error occurred'),
+              backgroundColor: AppColors.error,
             ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state.submitStatus == ReportStatus.loading;
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: CircleAvatar(
+                backgroundColor: Colors.grey[100],
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
+                  onPressed: () => context.pop(),
+                ),
+              ),
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            toolbarHeight: 80,
           ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 80,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             const Text(
               'Report an Incident',
               style: TextStyle(
@@ -80,12 +101,13 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.1,
+                childAspectRatio: 1.15,
               ),
               itemCount: _categories.length,
               itemBuilder: (context, index) {
                 final cat = _categories[index];
                 final isSelected = _selectedCategory == (cat['name'] as String);
+                final color = cat['color'] as Color;
                 
                 return GestureDetector(
                   onTap: () {
@@ -93,27 +115,38 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                       _selectedCategory = cat['name'] as String;
                     });
                   },
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFF8FAFC) : const Color(0xFFF8FAFC),
+                      color: isSelected ? color : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(24),
+                      boxShadow: isSelected ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        )
+                      ] : [],
                       border: Border.all(
-                        color: isSelected ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
+                        color: isSelected ? color : const Color(0xFFF1F5F9),
+                        width: 1.5,
                       ),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           padding: const EdgeInsets.all(12),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             cat['icon'] as IconData,
-                            color: cat['color'] as Color,
-                            size: 20,
+                            color: isSelected ? Colors.white : color,
+                            size: 24,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -121,9 +154,9 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                           cat['name'] as String,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? const Color(0xFF334155) : const Color(0xFF64748B),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : const Color(0xFF334155),
                           ),
                         ),
                       ],
@@ -135,21 +168,28 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
             const SizedBox(height: 32),
             // Location Box
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.location_on, color: Colors.black, size: 18),
+                    child: const Icon(Icons.location_on, color: AppColors.primary, size: 22),
                   ),
                   const SizedBox(width: 16),
                   const Expanded(
@@ -157,40 +197,52 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'CURRENT LAYOUT ZONE',
+                          'INCIDENT LOCATION',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF94A3B8),
-                            letterSpacing: 0.5,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        SizedBox(height: 4),
                         Text(
-                          '1240 Market St, Plaza...',
+                          '1240 Market St, San Francisco',
                           style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF334155),
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
                 ],
               ),
             ),
             const SizedBox(height: 24),
             // Anonymity Toggle
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                gradient: LinearGradient(
+                  colors: _isAnonymous 
+                    ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                    : [const Color(0xFFF8FAFC), const Color(0xFFF8FAFC)],
+                ),
                 borderRadius: BorderRadius.circular(24),
+                boxShadow: _isAnonymous ? [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  )
+                ] : [],
               ),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -198,35 +250,30 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                           'Submit Anonymously',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
+                            fontWeight: FontWeight.bold,
+                            color: _isAnonymous ? Colors.white : const Color(0xFF1E293B),
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
-                          'Your identity will be completely hidden from authorities.',
+                          'Keep your identity hidden from authorities and secondary responders.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
-                            height: 1.4,
+                            color: _isAnonymous ? Colors.white.withValues(alpha: 0.7) : const Color(0xFF64748B),
+                            height: 1.5,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Transform.scale(
-                    scale: 0.8,
-                    child: Switch(
-                      value: _isAnonymous,
-                      onChanged: (value) {
-                        setState(() {
-                          _isAnonymous = value;
-                        });
-                      },
-                      activeThumbColor: const Color(0xFF10B981), // Emerald
-                      inactiveThumbColor: Colors.white,
-                      inactiveTrackColor: Colors.grey[300],
-                    ),
+                  Switch.adaptive(
+                    value: _isAnonymous,
+                    onChanged: (value) {
+                      setState(() {
+                        _isAnonymous = value;
+                      });
+                    },
+                    activeThumbColor: const Color(0xFF10B981),
                   ),
                 ],
               ),
@@ -243,47 +290,83 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
             const SizedBox(height: 12),
             TextField(
               controller: _descriptionController,
-              maxLines: 4,
+              maxLines: 5,
+              style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
               decoration: InputDecoration(
-                hintText: 'What happened? Provide details...',
+                hintText: 'Provide as many details as possible to help responders...',
                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(color: Color(0xFFF1F5F9)),
-                ),
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.all(24),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(color: Color(0xFFF1F5F9)),
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: Color(0xFFF1F5F9), width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
                 ),
-                contentPadding: const EdgeInsets.all(20),
               ),
             ),
             const SizedBox(height: 40),
-            CustomButton(
-              text: 'Submit Report',
-              onPressed: () {
-                if (_selectedCategory == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select a category')),
-                  );
-                  return;
-                }
-                context.push('/report-success');
-              },
-              backgroundColor: AppColors.error,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.error.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: CustomButton(
+                text: isLoading ? 'SUBMITTING...' : 'SUBMIT INCIDENT REPORT',
+                onPressed: () {
+                  if (isLoading) {
+                    return;
+                  }
+
+                  if (_selectedCategory == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a category first'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final bloc = context.read<ReportBloc>();
+                  
+                  // Fill the Bloc state first
+                  bloc.add(ReportCategorySelected(_selectedCategory!));
+                  bloc.add(ReportLocationTimeUpdated(
+                    lat: -8.5830695,
+                    lng: 116.1155455,
+                    locationLabel: '1240 Market St, San Francisco',
+                    time: DateTime.now(),
+                  ));
+                  bloc.add(ReportDetailsUpdated(
+                    description: _descriptionController.text.trim(),
+                  ));
+                  bloc.add(ReportPrivacyMediaUpdated(
+                    isAnonymous: _isAnonymous,
+                    mediaFiles: const [], // TODO: Add media support if needed
+                  ));
+                  
+                  // Finally submit
+                  bloc.add(ReportSubmitted());
+                },
+                backgroundColor: AppColors.error,
+              ),
             ),
             const SizedBox(height: 120),
-              ],
-            ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
+  },
+);
   }
 }

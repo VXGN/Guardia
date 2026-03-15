@@ -8,17 +8,22 @@ import 'package:guardia_app/presentation/pages/onboarding/permission_request_pag
 import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_success_page.dart';
 import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
+import 'package:guardia_app/presentation/pages/reports/report_detail_page.dart';
+import 'package:guardia_app/features/reports/domain/entities/report_entity.dart';
 import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
 import 'package:guardia_app/presentation/pages/profile/notifications_page.dart';
 import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
 import 'package:guardia_app/presentation/pages/journey/active_journey_page.dart';
 import 'package:guardia_app/presentation/pages/contacts/trusted_contacts_page.dart';
 import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
+import 'package:guardia_app/presentation/pages/journey/companion_chat_page.dart';
+import 'package:guardia_app/presentation/pages/journey/companion_call_page.dart';
 
 
 /// GoRouter instance for Guardia app navigation.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
+  debugLogDiagnostics: true,
   routes: [
     GoRoute(
       path: '/',
@@ -71,13 +76,13 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const AuthorityLoginPage(),
     ),
     GoRoute(
-      path: '/report-success',
-      name: 'report-success',
+      path: '/report_success',
+      name: 'report_success',
       builder: (context, state) => const ReportSuccessPage(),
     ),
     GoRoute(
-      path: '/report',
-      name: 'report',
+      path: '/report_incident',
+      name: 'report_incident',
       builder: (context, state) => const ReportIncidentPage(),
     ),
     GoRoute(
@@ -89,11 +94,37 @@ final GoRouter appRouter = GoRouter(
       path: '/my_reports',
       name: 'my_reports',
       builder: (context, state) => const MyReportsPage(),
+      routes: [
+        GoRoute(
+          name: 'report_detail',
+          path: 'report_detail',
+          builder: (context, state) {
+            final report = state.extra as ReportEntity;
+            return ReportDetailPage(report: report);
+          },
+        ),
+      ],
     ),
     GoRoute(
       path: '/notifications',
       name: 'notifications',
       builder: (context, state) => const NotificationsPage(),
+    ),
+    GoRoute(
+      path: '/companion_chat/:companionId',
+      name: 'companion_chat',
+      builder: (context, state) {
+        final id = state.pathParameters['companionId'] ?? '1';
+        return CompanionChatPage(companionId: id);
+      },
+    ),
+    GoRoute(
+      path: '/companion_call/:companionId',
+      name: 'companion_call',
+      builder: (context, state) {
+        final id = state.pathParameters['companionId'] ?? '1';
+        return CompanionCallPage(companionId: id);
+      },
     ),
   ],
 );

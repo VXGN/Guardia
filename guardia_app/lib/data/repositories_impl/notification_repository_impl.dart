@@ -17,7 +17,10 @@ class NotificationRepositoryImpl implements NotificationRepository {
     try {
       final response = await apiClient.get(Endpoints.notifications);
       final dynamic responseData = response.data;
-      final notifications = (responseData['data'] as List)
+      final notifications =
+          ((responseData['data'] as Map<String, dynamic>)['notifications']
+                  as List<dynamic>? ??
+              const <dynamic>[])
           .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return Right(notifications);

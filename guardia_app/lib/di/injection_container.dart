@@ -9,12 +9,13 @@ import 'package:guardia_app/core/services/permission_service.dart';
 import 'package:guardia_app/core/services/secure_storage_service.dart';
 
 // Repositories
+import 'package:guardia_app/features/reports/data/datasources/report_remote_data_source.dart';
 import 'package:guardia_app/features/auth/data/datasources/firebase_auth_data_source.dart';
+import 'package:guardia_app/features/reports/data/repositories/report_repository_impl.dart';
 import 'package:guardia_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/journey_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/notification_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/panic_repository_impl.dart';
-import 'package:guardia_app/data/repositories_impl/report_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/risk_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/routing_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/trusted_contact_repository_impl.dart';
@@ -23,7 +24,7 @@ import 'package:guardia_app/features/auth/domain/repositories/auth_repository.da
 import 'package:guardia_app/domain/repositories/journey_repository.dart';
 import 'package:guardia_app/domain/repositories/notification_repository.dart';
 import 'package:guardia_app/domain/repositories/panic_repository.dart';
-import 'package:guardia_app/domain/repositories/report_repository.dart';
+import 'package:guardia_app/features/reports/domain/repositories/report_repository.dart';
 import 'package:guardia_app/domain/repositories/risk_repository.dart';
 import 'package:guardia_app/domain/repositories/routing_repository.dart';
 import 'package:guardia_app/domain/repositories/trusted_contact_repository.dart';
@@ -42,9 +43,10 @@ import 'package:guardia_app/domain/usecases/notifications/get_notifications.dart
 import 'package:guardia_app/domain/usecases/panic/cancel_panic.dart';
 import 'package:guardia_app/domain/usecases/panic/trigger_panic.dart';
 // UseCases - Reports
-import 'package:guardia_app/domain/usecases/reports/create_report.dart';
-import 'package:guardia_app/domain/usecases/reports/get_my_reports.dart';
-import 'package:guardia_app/domain/usecases/reports/get_report_detail.dart';
+import 'package:guardia_app/features/reports/domain/usecases/create_report.dart';
+import 'package:guardia_app/features/reports/domain/usecases/get_my_reports.dart';
+import 'package:guardia_app/features/reports/domain/usecases/get_all_reports.dart';
+import 'package:guardia_app/features/reports/domain/usecases/get_report_detail.dart';
 // UseCases - Risk/Routing
 import 'package:guardia_app/domain/usecases/risk/get_area_risk_summary.dart';
 import 'package:guardia_app/domain/usecases/risk/get_heatmap_clusters.dart';
@@ -65,7 +67,7 @@ import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
 import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
 import 'package:guardia_app/presentation/bloc/panic/panic_bloc.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
-import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
 import 'package:guardia_app/presentation/bloc/routing/routing_bloc.dart';
 
@@ -105,9 +107,10 @@ Future<void> init() async {
   );
   sl.registerFactory(
     () => ReportBloc(
-      createReportUseCase: sl(),
-      getMyReportsUseCase: sl(),
-      getReportDetailUseCase: sl(),
+      createReport: sl(),
+      getMyReports: sl(),
+      getAllReports: sl(),
+      getReportDetail: sl(),
     ),
   );
   sl.registerFactory(
@@ -160,6 +163,7 @@ Future<void> init() async {
   // Auth UseCases removed, directly using AuthRepository in Bloc
   sl.registerLazySingleton(() => CreateReport(sl()));
   sl.registerLazySingleton(() => GetMyReports(sl()));
+  sl.registerLazySingleton(() => GetAllReports(sl()));
   sl.registerLazySingleton(() => GetReportDetail(sl()));
   sl.registerLazySingleton(() => StartJourney(sl()));
   sl.registerLazySingleton(() => GetActiveJourney(sl()));
@@ -186,10 +190,11 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(sl()),
   );
+  sl.registerLazySingleton<ReportRemoteDataSource>(
+    () => ReportRemoteDataSourceImpl(),
+  );
   sl.registerLazySingleton<ReportRepository>(
-    () => ReportRepositoryImpl(
-      apiClient: sl(),
-    ),
+    () => ReportRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<JourneyRepository>(
     () => JourneyRepositoryImpl(

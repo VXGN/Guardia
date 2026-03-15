@@ -64,11 +64,11 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Perjalanan selesai. Selamat tiba dengan selamat! 🎉'), backgroundColor: AppColors.success),
           );
-          context.go('/home');
+          context.goNamed('home');
         }
         if (state is JourneyCancelled) {
           _elapsedTimer?.cancel();
-          context.go('/home');
+          context.goNamed('home');
         }
       },
       builder: (context, state) {
@@ -204,13 +204,18 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
                 ),
                 title: Text('Companion ${contact.trustedContactId}', style: const TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text('ID: ${contact.trustedContactId}', style: TextStyle(color: Colors.grey[600])),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text('Watching', style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 11)),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chat_outlined, color: AppColors.primary, size: 22),
+                      onPressed: () => context.pushNamed('companion_chat', pathParameters: {'companionId': contact.trustedContactId}),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.phone_outlined, color: AppColors.primary, size: 22),
+                      onPressed: () => context.pushNamed('companion_call', pathParameters: {'companionId': contact.trustedContactId}),
+                    ),
+                  ],
                 ),
               )),
         ],
@@ -329,7 +334,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
             Text('Start a journey from the Home screen to track it here.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600])),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.goNamed('home'),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
               child: const Text('Go to Home', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),

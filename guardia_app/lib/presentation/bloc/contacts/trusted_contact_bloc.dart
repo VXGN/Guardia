@@ -45,6 +45,7 @@ class TrustedContactBloc extends Bloc<TrustedContactEvent, TrustedContactState> 
       contactName: event.contactName,
       contactPhone: event.contactPhone,
       contactEmail: event.contactEmail,
+      relationship: event.relationship,
     );
     result.fold(
       (failure) => emit(TrustedContactError(failure.message)),
@@ -62,6 +63,7 @@ class TrustedContactBloc extends Bloc<TrustedContactEvent, TrustedContactState> 
       contactName: event.contactName,
       contactPhone: event.contactPhone,
       contactEmail: event.contactEmail,
+      relationship: event.relationship,
       isActive: event.isActive,
     );
     result.fold(

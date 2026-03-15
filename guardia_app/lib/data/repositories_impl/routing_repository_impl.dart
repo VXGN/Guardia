@@ -20,20 +20,37 @@ class RoutingRepositoryImpl implements RoutingRepository {
     required double destinationLng,
   }) async {
     try {
-      final response = await apiClient.get(
+      final response = await apiClient.post(
         Endpoints.safeRoute,
-        queryParameters: {
-          'origin_lat': originLat,
-          'origin_lng': originLng,
-          'destination_lat': destinationLat,
-          'destination_lng': destinationLng,
+        data: {
+          'start_lat': originLat,
+          'start_lng': originLng,
+          'end_lat': destinationLat,
+          'end_lng': destinationLng,
         },
       );
 
       final dynamic responseData = response.data;
-      final routes = (responseData['data'] as List)
-          .map((e) => RouteOptionModel.fromJson(e as Map<String, dynamic>))
+      final routeData = responseData['data'] as Map<String, dynamic>;
+      final points = (routeData['route'] as List<dynamic>? ?? const <dynamic>[])
+          .map((e) => e as Map<String, dynamic>)
           .toList();
+
+      final polyline = points
+          .map((p) => '${p['lat']},${p['lng']}')
+          .join(';');
+
+      final routes = [
+        RouteOptionModel(
+          id: 'safe_route',
+          polyline: polyline,
+          distanceMeters: (routeData['total_distance_meters'] as num?)?.round() ?? 0,
+          durationSeconds:
+              (routeData['estimated_duration_seconds'] as num?)?.round() ?? 0,
+          safetyScore: (routeData['total_risk_score'] as num?)?.toDouble() ?? 0,
+          label: 'Recommended Safe Route',
+        ),
+      ];
       return Right(routes);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to calculate safe routes'));

@@ -1,4 +1,4 @@
-﻿import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -17,9 +17,11 @@ class RiskRepositoryImpl implements RiskRepository {
   @override
   Future<Either<Failure, List<HeatmapCluster>>> getHeatmapClusters() async {
     try {
-      final response = await apiClient.get(Endpoints.heatmapClusters);
+      final response = await apiClient.get(Endpoints.riskAreas);
       final dynamic responseData = response.data;
-      final clusters = (responseData['data'] as List)
+      final clusters = ((responseData['data'] as Map<String, dynamic>)['heatmap_clusters']
+              as List<dynamic>? ??
+          const <dynamic>[])
           .map((e) => HeatmapClusterModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return Right(clusters);
@@ -37,10 +39,10 @@ class RiskRepositoryImpl implements RiskRepository {
   }) async {
     try {
       final response = await apiClient.get(
-        Endpoints.areaRiskSummary,
+        Endpoints.riskAreas,
         queryParameters: {
-          'latitude': latitude,
-          'longitude': longitude,
+          'lat': latitude,
+          'lng': longitude,
         },
       );
       final dynamic responseData = response.data;
@@ -48,10 +50,10 @@ class RiskRepositoryImpl implements RiskRepository {
       final heatmapClusters = (data['heatmap_clusters'] as List<dynamic>? ?? const []);
       final riskScores = (data['risk_scores'] as List<dynamic>? ?? const []);
 
-      double maxRiskScore = 0;
+      double maxRiskScore = 0.0;
       for (final score in riskScores) {
         final value = (score as Map<String, dynamic>)['risk_score'];
-        final parsed = value is num ? value.toDouble() : 0.0;
+        final double parsed = value is num ? value.toDouble() : 0.0;
         if (parsed > maxRiskScore) {
           maxRiskScore = parsed;
         }
@@ -74,12 +76,15 @@ class RiskRepositoryImpl implements RiskRepository {
   @override
   Future<Either<Failure, List<RiskScore>>> getRiskScores(String segmentId) async {
     try {
-      final response = await apiClient.get(
-        Endpoints.riskScores,
-        queryParameters: {'segment_id': segmentId},
-      );
+      final response = await apiClient.get(Endpoints.riskAreas);
       final dynamic responseData = response.data;
-      final scores = (responseData['data'] as List)
+      final rawScores = ((responseData['data'] as Map<String, dynamic>)['risk_scores']
+              as List<dynamic>? ??
+          const <dynamic>[]);
+      final filteredScores = segmentId.isEmpty
+          ? rawScores
+          : rawScores.where((e) => (e as Map<String, dynamic>)['segment_id'] == segmentId);
+      final scores = filteredScores
           .map((e) => RiskScoreModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return Right(scores);

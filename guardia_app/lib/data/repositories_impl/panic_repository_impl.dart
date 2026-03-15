@@ -37,6 +37,11 @@ class PanicRepositoryImpl implements PanicRepository {
       await apiClient.post(Endpoints.cancelPanic);
       return const Right(null);
     } on ServerException catch (e) {
+      final message = e.message?.toLowerCase() ?? '';
+      if (message.contains('not found')) {
+        // Current backend does not expose panic cancellation yet.
+        return const Right(null);
+      }
       return Left(ServerFailure(e.message ?? 'Failed to cancel SOS'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));

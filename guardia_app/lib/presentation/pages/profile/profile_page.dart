@@ -3,11 +3,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
-import 'package:guardia_app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
+import 'package:guardia_app/presentation/bloc/profile/profile_event.dart';
+import 'package:guardia_app/presentation/bloc/profile/profile_state.dart';
 import 'package:go_router/go_router.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ProfileBloc>().add(LoadProfileRequested());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,16 +36,36 @@ class ProfilePage extends StatelessWidget {
         centerTitle: false,
         elevation: 0,
       ),
-      body: BlocBuilder<AuthBloc, AuthState>(
+      body: BlocBuilder<ProfileBloc, ProfileState>(
         builder: (context, state) {
-          if (state.status == AuthStatus.authenticated && state.user != null) {
-            final user = state.user!;
+          if (state is ProfileLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is ProfileError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(state.message, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () => context.read<ProfileBloc>().add(LoadProfileRequested()),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (state is ProfileLoaded) {
+            final user = state.user;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildProfileHeader(user.name ?? 'Citizen', user.email),
+                  _buildProfileHeader(user.fullName ?? 'Citizen', user.email ?? '-'),
                   const SizedBox(height: 32),
                   _buildImpactCard(context),
                   const SizedBox(height: 32),
@@ -46,6 +79,7 @@ class ProfilePage extends StatelessWidget {
               ),
             );
           }
+
           return const Center(child: CircularProgressIndicator());
         },
       ),
@@ -76,7 +110,7 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildImpactCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/impact_dashboard'),
+      onTap: () => context.pushNamed('impact_dashboard'),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -84,7 +118,7 @@ class ProfilePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -128,7 +162,7 @@ class ProfilePage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -136,11 +170,11 @@ class ProfilePage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildListTile(Icons.history, 'My Reports', onTap: () => context.push('/my_reports')),
+          _buildListTile(Icons.history, 'My Reports', onTap: () => context.pushNamed('my_reports')),
           const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildListTile(Icons.people_outline, 'Trusted Contacts', onTap: () => context.push('/trusted_contacts')),
+          _buildListTile(Icons.people_outline, 'Trusted Contacts', onTap: () => context.pushNamed('trusted_contacts')),
           const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildListTile(Icons.notifications_active, 'Notification Inbox', onTap: () => context.push('/notifications')),
+          _buildListTile(Icons.notifications_active, 'Notification Inbox', onTap: () => context.pushNamed('notifications')),
           const Divider(height: 1, indent: 20, endIndent: 20),
           _buildSwitchTile(Icons.notifications_outlined, 'Push Notifications', true),
           const Divider(height: 1, indent: 20, endIndent: 20),

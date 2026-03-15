@@ -1,12 +1,10 @@
-﻿import 'dart:io';
-import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
+﻿import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/core/network/api_client.dart';
 import 'package:guardia_app/core/network/endpoints.dart';
+import 'package:guardia_app/data/mappers/incident_type_mapper.dart';
 import 'package:guardia_app/data/models/incident_report_model.dart';
-import 'package:guardia_app/data/models/report_media_model.dart';
 import 'package:guardia_app/data/models/report_status_log_model.dart';
 import 'package:guardia_app/domain/entities/incident_report.dart';
 import 'package:guardia_app/domain/entities/report_media.dart';
@@ -25,11 +23,15 @@ class ReportRepositoryImpl implements ReportRepository {
     String? locationLabel,
   }) async {
     try {
+      final mappedIncidentType = IncidentTypeMapper.toBackend(incidentType);
+
       final response = await apiClient.post(
         Endpoints.reports,
         data: {
-          'incident_type': incidentType,
-          'description': description,
+          'incident_type': mappedIncidentType,
+          'description': (description == null || description.trim().isEmpty)
+              ? 'No additional description provided.'
+              : description,
           'incident_at': incidentAt.toIso8601String(),
           'latitude': latitude,
           'longitude': longitude,
@@ -43,6 +45,8 @@ class ReportRepositoryImpl implements ReportRepository {
       return Right(report);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to create report'));
+    } on FormatException catch (e) {
+      return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -54,6 +58,11 @@ class ReportRepositoryImpl implements ReportRepository {
     required String filePath,
     required String mediaType,
   }) async {
+    return Left(
+      ServerFailure('Report media upload is not available in current backend API'),
+    );
+
+    /*
     try {
       final file = File(filePath);
       final formData = FormData.fromMap({
@@ -77,14 +86,16 @@ class ReportRepositoryImpl implements ReportRepository {
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
+    */
   }
 
   @override
   Future<Either<Failure, List<IncidentReport>>> getMyReports() async {
     try {
-      final response = await apiClient.get(Endpoints.reports);
+      final response = await apiClient.get(Endpoints.reportsMy);
       final dynamic responseData = response.data;
-      final reports = (responseData['data'] as List)
+      final reports = ((responseData['data'] as Map<String, dynamic>)['reports']
+              as List<dynamic>)
           .map((e) => IncidentReportModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return Right(reports);
@@ -112,9 +123,10 @@ class ReportRepositoryImpl implements ReportRepository {
   @override
   Future<Either<Failure, List<ReportStatusLog>>> getReportStatusLogs(String reportId) async {
     try {
-      final response = await apiClient.get(Endpoints.reportStatusLogs(reportId));
+      final response = await apiClient.get(Endpoints.reportDetail(reportId));
       final dynamic responseData = response.data;
-      final logs = (responseData['data'] as List)
+      final reportData = responseData['data'] as Map<String, dynamic>;
+      final logs = (reportData['report_status_logs'] as List<dynamic>? ?? const [])
           .map((e) => ReportStatusLogModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return Right(logs);

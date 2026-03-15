@@ -12,6 +12,9 @@ class RiskScoreModel extends RiskScore {
   });
 
   factory RiskScoreModel.fromJson(Map<String, dynamic> json) {
+    final calculatedAtRaw =
+        (json['calculated_at'] ?? json['created_at']) as String?;
+
     return RiskScoreModel(
       id: json['id'] as String,
       segmentId: json['segment_id'] as String,
@@ -19,7 +22,9 @@ class RiskScoreModel extends RiskScore {
       riskScore: (json['risk_score'] as num).toDouble(),
       incidentCount: json['incident_count'] as int,
       dominantIncidentType: json['dominant_incident_type'] as String?,
-      calculatedAt: DateTime.parse(json['calculated_at'] as String),
+      calculatedAt: calculatedAtRaw != null
+          ? DateTime.parse(calculatedAtRaw)
+          : DateTime.now(),
       validUntil: json['valid_until'] != null ? DateTime.parse(json['valid_until'] as String) : null,
     );
   }
