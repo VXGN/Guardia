@@ -278,10 +278,12 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               },
               backgroundColor: AppColors.error,
             ),
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
+            const SizedBox(height: 120),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

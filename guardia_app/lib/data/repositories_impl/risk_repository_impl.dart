@@ -44,7 +44,26 @@ class RiskRepositoryImpl implements RiskRepository {
         },
       );
       final dynamic responseData = response.data;
-      return Right(responseData['data'] as Map<String, dynamic>);
+      final data = responseData['data'] as Map<String, dynamic>;
+      final heatmapClusters = (data['heatmap_clusters'] as List<dynamic>? ?? const []);
+      final riskScores = (data['risk_scores'] as List<dynamic>? ?? const []);
+
+      double maxRiskScore = 0;
+      for (final score in riskScores) {
+        final value = (score as Map<String, dynamic>)['risk_score'];
+        final parsed = value is num ? value.toDouble() : 0.0;
+        if (parsed > maxRiskScore) {
+          maxRiskScore = parsed;
+        }
+      }
+
+      final summary = <String, dynamic>{
+        'heatmap_cluster_count': heatmapClusters.length,
+        'risk_score_count': riskScores.length,
+        'max_risk_score': maxRiskScore,
+      };
+
+      return Right(summary);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message ?? 'Failed to load area risk summary'));
     } catch (e) {

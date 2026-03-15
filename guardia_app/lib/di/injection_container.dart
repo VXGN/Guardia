@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -74,6 +75,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 final GetIt sl = GetIt.instance;
 
+const String _defaultGoogleWebClientId =
+  '57902038315-uhgpi18btugbk0u2hajt8o3sq2rnve5a.apps.googleusercontent.com';
+
 Future<void> init() async {
   // External
   final sharedPreferences = await SharedPreferences.getInstance();
@@ -81,7 +85,18 @@ Future<void> init() async {
   sl.registerLazySingleton(() => const FlutterSecureStorage());
   sl.registerLazySingleton(Dio.new);
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  sl.registerLazySingleton<GoogleSignIn>(() => GoogleSignIn());
+  sl.registerLazySingleton<GoogleSignIn>(() {
+    final webClientId = const String.fromEnvironment(
+      'GOOGLE_WEB_CLIENT_ID',
+      defaultValue: _defaultGoogleWebClientId,
+    );
+
+    if (kIsWeb) {
+      return GoogleSignIn(clientId: webClientId);
+    }
+
+    return GoogleSignIn();
+  });
 
   // Features - Auth
   // Bloc

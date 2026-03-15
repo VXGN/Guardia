@@ -1,4 +1,4 @@
-import 'package:permission_handler/permission_handler.dart';
+ import 'package:permission_handler/permission_handler.dart';
 
 class PermissionService {
   /// Checks if all required permissions are granted.

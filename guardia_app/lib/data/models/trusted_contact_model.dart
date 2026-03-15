@@ -7,6 +7,7 @@ class TrustedContactModel extends TrustedContact {
     required super.contactName,
     required super.contactPhone,
     required super.isActive, required super.createdAt, super.contactEmail,
+    super.relationship,
     super.updatedAt,
   });
 
