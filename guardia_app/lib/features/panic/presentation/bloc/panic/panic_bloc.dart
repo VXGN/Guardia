@@ -129,7 +129,7 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
 
     // Close SOS immediately on UI while backend cancellation is processed.
     _stopLocationStreaming();
-    panicAlertService.stop();
+    unawaited(panicAlertService.stop());
     emit(state.copyWith(status: PanicStatus.idle, session: null));
 
     try {
@@ -150,7 +150,7 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
   ) {
     print('SOS Status: Resetting to idle.');
     _stopLocationStreaming();
-    panicAlertService.stop();
+    unawaited(panicAlertService.stop());
     emit(const PanicState());
   }
 
@@ -179,6 +179,7 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
   @override
   Future<void> close() {
     _stopLocationStreaming();
+    unawaited(panicAlertService.stop());
     return super.close();
   }
 }
