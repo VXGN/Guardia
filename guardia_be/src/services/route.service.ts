@@ -21,12 +21,16 @@ interface SafeRouteResponse {
 
 export class RouteService {
   async calculateSafeRoute(
-    coordinates: RouteCoordinates
+    coordinates: RouteCoordinates,
+    authorization?: string
   ): Promise<SafeRouteResponse> {
     try {
       const response = await pythonClient.post<SafeRouteResponse>(
         "/route/safe",
-        coordinates
+        coordinates,
+        {
+          headers: authorization ? { Authorization: authorization } : undefined,
+        }
       );
       return response.data;
     } catch (error) {

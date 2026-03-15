@@ -8,13 +8,16 @@ const analysisService = new AnalysisService();
 export class AnalysisController {
   analyzeRisk = asyncHandler(async (req: Request, res: Response) => {
     const { start_lat, start_lng, end_lat, end_lng } = req.body;
+    const authorization = Array.isArray(req.headers.authorization)
+      ? req.headers.authorization[0]
+      : req.headers.authorization;
 
     const result = await analysisService.analyzeRisk({
       start_lat,
       start_lng,
       end_lat,
       end_lng,
-    });
+    }, authorization);
 
     sendSuccess(res, result, "Risk analysis completed successfully");
   });
