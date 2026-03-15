@@ -10,7 +10,7 @@ import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
 import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
 import 'package:guardia_app/presentation/bloc/panic/panic_bloc.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
-import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
 import 'package:guardia_app/presentation/bloc/routing/routing_bloc.dart';
 import 'package:guardia_app/routes/app_router.dart';

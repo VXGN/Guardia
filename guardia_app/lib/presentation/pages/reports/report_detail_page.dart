@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/domain/entities/incident_report.dart';
+import 'package:guardia_app/features/reports/domain/entities/report_entity.dart';
 
 
 class ReportDetailPage extends StatelessWidget {
-  final IncidentReport report;
+  final ReportEntity report;
 
   const ReportDetailPage({super.key, required this.report});
 
@@ -121,7 +121,7 @@ class ReportDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Incident #${report.id.substring(0, 8).toUpperCase()}',
+            'Incident #${report.id.length > 8 ? report.id.substring(0, 8).toUpperCase() : report.id.toUpperCase()}',
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -131,7 +131,7 @@ class ReportDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Reported on ${report.incidentAt.day}/${report.incidentAt.month}/${report.incidentAt.year}',
+            'Reported on ${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}',
             style: TextStyle(color: Colors.grey[500], fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
@@ -189,10 +189,10 @@ class ReportDetailPage extends StatelessWidget {
           crossAxisSpacing: 16,
           childAspectRatio: 2.2,
           children: [
-            _buildMetadataCard(Icons.category_rounded, 'TYPE', report.incidentType),
-            _buildMetadataCard(Icons.location_on_rounded, 'LOCATION', report.locationLabel ?? 'Unknown'),
-            _buildMetadataCard(Icons.event_rounded, 'DATE', '${report.incidentAt.day}/${report.incidentAt.month}/${report.incidentAt.year}'),
-            _buildMetadataCard(Icons.access_time_filled_rounded, 'TIME', '${report.incidentAt.hour}:${report.incidentAt.minute.toString().padLeft(2, '0')}'),
+            _buildMetadataCard(Icons.category_rounded, 'TYPE', report.category),
+            _buildMetadataCard(Icons.location_on_rounded, 'LOCATION', report.locationLabel),
+            _buildMetadataCard(Icons.event_rounded, 'DATE', '${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}'),
+            _buildMetadataCard(Icons.access_time_filled_rounded, 'TIME', '${report.timestamp.hour}:${report.timestamp.minute.toString().padLeft(2, '0')}'),
           ],
         ),
         const SizedBox(height: 24),
@@ -258,94 +258,16 @@ class ReportDetailPage extends StatelessWidget {
   }
 
   Widget _buildAdvancedTimeline() {
-    final logs = report.statusLogs;
-    if (logs.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: Text('Initial status: Received. Analysis pending...', style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: logs.length,
-      itemBuilder: (context, index) {
-        final log = logs[index];
-        final isLast = index == logs.length - 1;
-        final isFirst = index == 0;
-        final statusColor = _getStatusColor(log.newStatus);
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: isFirst ? statusColor : Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: isFirst ? statusColor : const Color(0xFFE2E8F0), width: isFirst ? 0 : 2),
-                      boxShadow: isFirst ? [
-                        BoxShadow(color: statusColor.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))
-                      ] : [],
-                    ),
-                    child: isFirst ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
-                  ),
-                  if (!isLast)
-                    Expanded(
-                      child: Container(
-                        width: 2,
-                        color: const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          log.newStatus.toUpperCase(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold, 
-                            fontSize: 14, 
-                            color: isFirst ? statusColor : const Color(0xFF1E293B),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        Text(
-                          '${log.changedAt.hour}:${log.changedAt.minute.toString().padLeft(2, '0')}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      log.notes ?? 'Status transition recorded by system.',
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF64748B), height: 1.4),
-                    ),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    // ReportEntity doesn't have statusLogs yet, showing a simplified version
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Center(
+        child: Text('Current status: ${report.status}. Updates pending...', style: const TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+      ),
     );
   }
 

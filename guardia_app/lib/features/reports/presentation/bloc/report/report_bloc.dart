@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../domain/entities/report_entity.dart';
 import '../../../domain/usecases/create_report.dart';
 import '../../../domain/usecases/get_my_reports.dart';
+import '../../../domain/usecases/get_all_reports.dart';
 import '../../../domain/usecases/get_report_detail.dart';
 import 'report_event.dart';
 import 'report_state.dart';
@@ -10,11 +11,13 @@ import 'report_state.dart';
 class ReportBloc extends Bloc<ReportEvent, ReportState> {
   final CreateReport createReport;
   final GetMyReports getMyReports;
+  final GetAllReports getAllReports;
   final GetReportDetail getReportDetail;
 
   ReportBloc({
     required this.createReport,
     required this.getMyReports,
+    required this.getAllReports,
     required this.getReportDetail,
   }) : super(const ReportState()) {
     on<ReportStarted>(_onReportStarted);
@@ -27,10 +30,12 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<ReportDetailRequested>(_onReportDetailRequested);
     on<ReportTabChanged>(_onTabChanged);
     on<ToggleCreateReport>(_onToggleCreateReport);
+    on<GlobalReportsRequested>(_onGlobalReportsRequested);
   }
 
   void _onReportStarted(ReportStarted event, Emitter<ReportState> emit) {
     emit(const ReportState());
+    add(GlobalReportsRequested());
   }
 
   void _onCategorySelected(ReportCategorySelected event, Emitter<ReportState> emit) {
@@ -121,6 +126,22 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     }
   }
 
+  Future<void> _onGlobalReportsRequested(GlobalReportsRequested event, Emitter<ReportState> emit) async {
+    emit(state.copyWith(globalReportsStatus: ReportStatus.loading));
+    try {
+      final reports = await getAllReports();
+      emit(state.copyWith(
+        globalReports: reports,
+        globalReportsStatus: ReportStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        globalReportsStatus: ReportStatus.failure,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
   Future<void> _onReportDetailRequested(ReportDetailRequested event, Emitter<ReportState> emit) async {
     emit(state.copyWith(detailStatus: ReportStatus.loading));
     try {
@@ -145,6 +166,8 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     ));
     if (newTab == ReportTab.myReports && state.myReports.isEmpty) {
       add(MyReportsRequested());
+    } else if (newTab == ReportTab.community && state.globalReports.isEmpty) {
+      add(GlobalReportsRequested());
     }
   }
 

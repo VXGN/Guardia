@@ -57,6 +57,8 @@ class ReportSubmitted extends ReportEvent {}
 
 class MyReportsRequested extends ReportEvent {}
 
+class GlobalReportsRequested extends ReportEvent {}
+
 class ReportDetailRequested extends ReportEvent {
   final String id;
   const ReportDetailRequested(this.id);

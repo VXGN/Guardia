@@ -1,4 +1,4 @@
-﻿import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart';
 import 'package:guardia_app/core/errors/exceptions.dart';
 import 'package:guardia_app/core/errors/failures.dart';
 import 'package:guardia_app/core/network/api_client.dart';
@@ -50,10 +50,10 @@ class RiskRepositoryImpl implements RiskRepository {
       final heatmapClusters = (data['heatmap_clusters'] as List<dynamic>? ?? const []);
       final riskScores = (data['risk_scores'] as List<dynamic>? ?? const []);
 
-      double maxRiskScore = 0;
+      double maxRiskScore = 0.0;
       for (final score in riskScores) {
         final value = (score as Map<String, dynamic>)['risk_score'];
-        final parsed = value is num ? value.toDouble() : 0;
+        final double parsed = value is num ? value.toDouble() : 0.0;
         if (parsed > maxRiskScore) {
           maxRiskScore = parsed;
         }

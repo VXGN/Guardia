@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/domain/entities/incident_report.dart';
-import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
-import 'package:guardia_app/presentation/bloc/report/report_event.dart';
-import 'package:guardia_app/presentation/bloc/report/report_state.dart';
+import 'package:guardia_app/features/reports/domain/entities/report_entity.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_event.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_state.dart';
 
 class MyReportsPage extends StatefulWidget {
   final bool isEmbedded;
@@ -21,7 +21,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
   @override
   void initState() {
     super.initState();
-    context.read<ReportBloc>().add(LoadMyReportsRequested());
+    context.read<ReportBloc>().add(MyReportsRequested());
   }
 
   @override
@@ -45,19 +45,19 @@ class _MyReportsPageState extends State<MyReportsPage> {
   Widget _buildBody() {
     return BlocBuilder<ReportBloc, ReportState>(
       builder: (context, state) {
-        if (state is ReportLoading) {
+        if (state.myReportsStatus == ReportStatus.loading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (state is ReportError) {
+        if (state.myReportsStatus == ReportStatus.failure) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(state.message, textAlign: TextAlign.center),
+                Text(state.errorMessage ?? 'Failed to load reports', textAlign: TextAlign.center),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () => context.read<ReportBloc>().add(LoadMyReportsRequested()),
+                  onPressed: () => context.read<ReportBloc>().add(MyReportsRequested()),
                   child: const Text('Retry'),
                 ),
               ],
@@ -65,7 +65,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
           );
         }
 
-        final reports = state is MyReportsLoaded ? state.reports : const <IncidentReport>[];
+        final reports = state.myReports;
 
         return Column(
           children: [
@@ -162,7 +162,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
     );
   }
 
-  Widget _buildReportCard(IncidentReport report) {
+  Widget _buildReportCard(ReportEntity report) {
     final statusColor = _getStatusColor(report.status);
     
     return Container(
@@ -214,14 +214,14 @@ class _MyReportsPageState extends State<MyReportsPage> {
                 ),
               ),
               Text(
-                '${report.incidentAt.day}/${report.incidentAt.month}/${report.incidentAt.year}',
+                '${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}',
                 style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500),
               ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            report.incidentType,
+            report.category,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF1E293B)),
           ),
           const SizedBox(height: 6),
@@ -230,7 +230,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
               const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF94A3B8)),
               const SizedBox(width: 4),
               Text(
-                report.locationLabel ?? 'Unknown Location',
+                report.locationLabel,
                 style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
               ),
             ],

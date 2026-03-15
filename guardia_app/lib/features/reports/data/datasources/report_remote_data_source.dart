@@ -4,6 +4,7 @@ import '../models/report_model.dart';
 abstract class ReportRemoteDataSource {
   Future<void> createReport(ReportModel report, List<File> mediaFiles);
   Future<List<ReportModel>> getMyReports();
+  Future<List<ReportModel>> getAllReports();
   Future<ReportModel> getReportDetail(String id);
 }
 
@@ -60,6 +61,53 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
         timestamp: DateTime.now().subtract(const Duration(days: 1)),
         isAnonymous: true,
         status: 'RESOLVED',
+        mediaUrls: const [],
+      ),
+    ];
+  }
+
+  @override
+  Future<List<ReportModel>> getAllReports() async {
+    // Mocking global feed data
+    await Future.delayed(const Duration(seconds: 1));
+    return [
+      ReportModel(
+        id: 'global-1',
+        userId: 'user-99',
+        category: 'Theft',
+        description: 'Someone stole my bicycle at the park. Please be careful!',
+        latitude: -8.5830695,
+        longitude: 116.1155455,
+        locationLabel: 'Taman Sangkareang',
+        timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
+        isAnonymous: false,
+        status: 'RECEIVED',
+        mediaUrls: const [],
+      ),
+      ReportModel(
+        id: 'global-2',
+        userId: 'user-100',
+        category: 'Harassment',
+        description: 'Felt unsafe following a suspicious vehicle on Jl. Udayana.',
+        latitude: -8.5900,
+        longitude: 116.1000,
+        locationLabel: 'Jl. Udayana',
+        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+        isAnonymous: true,
+        status: 'RECEIVED',
+        mediaUrls: const [],
+      ),
+      ReportModel(
+        id: 'global-3',
+        userId: 'user-101',
+        category: 'Natural Disaster',
+        description: 'Heavy flooding near the traditional market.',
+        latitude: -8.5700,
+        longitude: 116.1200,
+        locationLabel: 'Pasar Kebon Roek',
+        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
+        isAnonymous: false,
+        status: 'RECEIVED',
         mediaUrls: const [],
       ),
     ];

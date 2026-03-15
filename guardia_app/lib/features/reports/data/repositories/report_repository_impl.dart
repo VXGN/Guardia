@@ -31,6 +31,16 @@ class ReportRepositoryImpl implements ReportRepository {
   }
 
   @override
+  Future<List<ReportEntity>> getAllReports() async {
+    try {
+      final models = await _remoteDataSource.getAllReports();
+      return models.map((m) => m.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<ReportEntity> getReportDetail(String id) async {
     try {
       final model = await _remoteDataSource.getReportDetail(id);

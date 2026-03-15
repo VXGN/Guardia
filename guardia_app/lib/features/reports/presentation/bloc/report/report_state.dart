@@ -26,8 +26,10 @@ class ReportState extends Equatable {
   
   // List & Detail
   final List<ReportEntity> myReports;
+  final List<ReportEntity> globalReports;
   final ReportEntity? selectedReport;
   final ReportStatus myReportsStatus;
+  final ReportStatus globalReportsStatus;
   final ReportStatus detailStatus;
 
   const ReportState({
@@ -45,8 +47,10 @@ class ReportState extends Equatable {
     this.submitStatus = ReportStatus.initial,
     this.errorMessage,
     this.myReports = const [],
+    this.globalReports = const [],
     this.selectedReport,
     this.myReportsStatus = ReportStatus.initial,
+    this.globalReportsStatus = ReportStatus.initial,
     this.detailStatus = ReportStatus.initial,
   });
 
@@ -65,8 +69,10 @@ class ReportState extends Equatable {
     ReportStatus? submitStatus,
     String? errorMessage,
     List<ReportEntity>? myReports,
+    List<ReportEntity>? globalReports,
     ReportEntity? selectedReport,
     ReportStatus? myReportsStatus,
+    ReportStatus? globalReportsStatus,
     ReportStatus? detailStatus,
   }) {
     return ReportState(
@@ -84,8 +90,10 @@ class ReportState extends Equatable {
       submitStatus: submitStatus ?? this.submitStatus,
       errorMessage: errorMessage ?? this.errorMessage,
       myReports: myReports ?? this.myReports,
+      globalReports: globalReports ?? this.globalReports,
       selectedReport: selectedReport ?? this.selectedReport,
       myReportsStatus: myReportsStatus ?? this.myReportsStatus,
+      globalReportsStatus: globalReportsStatus ?? this.globalReportsStatus,
       detailStatus: detailStatus ?? this.detailStatus,
     );
   }
@@ -106,8 +114,10 @@ class ReportState extends Equatable {
         submitStatus,
         errorMessage,
         myReports,
+        globalReports,
         selectedReport,
         myReportsStatus,
+        globalReportsStatus,
         detailStatus,
       ];
 }

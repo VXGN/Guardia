@@ -44,6 +44,7 @@ import 'package:guardia_app/domain/usecases/panic/trigger_panic.dart';
 // UseCases - Reports
 import 'package:guardia_app/features/reports/domain/usecases/create_report.dart';
 import 'package:guardia_app/features/reports/domain/usecases/get_my_reports.dart';
+import 'package:guardia_app/features/reports/domain/usecases/get_all_reports.dart';
 import 'package:guardia_app/features/reports/domain/usecases/get_report_detail.dart';
 // UseCases - Risk/Routing
 import 'package:guardia_app/domain/usecases/risk/get_area_risk_summary.dart';
@@ -93,6 +94,7 @@ Future<void> init() async {
     () => ReportBloc(
       createReport: sl(),
       getMyReports: sl(),
+      getAllReports: sl(),
       getReportDetail: sl(),
     ),
   );
@@ -146,6 +148,7 @@ Future<void> init() async {
   // Auth UseCases removed, directly using AuthRepository in Bloc
   sl.registerLazySingleton(() => CreateReport(sl()));
   sl.registerLazySingleton(() => GetMyReports(sl()));
+  sl.registerLazySingleton(() => GetAllReports(sl()));
   sl.registerLazySingleton(() => GetReportDetail(sl()));
   sl.registerLazySingleton(() => StartJourney(sl()));
   sl.registerLazySingleton(() => GetActiveJourney(sl()));

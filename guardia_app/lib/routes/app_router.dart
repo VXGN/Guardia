@@ -9,7 +9,7 @@ import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart
 import 'package:guardia_app/presentation/pages/reports/report_success_page.dart';
 import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_detail_page.dart';
-import 'package:guardia_app/domain/entities/incident_report.dart';
+import 'package:guardia_app/features/reports/domain/entities/report_entity.dart';
 import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
 import 'package:guardia_app/presentation/pages/profile/notifications_page.dart';
 import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
@@ -94,14 +94,16 @@ final GoRouter appRouter = GoRouter(
       path: '/my_reports',
       name: 'my_reports',
       builder: (context, state) => const MyReportsPage(),
-    ),
-    GoRoute(
-      path: '/report_detail',
-      name: 'report_detail',
-      builder: (context, state) {
-        final report = state.extra as IncidentReport;
-        return ReportDetailPage(report: report);
-      },
+      routes: [
+        GoRoute(
+          name: 'report_detail',
+          path: 'report_detail',
+          builder: (context, state) {
+            final report = state.extra as ReportEntity;
+            return ReportDetailPage(report: report);
+          },
+        ),
+      ],
     ),
     GoRoute(
       path: '/notifications',

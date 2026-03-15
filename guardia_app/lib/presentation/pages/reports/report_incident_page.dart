@@ -1,11 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
-import 'package:guardia_app/presentation/bloc/report/report_bloc.dart';
-import 'package:guardia_app/presentation/bloc/report/report_event.dart';
-import 'package:guardia_app/presentation/bloc/report/report_state.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_event.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_state.dart';
 
 class ReportIncidentPage extends StatefulWidget {
   const ReportIncidentPage({super.key});
@@ -39,19 +39,19 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
     debugPrint('DEBUG: Building ReportIncidentPage');
     return BlocConsumer<ReportBloc, ReportState>(
       listener: (context, state) {
-        if (state is ReportCreatedSuccess) {
+        if (state.submitStatus == ReportStatus.success) {
           context.pushNamed('report_success');
-        } else if (state is ReportError) {
+        } else if (state.submitStatus == ReportStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(state.errorMessage ?? 'An error occurred'),
               backgroundColor: AppColors.error,
             ),
           );
         }
       },
       builder: (context, state) {
-        final isLoading = state is ReportLoading;
+        final isLoading = state.submitStatus == ReportStatus.loading;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -337,27 +337,36 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                     return;
                   }
 
-                  context.read<ReportBloc>().add(
-                        CreateReportRequested(
-                          incidentType: _selectedCategory!,
-                          description: _descriptionController.text.trim(),
-                          incidentAt: DateTime.now(),
-                          latitude: -8.5830695,
-                          longitude: 116.1155455,
-                          isAnonymous: _isAnonymous,
-                          locationLabel: '1240 Market St, San Francisco',
-                        ),
-                      );
+                  final bloc = context.read<ReportBloc>();
+                  
+                  // Fill the Bloc state first
+                  bloc.add(ReportCategorySelected(_selectedCategory!));
+                  bloc.add(ReportLocationTimeUpdated(
+                    lat: -8.5830695,
+                    lng: 116.1155455,
+                    locationLabel: '1240 Market St, San Francisco',
+                    time: DateTime.now(),
+                  ));
+                  bloc.add(ReportDetailsUpdated(
+                    description: _descriptionController.text.trim(),
+                  ));
+                  bloc.add(ReportPrivacyMediaUpdated(
+                    isAnonymous: _isAnonymous,
+                    mediaFiles: const [], // TODO: Add media support if needed
+                  ));
+                  
+                  // Finally submit
+                  bloc.add(ReportSubmitted());
                 },
                 backgroundColor: AppColors.error,
               ),
             ),
             const SizedBox(height: 120),
-              ],
-            ),
-          ),
+          ],
         ),
-      },
+      ),
     );
-  }
+  },
+);
+}
 }
