@@ -49,4 +49,23 @@ class ReportRepositoryImpl implements ReportRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<void> updateReport(ReportEntity report, List<File> mediaFiles) async {
+    try {
+      final model = ReportModel.fromEntity(report);
+      await _remoteDataSource.updateReport(model, mediaFiles);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteReport(String id) async {
+    try {
+      await _remoteDataSource.deleteReport(id);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

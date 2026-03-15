@@ -9,6 +9,9 @@ import 'package:guardia_app/presentation/bloc/risk/risk_event.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_state.dart';
 import 'package:guardia_app/presentation/widgets/journey/active_navigation_overlay.dart';
 import 'package:guardia_app/presentation/widgets/journey/routing_options_sheet.dart';
+import 'package:guardia_app/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:guardia_app/features/notifications/presentation/bloc/notification_event.dart';
+import 'package:guardia_app/features/notifications/presentation/bloc/notification_state.dart';
 import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_bloc.dart';
 import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_event.dart';
 import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_state.dart';
@@ -62,6 +65,9 @@ class _HomePageState extends State<HomePage> {
           radiusMeters: _riskRadiusMeters,
         ),
       );
+      
+      // Load notifications for the badge
+      context.read<NotificationBloc>().add(LoadNotificationsRequested());
     });
   }
 
@@ -325,27 +331,55 @@ class _HomePageState extends State<HomePage> {
                       Icons.search,
                       color: AppColors.textSecondary,
                     ),
-                    suffixIcon: GestureDetector(
-                    onTap: () => context.pushNamed('profile'),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFC4C4C4),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'US',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                    suffixIcon: BlocBuilder<NotificationBloc, NotificationState>(
+                      builder: (context, state) {
+                        int unreadCount = 0;
+                        if (state is NotificationsLoaded) {
+                          unreadCount = state.notifications.where((n) => !n.isSent).length; // Using isSent as a proxy for unread in this mock/early stage
+                        }
+
+                        return GestureDetector(
+                          onTap: () => context.pushNamed('notifications'),
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.notifications_outlined,
+                                  color: AppColors.textSecondary,
+                                  size: 28,
+                                ),
+                                if (unreadCount > 0)
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        '$unreadCount',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),

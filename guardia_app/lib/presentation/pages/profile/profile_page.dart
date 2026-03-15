@@ -6,6 +6,8 @@ import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_event.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_state.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
+import 'package:guardia_app/features/reports/presentation/bloc/report/report_state.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -25,17 +27,8 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Soft background
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-        backgroundColor: Colors.white,
-        centerTitle: false,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.grey[50],
+      appBar: _buildAppBar(context),
       body: BlocBuilder<ProfileBloc, ProfileState>(
         builder: (context, state) {
           if (state is ProfileLoading) {
@@ -43,45 +36,89 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           if (state is ProfileError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(state.message, textAlign: TextAlign.center),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => context.read<ProfileBloc>().add(LoadProfileRequested()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
+            return _buildErrorState(context, state.message);
           }
 
           if (state is ProfileLoaded) {
-            final user = state.user;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildProfileHeader(user.fullName ?? 'Citizen', user.email ?? '-'),
-                  const SizedBox(height: 32),
-                  _buildImpactCard(context),
-                  const SizedBox(height: 32),
-                  const Text('Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  _buildSettingsList(context),
-                  const SizedBox(height: 32),
-                  _buildLogoutButton(context),
-                  const SizedBox(height: 100), // Padding for bottom navbar
-                ],
-              ),
-            );
+            return _buildProfileContent(context, state);
           }
 
           return const Center(child: CircularProgressIndicator());
         },
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: AppColors.background),
+        onPressed: () => context.pop(),
+      ),
+      title: const Text(
+        'Profile',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+      ),
+      backgroundColor: AppColors.primary,
+      centerTitle: false,
+      elevation: 0,
+      actions: [
+        TextButton(
+          onPressed: () => context.pushNamed('edit_profile'),
+          child: const Text(
+            'Edit Profile',
+            style: TextStyle(
+              color: AppColors.background,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () =>
+                context.read<ProfileBloc>().add(LoadProfileRequested()),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileContent(BuildContext context, ProfileLoaded state) {
+    final user = state.user;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildProfileHeader(
+            user.fullName ?? 'Citizen',
+            user.email ?? '-',
+          ),
+          const SizedBox(height: 32),
+          _buildImpactCard(context),
+          const SizedBox(height: 32),
+          const Text(
+            'Settings',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          _buildSettingsList(context),
+          const SizedBox(height: 32),
+          _buildLogoutButton(context),
+          const SizedBox(height: 100),
+        ],
       ),
     );
   }
@@ -100,10 +137,7 @@ class _ProfilePageState extends State<ProfilePage> {
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        Text(
-          email,
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-        ),
+        Text(email, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
       ],
     );
   }
@@ -124,20 +158,36 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Your Guardia Impact', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+        child: BlocBuilder<ReportBloc, ReportState>(
+          builder: (context, reportState) {
+            final reportCount = reportState.myReports.length;
+            final level = (reportCount / 5).floor() + 1;
+            final levelLabel = level >= 5
+                ? 'Guardian'
+                : (level >= 3 ? 'Defender' : 'Trusted');
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildImpactItem(Icons.verified_user, 'Level 2', 'Trusted'),
-                _buildImpactItem(Icons.eco, '250', 'Impact Pts'),
-                _buildImpactItem(Icons.report, '12', 'Reports'),
+                const Text(
+                  'Your Guardia Impact',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildImpactItem(
+                      Icons.verified_user,
+                      'Level $level',
+                      levelLabel,
+                    ),
+                    _buildImpactItem(Icons.report, '$reportCount', 'Reports'),
+                  ],
+                ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -148,7 +198,14 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Icon(icon, color: AppColors.primary, size: 28),
         const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 4),
         Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
@@ -170,30 +227,48 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: Column(
         children: [
-          _buildListTile(Icons.history, 'My Reports', onTap: () => context.pushNamed('my_reports')),
-          const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildListTile(Icons.people_outline, 'Trusted Contacts', onTap: () => context.pushNamed('trusted_contacts')),
-          const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildListTile(Icons.notifications_active, 'Notification Inbox', onTap: () => context.pushNamed('notifications')),
-          const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildSwitchTile(Icons.notifications_outlined, 'Push Notifications', true),
-          const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildListTile(Icons.language, 'Language', trailing: const Text('English', style: TextStyle(color: Colors.grey))),
-          const Divider(height: 1, indent: 20, endIndent: 20),
-          _buildSwitchTile(Icons.dark_mode_outlined, 'Dark Mode', false),
-          const Divider(height: 1, indent: 20, endIndent: 20),
+          _buildListTile(
+            Icons.history,
+            'My Reports',
+            onTap: () => context.pushNamed('my_reports'),
+          ),
+          const Divider(height: 1),
+          _buildListTile(
+            Icons.people_outline,
+            'Trusted Contacts',
+            onTap: () => context.pushNamed('trusted_contacts'),
+          ),
+          const Divider(height: 1),
+          _buildListTile(
+            Icons.notifications_active,
+            'Notification Inbox',
+            onTap: () => context.pushNamed('notifications'),
+          ),
+          const Divider(height: 1),
+          _buildSwitchTile(
+            Icons.notifications_outlined,
+            'Push Notifications',
+            true,
+            (val) {},
+          ),
+          const Divider(height: 1),
           _buildListTile(Icons.privacy_tip_outlined, 'Privacy Policy'),
-          const Divider(height: 1, indent: 20, endIndent: 20),
+          const Divider(height: 1),
           _buildListTile(Icons.help_outline, 'Help & Support'),
         ],
       ),
     );
   }
 
-  Widget _buildSwitchTile(IconData icon, String title, bool value) {
+  Widget _buildSwitchTile(
+    IconData icon,
+    String title,
+    bool value,
+    Function(bool) onChanged,
+  ) {
     return SwitchListTile(
       value: value,
-      onChanged: (val) {},
+      onChanged: onChanged,
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       secondary: Icon(icon, color: AppColors.primary),
       activeThumbColor: AppColors.primary,
@@ -201,7 +276,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, {Widget? trailing, VoidCallback? onTap}) {
+  Widget _buildListTile(
+    IconData icon,
+    String title, {
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
     return ListTile(
       leading: Icon(icon, color: AppColors.primary),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -218,7 +298,10 @@ class _ProfilePageState extends State<ProfilePage> {
         context.goNamed('login');
       },
       icon: const Icon(Icons.logout, color: AppColors.error),
-      label: const Text('Sign Out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+      label: const Text(
+        'Sign Out',
+        style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
+      ),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
         side: const BorderSide(color: AppColors.error),

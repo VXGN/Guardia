@@ -6,11 +6,11 @@ import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_event.d
 import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_state.dart';
 import 'package:guardia_app/presentation/pages/home/home_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_setup_page.dart';
-import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
+import 'package:guardia_app/features/profile/presentation/pages/profile_page.dart';
 import 'package:guardia_app/features/reports/presentation/pages/report_tab_page.dart';
 import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
-import 'package:guardia_app/presentation/widgets/panic/sos_active_overlay.dart';
-import 'package:guardia_app/presentation/widgets/panic/sos_countdown_overlay.dart';
+import 'package:guardia_app/features/panic/presentation/widgets/sos_active_overlay.dart';
+import 'package:guardia_app/features/panic/presentation/widgets/sos_countdown_overlay.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

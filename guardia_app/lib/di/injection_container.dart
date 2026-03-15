@@ -49,18 +49,23 @@ import 'package:guardia_app/features/reports/domain/usecases/create_report.dart'
 import 'package:guardia_app/features/reports/domain/usecases/get_my_reports.dart';
 import 'package:guardia_app/features/reports/domain/usecases/get_all_reports.dart';
 import 'package:guardia_app/features/reports/domain/usecases/get_report_detail.dart';
+import 'package:guardia_app/features/reports/domain/usecases/update_report.dart';
+import 'package:guardia_app/features/reports/domain/usecases/delete_report.dart';
 import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
 
-// Features - Other (Core/Old Structure)
-import 'package:guardia_app/data/repositories_impl/notification_repository_impl.dart';
-import 'package:guardia_app/data/repositories_impl/user_repository_impl.dart';
-import 'package:guardia_app/domain/repositories/notification_repository.dart';
-import 'package:guardia_app/domain/repositories/user_repository.dart';
-import 'package:guardia_app/domain/usecases/notifications/get_notifications.dart';
-import 'package:guardia_app/domain/usecases/user/get_profile.dart';
-import 'package:guardia_app/domain/usecases/user/update_profile.dart';
-import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
-import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
+// Features - Profile
+import 'package:guardia_app/features/profile/data/repositories/user_repository_impl.dart';
+import 'package:guardia_app/features/profile/domain/repositories/user_repository.dart';
+import 'package:guardia_app/features/profile/domain/usecases/get_profile.dart';
+import 'package:guardia_app/features/profile/domain/usecases/update_profile.dart';
+import 'package:guardia_app/features/profile/presentation/bloc/profile_bloc.dart';
+
+// Features - Notifications
+import 'package:guardia_app/features/notifications/data/repositories/notification_repository_impl.dart';
+import 'package:guardia_app/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:guardia_app/features/notifications/domain/usecases/get_notifications.dart';
+import 'package:guardia_app/features/notifications/presentation/bloc/notification_bloc.dart';
+
 import 'package:guardia_app/data/repositories_impl/risk_repository_impl.dart';
 import 'package:guardia_app/domain/repositories/risk_repository.dart';
 import 'package:guardia_app/domain/usecases/risk/get_area_risk_summary.dart';
@@ -181,12 +186,16 @@ Future<void> init() async {
       getMyReports: sl(),
       getAllReports: sl(),
       getReportDetail: sl(),
+      updateReport: sl(),
+      deleteReport: sl(),
     ),
   );
   sl.registerLazySingleton(() => CreateReport(sl()));
   sl.registerLazySingleton(() => GetMyReports(sl()));
   sl.registerLazySingleton(() => GetAllReports(sl()));
   sl.registerLazySingleton(() => GetReportDetail(sl()));
+  sl.registerLazySingleton(() => UpdateReport(sl()));
+  sl.registerLazySingleton(() => DeleteReport(sl()));
   sl.registerLazySingleton<ReportRepository>(() => ReportRepositoryImpl(sl()));
   sl.registerLazySingleton<ReportRemoteDataSource>(
     () => ReportRemoteDataSourceImpl(apiClient: sl()),

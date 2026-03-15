@@ -65,11 +65,18 @@ class _MyReportsPageState extends State<MyReportsPage> {
           );
         }
 
-        final reports = state.myReports;
+        final reports = state.myReports.where((report) {
+          final matchesStatus = state.statusFilter == 'All' || 
+              report.status.toLowerCase() == state.statusFilter.toLowerCase();
+          final matchesCategory = state.categoryFilter == 'All' || 
+              report.category.toLowerCase() == state.categoryFilter.toLowerCase();
+          return matchesStatus && matchesCategory;
+        }).toList();
 
         return Column(
           children: [
-            _buildFilterBar(),
+            _buildFilterBar(state),
+            _buildCategoryFilterBar(state),
             Expanded(
               child: reports.isEmpty
                   ? _buildEmptyState()
@@ -92,34 +99,90 @@ class _MyReportsPageState extends State<MyReportsPage> {
   }
 
 
-  Widget _buildFilterBar() {
+  Widget _buildFilterBar(ReportState state) {
     final filters = ['All', 'Received', 'In Progress', 'Resolved'];
     return Container(
-      height: 60,
-      margin: const EdgeInsets.symmetric(vertical: 16),
+      height: 45,
+      margin: const EdgeInsets.only(top: 16, bottom: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: filters.length,
         itemBuilder: (context, index) {
-          final isSelected = index == 0; // Static mockup
-          return Container(
-            margin: const EdgeInsets.only(right: 12),
-            child: Chip(
-              label: Text(
-                filters[index],
-                style: TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFF64748B),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+          final filter = filters[index];
+          final isSelected = state.statusFilter.toLowerCase() == filter.toLowerCase();
+          return GestureDetector(
+            onTap: () {
+              context.read<ReportBloc>().add(ReportFilterChanged(status: filter));
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: Chip(
+                label: Text(
+                  filter,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
+                backgroundColor: isSelected ? AppColors.primary : Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
-              backgroundColor: isSelected ? AppColors.primary : Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilterBar(ReportState state) {
+    final categories = [
+      'All', 
+      'Harassment', 
+      'Suspicious Activity', 
+      'Poor Lighting', 
+      'Verbal Abuse', 
+      'Medical Issue', 
+      'Other'
+    ];
+    
+    return Container(
+      height: 45,
+      margin: const EdgeInsets.only(bottom: 16),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final cat = categories[index];
+          final isSelected = state.categoryFilter.toLowerCase() == cat.toLowerCase();
+          return GestureDetector(
+            onTap: () {
+              context.read<ReportBloc>().add(ReportFilterChanged(category: cat));
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: Chip(
+                label: Text(
+                  cat,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                backgroundColor: isSelected ? const Color(0xFF6366F1) : Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           );
         },
@@ -213,9 +276,47 @@ class _MyReportsPageState extends State<MyReportsPage> {
                   ],
                 ),
               ),
-              Text(
-                '${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}',
-                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500),
+              Row(
+                children: [
+                  Text(
+                    '${report.timestamp.day}/${report.timestamp.month}/${report.timestamp.year}',
+                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF94A3B8)),
+                    padding: EdgeInsets.zero,
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        context.read<ReportBloc>().add(EditReportRequested(report));
+                        context.pushNamed('report_incident');
+                      } else if (value == 'delete') {
+                        _showDeleteConfirmation(context, report.id);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 18),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -276,5 +377,29 @@ class _MyReportsPageState extends State<MyReportsPage> {
       default:
         return const Color(0xFF94A3B8);
     }
+  }
+
+  void _showDeleteConfirmation(BuildContext context, String reportId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Report?'),
+        content: const Text('Are you sure you want to delete this report? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<ReportBloc>().add(DeleteReportRequested(reportId));
+              Navigator.pop(dialogContext);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('DELETE'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -3,19 +3,20 @@ import 'package:guardia_app/features/auth/presentation/pages/authority_login_pag
 import 'package:guardia_app/features/auth/presentation/pages/login_page.dart';
 import 'package:guardia_app/features/auth/presentation/pages/register_page.dart';
 import 'package:guardia_app/presentation/pages/home/main_screen.dart';
-import 'package:guardia_app/presentation/pages/onboarding/onboarding_page.dart';
-import 'package:guardia_app/presentation/pages/onboarding/permission_request_page.dart';
+import 'package:guardia_app/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:guardia_app/features/onboarding/presentation/pages/permission_request_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_incident_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_success_page.dart';
 import 'package:guardia_app/presentation/pages/reports/my_reports_page.dart';
 import 'package:guardia_app/presentation/pages/reports/report_detail_page.dart';
 import 'package:guardia_app/features/reports/domain/entities/report_entity.dart';
-import 'package:guardia_app/presentation/pages/profile/impact_dashboard_page.dart';
-import 'package:guardia_app/presentation/pages/profile/notifications_page.dart';
-import 'package:guardia_app/presentation/pages/splash/splash_page.dart';
+import 'package:guardia_app/features/profile/presentation/pages/impact_dashboard_page.dart';
+import 'package:guardia_app/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:guardia_app/features/onboarding/presentation/pages/splash_page.dart';
 import 'package:guardia_app/presentation/pages/journey/active_journey_page.dart';
 import 'package:guardia_app/presentation/pages/contacts/trusted_contacts_page.dart';
-import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
+import 'package:guardia_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:guardia_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_chat_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_call_page.dart';
 
@@ -54,6 +55,13 @@ final GoRouter appRouter = GoRouter(
       path: '/profile',
       name: 'profile',
       builder: (context, state) => const ProfilePage(),
+      routes: [
+        GoRoute(
+          path: 'edit',
+          name: 'edit_profile',
+          builder: (context, state) => const EditProfilePage(),
+        ),
+      ],
     ),
     GoRoute(
       path: '/login',

@@ -29,6 +29,15 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    final state = context.read<ReportBloc>().state;
+    _selectedCategory = state.selectedCategory;
+    _isAnonymous = state.isAnonymous;
+    _descriptionController.text = state.description ?? '';
+  }
+
+  @override
   void dispose() {
     _descriptionController.dispose();
     super.dispose();
@@ -75,9 +84,9 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            const Text(
-              'Report an Incident',
-              style: TextStyle(
+            Text(
+              state.editingReportId != null ? 'Edit Report' : 'Report an Incident',
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1E293B),
@@ -321,7 +330,9 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                 ],
               ),
               child: CustomButton(
-                text: isLoading ? 'SUBMITTING...' : 'SUBMIT INCIDENT REPORT',
+                text: isLoading 
+                  ? 'SUBMITTING...' 
+                  : (state.editingReportId != null ? 'UPDATE REPORT' : 'SUBMIT INCIDENT REPORT'),
                 onPressed: () {
                   if (isLoading) {
                     return;

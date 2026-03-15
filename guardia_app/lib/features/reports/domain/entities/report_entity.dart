@@ -42,4 +42,32 @@ class ReportEntity extends Equatable {
         status,
         mediaUrls,
       ];
+
+  ReportEntity copyWith({
+    String? id,
+    String? userId,
+    String? category,
+    String? description,
+    double? latitude,
+    double? longitude,
+    String? locationLabel,
+    DateTime? timestamp,
+    bool? isAnonymous,
+    String? status,
+    List<String>? mediaUrls,
+  }) {
+    return ReportEntity(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      category: category ?? this.category,
+      description: description ?? this.description,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationLabel: locationLabel ?? this.locationLabel,
+      timestamp: timestamp ?? this.timestamp,
+      isAnonymous: isAnonymous ?? this.isAnonymous,
+      status: status ?? this.status,
+      mediaUrls: mediaUrls ?? this.mediaUrls,
+    );
+  }
 }

@@ -9,6 +9,9 @@ class ReportState extends Equatable {
   final ReportTab currentTab;
   final int currentStep; // 0..3
   final bool isCreatingReport;
+  final String? editingReportId;
+  final String statusFilter;
+  final String categoryFilter;
   
   // Wizard data
   final String? selectedCategory;
@@ -36,6 +39,7 @@ class ReportState extends Equatable {
     this.currentTab = ReportTab.community,
     this.currentStep = 0,
     this.isCreatingReport = false,
+    this.editingReportId,
     this.selectedCategory,
     this.latitude,
     this.longitude,
@@ -52,12 +56,16 @@ class ReportState extends Equatable {
     this.myReportsStatus = ReportStatus.initial,
     this.globalReportsStatus = ReportStatus.initial,
     this.detailStatus = ReportStatus.initial,
+    this.statusFilter = 'All',
+    this.categoryFilter = 'All',
   });
 
   ReportState copyWith({
     ReportTab? currentTab,
     int? currentStep,
     bool? isCreatingReport,
+    String? editingReportId,
+    bool clearEditingReportId = false,
     String? selectedCategory,
     double? latitude,
     double? longitude,
@@ -74,11 +82,14 @@ class ReportState extends Equatable {
     ReportStatus? myReportsStatus,
     ReportStatus? globalReportsStatus,
     ReportStatus? detailStatus,
+    String? statusFilter,
+    String? categoryFilter,
   }) {
     return ReportState(
       currentTab: currentTab ?? this.currentTab,
       currentStep: currentStep ?? this.currentStep,
       isCreatingReport: isCreatingReport ?? this.isCreatingReport,
+      editingReportId: clearEditingReportId ? null : (editingReportId ?? this.editingReportId),
       selectedCategory: selectedCategory ?? this.selectedCategory,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
@@ -95,6 +106,8 @@ class ReportState extends Equatable {
       myReportsStatus: myReportsStatus ?? this.myReportsStatus,
       globalReportsStatus: globalReportsStatus ?? this.globalReportsStatus,
       detailStatus: detailStatus ?? this.detailStatus,
+      statusFilter: statusFilter ?? this.statusFilter,
+      categoryFilter: categoryFilter ?? this.categoryFilter,
     );
   }
 
@@ -103,6 +116,7 @@ class ReportState extends Equatable {
         currentTab,
         currentStep,
         isCreatingReport,
+        editingReportId,
         selectedCategory,
         latitude,
         longitude,
@@ -119,5 +133,7 @@ class ReportState extends Equatable {
         myReportsStatus,
         globalReportsStatus,
         detailStatus,
+        statusFilter,
+        categoryFilter,
       ];
 }

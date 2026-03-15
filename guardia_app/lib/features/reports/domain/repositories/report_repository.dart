@@ -6,4 +6,6 @@ abstract class ReportRepository {
   Future<List<ReportEntity>> getMyReports();
   Future<List<ReportEntity>> getAllReports();
   Future<ReportEntity> getReportDetail(String id);
+  Future<void> updateReport(ReportEntity report, List<File> mediaFiles);
+  Future<void> deleteReport(String id);
 }

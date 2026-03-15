@@ -5,6 +5,8 @@ import '../../../domain/usecases/create_report.dart';
 import '../../../domain/usecases/get_my_reports.dart';
 import '../../../domain/usecases/get_all_reports.dart';
 import '../../../domain/usecases/get_report_detail.dart';
+import '../../../domain/usecases/update_report.dart';
+import '../../../domain/usecases/delete_report.dart';
 import 'report_event.dart';
 import 'report_state.dart';
 
@@ -13,12 +15,16 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   final GetMyReports getMyReports;
   final GetAllReports getAllReports;
   final GetReportDetail getReportDetail;
+  final UpdateReport updateReport;
+  final DeleteReport deleteReport;
 
   ReportBloc({
     required this.createReport,
     required this.getMyReports,
     required this.getAllReports,
     required this.getReportDetail,
+    required this.updateReport,
+    required this.deleteReport,
   }) : super(const ReportState()) {
     on<ReportStarted>(_onReportStarted);
     on<ReportCategorySelected>(_onCategorySelected);
@@ -31,7 +37,18 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<ReportTabChanged>(_onTabChanged);
     on<ToggleCreateReport>(_onToggleCreateReport);
     on<GlobalReportsRequested>(_onGlobalReportsRequested);
+    on<DeleteReportRequested>(_onDeleteReportRequested);
+    on<EditReportRequested>(_onEditReportRequested);
+    on<ReportFilterChanged>(_onFilterChanged);
   }
+
+  void _onFilterChanged(ReportFilterChanged event, Emitter<ReportState> emit) {
+    emit(state.copyWith(
+      statusFilter: event.status,
+      categoryFilter: event.category,
+    ));
+  }
+
 
   void _onReportStarted(ReportStarted event, Emitter<ReportState> emit) {
     emit(const ReportState());
@@ -104,10 +121,19 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
         mediaUrls: const [], // Will be filled after upload
       );
 
-      await createReport(report, state.mediaFiles);
+      if (state.editingReportId != null) {
+        // Handle update
+        final updatedReport = report.copyWith(id: state.editingReportId);
+        await updateReport(updatedReport, state.mediaFiles);
+      } else {
+        // Handle create
+        await createReport(report, state.mediaFiles);
+      }
+
       emit(state.copyWith(
         submitStatus: ReportStatus.success,
         isCreatingReport: false,
+        editingReportId: null, // Clear after success
       ));
       // Optionally reset or refresh
       add(MyReportsRequested());
@@ -191,6 +217,35 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
       latitude: null,
       longitude: null,
       locationLabel: null,
+      editingReportId: null,
+    ));
+  }
+
+  Future<void> _onDeleteReportRequested(DeleteReportRequested event, Emitter<ReportState> emit) async {
+    // Optionally update status to loading if needed
+    try {
+      await deleteReport(event.id);
+      add(MyReportsRequested()); // Refresh list
+    } catch (e) {
+      emit(state.copyWith(
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
+  void _onEditReportRequested(EditReportRequested event, Emitter<ReportState> emit) {
+    // Initialize wizard with existing report data
+    emit(state.copyWith(
+      isCreatingReport: true,
+      currentStep: 0,
+      selectedCategory: event.report.category,
+      description: event.report.description,
+      latitude: event.report.latitude,
+      longitude: event.report.longitude,
+      locationLabel: event.report.locationLabel,
+      time: event.report.timestamp,
+      isAnonymous: event.report.isAnonymous,
+      editingReportId: event.report.id,
     ));
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:equatable/equatable.dart';
+import 'package:guardia_app/features/reports/domain/entities/report_entity.dart';
 
 abstract class ReportEvent extends Equatable {
   const ReportEvent();
@@ -78,3 +79,26 @@ class ToggleCreateReport extends ReportEvent {
   @override
   List<Object?> get props => [value];
 }
+
+class EditReportRequested extends ReportEvent {
+  final ReportEntity report;
+  const EditReportRequested(this.report);
+  @override
+  List<Object?> get props => [report];
+}
+
+class DeleteReportRequested extends ReportEvent {
+  final String id;
+  const DeleteReportRequested(this.id);
+  @override
+  List<Object?> get props => [id];
+}
+
+class ReportFilterChanged extends ReportEvent {
+  final String? status;
+  final String? category;
+  const ReportFilterChanged({this.status, this.category});
+  @override
+  List<Object?> get props => [status, category];
+}
+

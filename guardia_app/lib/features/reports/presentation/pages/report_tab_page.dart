@@ -153,27 +153,91 @@ class _CommunityFeed extends StatelessWidget {
           );
         }
 
-        if (state.globalReports.isEmpty) {
-          return const Center(child: Text('No reports in your area yet.'));
-        }
+        final reports = state.globalReports.where((report) {
+          // Status filtering in community feed might be different, 
+          // but for now we'll stick to category filtering.
+          final matchesCategory = state.categoryFilter == 'All' || 
+              report.category.toLowerCase() == state.categoryFilter.toLowerCase();
+          return matchesCategory;
+        }).toList();
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            context.read<ReportBloc>().add(GlobalReportsRequested());
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: state.globalReports.length,
-            itemBuilder: (context, index) {
-              final report = state.globalReports[index];
-              return _SocialReportCard(report: report);
-            },
-          ),
+        return Column(
+          children: [
+            _buildCategoryFilter(context, state),
+            Expanded(
+              child: reports.isEmpty
+                ? const Center(child: Text('No reports match your filter.'))
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<ReportBloc>().add(GlobalReportsRequested());
+                    },
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: reports.length,
+                      itemBuilder: (context, index) {
+                        final report = reports[index];
+                        return _SocialReportCard(report: report);
+                      },
+                    ),
+                  ),
+            ),
+          ],
         );
       },
     );
   }
+
+  Widget _buildCategoryFilter(BuildContext context, ReportState state) {
+    final categories = [
+      'All', 
+      'Harassment', 
+      'Suspicious Activity', 
+      'Poor Lighting', 
+      'Verbal Abuse', 
+      'Medical Issue', 
+      'Other'
+    ];
+    
+    return Container(
+      height: 45,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final cat = categories[index];
+          final isSelected = state.categoryFilter.toLowerCase() == cat.toLowerCase();
+          return GestureDetector(
+            onTap: () {
+              context.read<ReportBloc>().add(ReportFilterChanged(category: cat));
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: Chip(
+                label: Text(
+                  cat,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+                backgroundColor: isSelected ? AppColors.primary : Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
+
 
 class _SocialReportCard extends StatelessWidget {
   final ReportEntity report;
