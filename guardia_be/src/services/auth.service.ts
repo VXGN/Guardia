@@ -36,22 +36,26 @@ export class AuthService {
     const phoneNumber = data.phone_number ?? data.phoneNumber ?? null;
     const emergencyPin = data.emergency_pin ?? data.emergencyPin ?? data["emergency pin"];
 
-    if (!fullName) {
-      throw new BadRequestError("full_name is required");
-    }
+    const resolvedFullName = fullName ?? data.email.split("@")[0] ?? "Guardia User";
+    const resolvedEmergencyPin = emergencyPin || generateEmergencyPin();
 
-    if (!emergencyPin) {
-      throw new BadRequestError("emergency pin is required");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[Auth] Register request", {
+        email: data.email,
+        has_full_name: Boolean(fullName),
+        has_phone_number: Boolean(phoneNumber),
+        has_emergency_pin: Boolean(emergencyPin),
+      });
     }
 
     try {
       const created = await prisma.user.create({
         data: {
-          full_name: fullName,
+          full_name: resolvedFullName,
           email: data.email,
           phone_number: phoneNumber,
           password_hash: hashPassword(data.password),
-          emergency_pin_hash: hashEmergencyPin(emergencyPin),
+          emergency_pin_hash: hashEmergencyPin(resolvedEmergencyPin),
           role: "user",
           is_anonymous_mode: true,
           is_verified: false,
@@ -91,6 +95,10 @@ export class AuthService {
           throw new BadRequestError("Phone number already registered");
         }
         throw new BadRequestError("User already exists");
+      }
+
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[Auth] Register failed", error);
       }
 
       throw error;
