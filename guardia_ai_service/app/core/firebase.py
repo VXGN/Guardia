@@ -76,6 +76,32 @@ async def verify_firebase_token(
         return payload
     except HTTPException:
         raise
+    except pyjwt.InvalidIssuerError as e:
+        unverified = pyjwt.decode(
+            token,
+            options={"verify_signature": False, "verify_exp": False, "verify_aud": False},
+        )
+        logger.warning(
+            "Invalid Firebase token issuer. token_iss=%r token_aud=%r expected_issuer=%r expected_aud=%r",
+            unverified.get("iss"),
+            unverified.get("aud"),
+            f"https://securetoken.google.com/{project_id}",
+            project_id,
+        )
+        raise HTTPException(401, "Invalid token") from e
+    except pyjwt.InvalidAudienceError as e:
+        unverified = pyjwt.decode(
+            token,
+            options={"verify_signature": False, "verify_exp": False, "verify_aud": False},
+        )
+        logger.warning(
+            "Invalid Firebase token audience. token_iss=%r token_aud=%r expected_issuer=%r expected_aud=%r",
+            unverified.get("iss"),
+            unverified.get("aud"),
+            f"https://securetoken.google.com/{project_id}",
+            project_id,
+        )
+        raise HTTPException(401, "Invalid token") from e
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(401, "Token expired")
     except pyjwt.InvalidTokenError as e:

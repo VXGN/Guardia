@@ -19,10 +19,33 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  bool _didNavigate = false;
+
   @override
   void initState() {
     super.initState();
-    // Start auth subscription if not already done (it's done in app.dart)
+
+    // Fail-safe: if auth state is still unknown after a few seconds,
+    // continue the app flow instead of staying forever on splash.
+    Future<void>.delayed(const Duration(seconds: 4), () async {
+      if (!mounted || _didNavigate) return;
+
+      final authState = context.read<AuthBloc>().state;
+      if (authState.status != AuthStatus.unknown &&
+          authState.status != AuthStatus.loading) {
+        return;
+      }
+
+      final prefs = sl<SharedPreferences>();
+      final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
+      _didNavigate = true;
+      if (hasSeenOnboarding) {
+        context.goNamed('login');
+      } else {
+        context.goNamed('onboarding');
+      }
+    });
   }
 
   void _handleNavigation(BuildContext context, AuthState state) async {
@@ -35,6 +58,7 @@ class _SplashPageState extends State<SplashPage> {
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
 
     if (!hasSeenOnboarding) {
+      _didNavigate = true;
       context.goNamed('onboarding');
       return;
     }
@@ -42,6 +66,7 @@ class _SplashPageState extends State<SplashPage> {
     if (state.status == AuthStatus.authenticated) {
       final hasPermissions = await sl<PermissionService>().hasAllPermissions();
       if (mounted) {
+        _didNavigate = true;
         if (hasPermissions) {
           context.goNamed('home');
         } else {
@@ -49,6 +74,7 @@ class _SplashPageState extends State<SplashPage> {
         }
       }
     } else if (state.status == AuthStatus.unauthenticated || state.status == AuthStatus.failure) {
+      _didNavigate = true;
       context.goNamed('login');
     }
     // If still loading or unknown, do nothing and wait for next state change

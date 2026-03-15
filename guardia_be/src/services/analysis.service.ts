@@ -24,12 +24,16 @@ interface RiskAnalysisResponse {
 
 export class AnalysisService {
   async analyzeRisk(
-    coordinates: AnalysisCoordinates
+    coordinates: AnalysisCoordinates,
+    authorization?: string
   ): Promise<RiskAnalysisResponse> {
     try {
       const response = await pythonClient.post<RiskAnalysisResponse>(
         "/analyze",
-        coordinates
+        coordinates,
+        {
+          headers: authorization ? { Authorization: authorization } : undefined,
+        }
       );
       return response.data;
     } catch (error) {
