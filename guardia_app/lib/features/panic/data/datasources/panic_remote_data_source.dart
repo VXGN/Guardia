@@ -1,4 +1,5 @@
 import 'package:guardia_app/core/network/api_client.dart';
+import 'package:guardia_app/core/network/endpoints.dart';
 
 class PanicRemoteDataSource {
   final ApiClient apiClient;
@@ -6,14 +7,13 @@ class PanicRemoteDataSource {
   PanicRemoteDataSource({required this.apiClient});
 
   /// Starts a panic session on the backend.
-  /// POST /panic/start
+  /// POST /api/panic/trigger
   Future<Map<String, dynamic>> startPanic({
     required double lat,
     required double lng,
   }) async {
-    // TODO: Adjust endpoints with backend
     final response = await apiClient.post(
-      '/panic/start',
+      Endpoints.triggerPanic,
       data: {
         'latitude': lat,
         'longitude': lng,
@@ -23,14 +23,14 @@ class PanicRemoteDataSource {
   }
 
   /// Updates user location during an active SOS session.
-  /// POST /panic/update-location
+  /// POST /api/panic/update-location
   Future<void> updatePanicLocation({
     required String sessionId,
     required double lat,
     required double lng,
   }) async {
     await apiClient.post(
-      '/panic/update-location',
+      Endpoints.updatePanicLocation,
       data: {
         'session_id': sessionId,
         'latitude': lat,
@@ -40,14 +40,17 @@ class PanicRemoteDataSource {
   }
 
   /// Cancels an active panic session.
-  /// POST /panic/cancel
+  /// POST /api/panic/cancel
   Future<void> cancelPanic({
     required String sessionId,
+    String? emergencyCode,
   }) async {
     await apiClient.post(
-      '/panic/cancel',
+      Endpoints.cancelPanic,
       data: {
         'session_id': sessionId,
+        if (emergencyCode != null && emergencyCode.trim().isNotEmpty)
+          'emergency_code': emergencyCode.trim(),
       },
     );
   }

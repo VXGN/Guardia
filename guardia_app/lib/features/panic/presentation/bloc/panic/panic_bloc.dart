@@ -133,7 +133,10 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     emit(state.copyWith(status: PanicStatus.idle, session: null));
 
     try {
-      await cancelPanicUseCase(sessionId: sessionId);
+      await cancelPanicUseCase(
+        sessionId: sessionId,
+        emergencyCode: event.emergencyCode,
+      );
       print('SOS Session Cancelled successfully.');
     } catch (e) {
       // Keep the UI closed; backend/network failure should not re-open SOS session.

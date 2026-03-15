@@ -62,10 +62,14 @@ class PanicRepositoryImpl implements PanicRepository {
   @override
   Future<void> cancelPanic({
     required String sessionId,
+    String? emergencyCode,
   }) async {
     try {
       if (sessionId.startsWith('mock_')) return;
-      await remoteDataSource.cancelPanic(sessionId: sessionId);
+      await remoteDataSource.cancelPanic(
+        sessionId: sessionId,
+        emergencyCode: emergencyCode,
+      );
     } catch (e) {
       print('Network error cancelling panic: $e');
     }

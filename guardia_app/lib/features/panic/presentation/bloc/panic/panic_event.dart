@@ -24,6 +24,13 @@ class PanicLocationUpdated extends PanicEvent {
   List<Object?> get props => [latitude, longitude];
 }
 
-class PanicCancelRequested extends PanicEvent {}
+class PanicCancelRequested extends PanicEvent {
+  final String? emergencyCode;
+
+  const PanicCancelRequested({this.emergencyCode});
+
+  @override
+  List<Object?> get props => [emergencyCode];
+}
 
 class PanicResetToIdle extends PanicEvent {}

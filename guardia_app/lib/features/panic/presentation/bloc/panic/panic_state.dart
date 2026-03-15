@@ -12,6 +12,8 @@ enum PanicStatus {
 }
 
 class PanicState extends Equatable {
+  static const Object _sessionSentinel = Object();
+
   final PanicStatus status;
   final PanicSessionEntity? session;
   final String? errorMessage;
@@ -26,13 +28,15 @@ class PanicState extends Equatable {
 
   PanicState copyWith({
     PanicStatus? status,
-    PanicSessionEntity? session,
+    Object? session = _sessionSentinel,
     String? errorMessage,
     DateTime? lastLocationUpdateAt,
   }) {
     return PanicState(
       status: status ?? this.status,
-      session: session ?? this.session,
+      session: identical(session, _sessionSentinel)
+          ? this.session
+          : session as PanicSessionEntity?,
       errorMessage: errorMessage ?? this.errorMessage,
       lastLocationUpdateAt: lastLocationUpdateAt ?? this.lastLocationUpdateAt,
     );

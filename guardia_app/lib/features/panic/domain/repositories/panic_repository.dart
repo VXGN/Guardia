@@ -14,5 +14,6 @@ abstract class PanicRepository {
 
   Future<void> cancelPanic({
     required String sessionId,
+    String? emergencyCode,
   });
 }
