@@ -52,6 +52,7 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
     on<CompanionMessageSent>(_onMessageSent);
     on<CompanionLocationShared>(_onLocationShared);
     on<CompanionAlertTriggered>(_onAlertTriggered);
+    on<CompanionResetAlert>(_onResetAlert);
     on<CompanionResetError>(_onResetError);
   }
 
@@ -95,7 +96,10 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
         longitude: position.longitude,
         time: DateTime.now(),
       );
-      emit(state.copyWith(messages: List.from(state.messages)..add(newMessage)));
+      emit(state.copyWith(
+        messages: List.from(state.messages)..add(newMessage),
+        alertSent: true,
+      ));
     } catch (e) {
       // Still send alert message even if location fails, just without coordinates
       final newMessage = CompanionMessageEntity(
@@ -104,8 +108,15 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
         isSystem: true,
         time: DateTime.now(),
       );
-      emit(state.copyWith(messages: List.from(state.messages)..add(newMessage)));
+      emit(state.copyWith(
+        messages: List.from(state.messages)..add(newMessage),
+        alertSent: true,
+      ));
     }
+  }
+
+  void _onResetAlert(CompanionResetAlert event, Emitter<CompanionState> emit) {
+    emit(state.copyWith(alertSent: false));
   }
 
   void _onResetError(CompanionResetError event, Emitter<CompanionState> emit) {

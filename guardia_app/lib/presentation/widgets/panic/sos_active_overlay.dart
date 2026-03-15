@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class SosActiveOverlay extends StatelessWidget {
 
@@ -89,11 +89,6 @@ class SosActiveOverlay extends StatelessWidget {
             ),
             const SizedBox(height: 80),
             // Status Indicators
-            _buildStatusTile(
-              label: 'Sedang Merekam Audio',
-              status: 'AKTIF',
-            ),
-            const SizedBox(height: 12),
             _buildStatusTile(
               label: 'Lokasi Dibagikan',
               status: 'AKTIF',

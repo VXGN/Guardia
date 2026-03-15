@@ -85,6 +85,10 @@ class CompanionAlertTriggered extends CompanionEvent {
   const CompanionAlertTriggered();
 }
 
+class CompanionResetAlert extends CompanionEvent {
+  const CompanionResetAlert();
+}
+
 class CompanionResetError extends CompanionEvent {
   const CompanionResetError();
 }

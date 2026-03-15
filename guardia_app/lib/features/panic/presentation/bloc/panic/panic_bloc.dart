@@ -4,6 +4,7 @@ import 'package:guardia_app/core/utils/location_utils.dart';
 import 'package:guardia_app/features/panic/domain/usecases/start_panic.dart';
 import 'package:guardia_app/features/panic/domain/usecases/update_panic_location.dart';
 import 'package:guardia_app/features/panic/domain/usecases/cancel_panic.dart';
+import 'package:guardia_app/core/services/panic_alert_service.dart';
 import 'panic_event.dart';
 import 'panic_state.dart';
 
@@ -11,6 +12,7 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
   final StartPanic startPanicUseCase;
   final UpdatePanicLocation updatePanicLocationUseCase;
   final CancelPanicAction cancelPanicUseCase;
+  final PanicAlertService panicAlertService;
 
   StreamSubscription? _locationSubscription;
 
@@ -18,6 +20,7 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     required this.startPanicUseCase,
     required this.updatePanicLocationUseCase,
     required this.cancelPanicUseCase,
+    required this.panicAlertService,
   }) : super(const PanicState()) {
     on<PanicButtonPressed>(_onPanicButtonPressed);
     on<PanicCountdownFinished>(_onPanicCountdownFinished);
@@ -75,6 +78,9 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
 
       // Start periodic location updates (real-time stream)
       _startLocationStreaming();
+
+      // Start sound and vibration
+      panicAlertService.start();
     } catch (e) {
       print('SOS Start Error: $e');
       emit(state.copyWith(
@@ -126,6 +132,7 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
       
       print('SOS Session Cancelled successfully.');
       _stopLocationStreaming();
+      panicAlertService.stop();
       emit(state.copyWith(status: PanicStatus.idle, session: null));
     } catch (e) {
       print('SOS Cancel Error: $e');
@@ -142,6 +149,7 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
   ) {
     print('SOS Status: Resetting to idle.');
     _stopLocationStreaming();
+    panicAlertService.stop();
     emit(const PanicState());
   }
 

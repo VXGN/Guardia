@@ -6,7 +6,9 @@ import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_event.d
 import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_state.dart';
 import 'package:guardia_app/presentation/pages/home/home_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_setup_page.dart';
+import 'package:guardia_app/presentation/pages/profile/profile_page.dart';
 import 'package:guardia_app/features/reports/presentation/pages/report_tab_page.dart';
+import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
 import 'package:guardia_app/presentation/widgets/panic/sos_active_overlay.dart';
 import 'package:guardia_app/presentation/widgets/panic/sos_countdown_overlay.dart';
 
@@ -23,9 +25,9 @@ class _MainScreenState extends State<MainScreen> {
   // List of standard pages for the bottom navigation
   final List<Widget> _pages = [
     const HomePage(),
-    const Center(child: Text('Safety Zone: Nearby Safe Spaces')), // Placeholder for now
-    const ReportTabPage(),
     const CompanionSetupPage(),
+    const ReportTabPage(),
+    const ProfilePage(),
   ];
 
   void _onTabTapped(int index) {
@@ -38,19 +40,52 @@ class _MainScreenState extends State<MainScreen> {
     context.read<PanicBloc>().add(PanicButtonPressed());
   }
 
+  void _showSosSentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('SOS Terkirim'),
+          ],
+        ),
+        content: const Text('Lokasi dan peringatan darurat Anda telah berhasil dikirim ke semua kontak terpercaya.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PanicBloc, PanicState>(
-      listener: (context, state) {
-        if (state.status == PanicStatus.failure && state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<PanicBloc, PanicState>(
+          listener: (context, state) {
+            if (state.status == PanicStatus.failure && state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+        ),
+        BlocListener<CompanionBloc, CompanionState>(
+          listenWhen: (previous, current) => !previous.alertSent && current.alertSent,
+          listener: (context, state) {
+            _showSosSentDialog(context);
+            context.read<CompanionBloc>().add(const CompanionResetAlert());
+          },
+        ),
+      ],
       child: BlocBuilder<PanicBloc, PanicState>(
         builder: (context, state) {
           return Stack(
@@ -96,12 +131,12 @@ class _MainScreenState extends State<MainScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildNavItem(icon: Icons.map_outlined, label: 'Home', index: 0),
-                        _buildNavItem(icon: Icons.shield_outlined, label: 'Safety Zone', index: 1),
+                        _buildNavItem(icon: Icons.people_outline, label: 'Companion', index: 1),
                         
                         const SizedBox(width: 48), // Space for the SOS FAB
                         
                         _buildNavItem(icon: Icons.assignment_outlined, label: 'Reports', index: 2),
-                        _buildNavItem(icon: Icons.people_outline, label: 'Companion', index: 3),
+                        _buildNavItem(icon: Icons.person_outline, label: 'Profile', index: 3),
                       ],
                     ),
                   ),
@@ -116,6 +151,7 @@ class _MainScreenState extends State<MainScreen> {
                   },
                   onConfirm: () {
                     context.read<PanicBloc>().add(PanicCountdownFinished());
+                    context.read<CompanionBloc>().add(const CompanionAlertTriggered());
                   },
                 ),
                 

@@ -9,6 +9,7 @@ class CompanionState extends Equatable {
   final bool isStartingJourney;
   final bool isUpdatingLocation;
   final bool isEndingJourney;
+  final bool alertSent;
   final String? errorMessage;
 
   const CompanionState({
@@ -20,6 +21,7 @@ class CompanionState extends Equatable {
     this.isStartingJourney = false,
     this.isUpdatingLocation = false,
     this.isEndingJourney = false,
+    this.alertSent = false,
     this.errorMessage,
   });
 
@@ -35,6 +37,7 @@ class CompanionState extends Equatable {
     bool? isStartingJourney,
     bool? isUpdatingLocation,
     bool? isEndingJourney,
+    bool? alertSent,
     String? errorMessage,
     bool clearActiveJourney = false,
     bool clearErrorMessage = false,
@@ -48,6 +51,7 @@ class CompanionState extends Equatable {
       isStartingJourney: isStartingJourney ?? this.isStartingJourney,
       isUpdatingLocation: isUpdatingLocation ?? this.isUpdatingLocation,
       isEndingJourney: isEndingJourney ?? this.isEndingJourney,
+      alertSent: alertSent ?? this.alertSent,
       errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -62,6 +66,7 @@ class CompanionState extends Equatable {
         isStartingJourney,
         isUpdatingLocation,
         isEndingJourney,
+        alertSent,
         errorMessage,
       ];
 }

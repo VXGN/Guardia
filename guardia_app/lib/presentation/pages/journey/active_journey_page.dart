@@ -58,6 +58,28 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
     return '$h:$m:$s';
   }
 
+  void _showSosSentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('SOS Terkirim'),
+          ],
+        ),
+        content: const Text('Lokasi dan peringatan darurat Anda telah berhasil dikirim ke semua kontak terpercaya.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<CompanionBloc, CompanionState>(
@@ -84,6 +106,11 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
             SnackBar(content: Text(state.errorMessage!), backgroundColor: AppColors.error),
           );
           context.read<CompanionBloc>().add(const CompanionResetError());
+        }
+
+        if (state.alertSent) {
+          _showSosSentDialog(context);
+          context.read<CompanionBloc>().add(const CompanionResetAlert());
         }
       },
       builder: (context, state) {
