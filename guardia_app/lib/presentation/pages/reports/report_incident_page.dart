@@ -207,7 +207,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          '1240 Market St, San Francisco',
+                          'Mataram, Nusa Tenggara Barat',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -344,7 +344,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                   bloc.add(ReportLocationTimeUpdated(
                     lat: -8.5830695,
                     lng: 116.1155455,
-                    locationLabel: '1240 Market St, San Francisco',
+                    locationLabel: 'Mataram, Nusa Tenggara Barat',
                     time: DateTime.now(),
                   ));
                   bloc.add(ReportDetailsUpdated(

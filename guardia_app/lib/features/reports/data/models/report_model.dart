@@ -23,12 +23,12 @@ class ReportModel extends ReportEntity {
   factory ReportModel.fromJson(Map<String, dynamic> json) {
     // Handle backend API format (incident_type, incident_at, etc.)
     if (json.containsKey('incident_type') || json.containsKey('incident_at')) {
-      final latitude = (json['latitude_blurred'] ??
-          json['latitude'] ??
-          json['latitude_exact'] ?? 0) as num;
-      final longitude = (json['longitude_blurred'] ??
-          json['longitude'] ??
-          json['longitude_exact'] ?? 0) as num;
+      final latitude = _parseCoordinate(
+        json['latitude_blurred'] ?? json['latitude'] ?? json['latitude_exact'],
+      );
+      final longitude = _parseCoordinate(
+        json['longitude_blurred'] ?? json['longitude'] ?? json['longitude_exact'],
+      );
 
       // Parse timestamp from incident_at or created_at
       final timestampStr = json['incident_at'] ?? json['created_at'];
@@ -48,8 +48,8 @@ class ReportModel extends ReportEntity {
         userId: json['user_id'] as String?,
         category: json['incident_type'] as String? ?? 'other',
         description: json['description'] as String?,
-        latitude: latitude.toDouble(),
-        longitude: longitude.toDouble(),
+        latitude: latitude,
+        longitude: longitude,
         locationLabel: json['location_label'] as String? ?? '',
         timestamp: timestamp,
         isAnonymous: json['is_anonymous'] as bool? ?? false,
@@ -94,5 +94,17 @@ class ReportModel extends ReportEntity {
       status: status,
       mediaUrls: mediaUrls,
     );
+  }
+
+  static double _parseCoordinate(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+
+    return 0.0;
   }
 }

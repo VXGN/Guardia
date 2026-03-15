@@ -78,6 +78,15 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
       return;
     }
 
+    final description = state.description?.trim();
+    if (description != null && description.isNotEmpty && description.length < 10) {
+      emit(state.copyWith(
+        submitStatus: ReportStatus.failure,
+        errorMessage: 'Description must be at least 10 characters.',
+      ));
+      return;
+    }
+
     emit(state.copyWith(submitStatus: ReportStatus.loading));
 
     try {
