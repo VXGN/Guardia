@@ -155,7 +155,7 @@ class NewsArticle(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
     source: Mapped[str] = mapped_column(String(50))
     title: Mapped[str] = mapped_column(String(500))
-    url: Mapped[str] = mapped_column(String(1000), unique=True)
+    url: Mapped[str] = mapped_column(String(700), unique=True)
     snippet: Mapped[str | None] = mapped_column(Text)
     crime_type: Mapped[str | None] = mapped_column(String(100))
     severity_score: Mapped[int | None] = mapped_column(SmallInteger)

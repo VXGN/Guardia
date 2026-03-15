@@ -9,10 +9,13 @@ class ReportStatusLogModel extends ReportStatusLog {
   });
 
   factory ReportStatusLogModel.fromJson(Map<String, dynamic> json) {
+    final changedByUser = json['user'] as Map<String, dynamic>?;
+
     return ReportStatusLogModel(
       id: json['id'] as String,
-      reportId: json['report_id'] as String,
-      changedBy: json['changed_by'] as String?,
+      reportId: (json['report_id'] as String?) ?? '',
+      changedBy:
+          (json['changed_by'] as String?) ?? (changedByUser?['id'] as String?),
       oldStatus: json['old_status'] as String,
       newStatus: json['new_status'] as String,
       notes: json['notes'] as String?,
