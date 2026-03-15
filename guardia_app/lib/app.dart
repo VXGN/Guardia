@@ -15,7 +15,6 @@ import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
 import 'package:guardia_app/presentation/bloc/routing/routing_bloc.dart';
 import 'package:guardia_app/routes/app_router.dart';
 
-/// Root widget of the Guardia application.
 class GuardiaApp extends StatelessWidget {
   const GuardiaApp({super.key});
 

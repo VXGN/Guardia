@@ -14,6 +14,7 @@ USER_AGENT = (
 )
 
 TIMEOUT = 60.0
+DETAIL_FETCH_CONCURRENCY = 8
 
 DEFAULT_MAX_ARTICLES_PER_SOURCE = 200
 DEFAULT_MAX_PAGES = 10
@@ -50,6 +51,36 @@ async def _fetch_html(url: str) -> str | None:
     except Exception as e:
         logger.error("Failed to fetch %s: %s", url, e)
         return None
+
+
+def _extract_first_paragraph(html: str) -> str | None:
+    """Extract the first meaningful paragraph from article detail HTML."""
+    soup = BeautifulSoup(html, "html.parser")
+
+    selectors = [
+        "article p",
+        ".entry-content p",
+        ".post-content p",
+        ".content p",
+        ".article-content p",
+        ".read__content p",
+        "p",
+    ]
+
+    for selector in selectors:
+        paragraphs = soup.select(selector)
+        for p in paragraphs:
+            text = p.get_text(" ", strip=True)
+            if len(text) >= 40:
+                return text
+    return None
+
+
+async def _fetch_first_paragraph(url: str) -> str | None:
+    html = await _fetch_html(url)
+    if not html:
+        return None
+    return _extract_first_paragraph(html)
 
 
 def _deduplicate_articles(articles: list[RawArticle]) -> list[RawArticle]:
@@ -342,3 +373,38 @@ async def scrape_all_sources(config: ScrapeConfig | None = None) -> list[RawArti
 
     logger.info("Total scraped: %d articles from all sources", len(all_articles))
     return all_articles
+
+
+async def enrich_articles_with_first_paragraph(
+    articles: list[RawArticle],
+    max_to_fetch: int | None = None,
+) -> tuple[list[RawArticle], int]:
+    """Enrich missing snippets by fetching each article detail's first paragraph."""
+    targets = [a for a in articles if not a.snippet]
+    if max_to_fetch is not None:
+        targets = targets[:max_to_fetch]
+
+    if not targets:
+        return articles, 0
+
+    semaphore = asyncio.Semaphore(DETAIL_FETCH_CONCURRENCY)
+
+    async def enrich_one(article: RawArticle) -> bool:
+        async with semaphore:
+            paragraph = await _fetch_first_paragraph(article.url)
+            if paragraph:
+                article.snippet = paragraph
+                return True
+            return False
+
+    results = await asyncio.gather(*(enrich_one(a) for a in targets), return_exceptions=True)
+
+    enriched_count = 0
+    for result in results:
+        if isinstance(result, bool) and result:
+            enriched_count += 1
+
+    if enriched_count > 0:
+        logger.info("Enriched %d article snippets from detail pages", enriched_count)
+
+    return articles, enriched_count
