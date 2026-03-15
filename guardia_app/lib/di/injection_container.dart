@@ -11,11 +11,12 @@ import 'package:guardia_app/core/services/secure_storage_service.dart';
 // Repositories
 import 'package:guardia_app/features/reports/data/datasources/report_remote_data_source.dart';
 import 'package:guardia_app/features/auth/data/datasources/firebase_auth_data_source.dart';
+import 'package:guardia_app/features/panic/data/datasources/panic_remote_data_source.dart';
 import 'package:guardia_app/features/reports/data/repositories/report_repository_impl.dart';
 import 'package:guardia_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/journey_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/notification_repository_impl.dart';
-import 'package:guardia_app/data/repositories_impl/panic_repository_impl.dart';
+import 'package:guardia_app/features/panic/data/repositories/panic_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/risk_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/routing_repository_impl.dart';
 import 'package:guardia_app/data/repositories_impl/trusted_contact_repository_impl.dart';
@@ -23,7 +24,7 @@ import 'package:guardia_app/data/repositories_impl/user_repository_impl.dart';
 import 'package:guardia_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:guardia_app/domain/repositories/journey_repository.dart';
 import 'package:guardia_app/domain/repositories/notification_repository.dart';
-import 'package:guardia_app/domain/repositories/panic_repository.dart';
+import 'package:guardia_app/features/panic/domain/repositories/panic_repository.dart';
 import 'package:guardia_app/features/reports/domain/repositories/report_repository.dart';
 import 'package:guardia_app/domain/repositories/risk_repository.dart';
 import 'package:guardia_app/domain/repositories/routing_repository.dart';
@@ -40,8 +41,9 @@ import 'package:guardia_app/domain/usecases/journey/update_journey_location.dart
 // UseCases - Notifications
 import 'package:guardia_app/domain/usecases/notifications/get_notifications.dart';
 // UseCases - Panic
-import 'package:guardia_app/domain/usecases/panic/cancel_panic.dart';
-import 'package:guardia_app/domain/usecases/panic/trigger_panic.dart';
+import 'package:guardia_app/features/panic/domain/usecases/cancel_panic.dart';
+import 'package:guardia_app/features/panic/domain/usecases/start_panic.dart';
+import 'package:guardia_app/features/panic/domain/usecases/update_panic_location.dart';
 // UseCases - Reports
 import 'package:guardia_app/features/reports/domain/usecases/create_report.dart';
 import 'package:guardia_app/features/reports/domain/usecases/get_my_reports.dart';
@@ -65,7 +67,7 @@ import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_bloc.dart';
 import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
 import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
-import 'package:guardia_app/presentation/bloc/panic/panic_bloc.dart';
+import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_bloc.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
 import 'package:guardia_app/presentation/bloc/risk/risk_bloc.dart';
@@ -124,7 +126,8 @@ Future<void> init() async {
   );
   sl.registerFactory(
     () => PanicBloc(
-      triggerPanicUseCase: sl(),
+      startPanicUseCase: sl(),
+      updatePanicLocationUseCase: sl(),
       cancelPanicUseCase: sl(),
     ),
   );
@@ -170,8 +173,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdateJourneyLocation(sl()));
   sl.registerLazySingleton(() => FinishJourney(sl()));
   sl.registerLazySingleton(() => CancelJourney(sl()));
-  sl.registerLazySingleton(() => TriggerPanic(sl()));
-  sl.registerLazySingleton(() => CancelPanic(sl()));
+  sl.registerLazySingleton(() => StartPanic(sl()));
+  sl.registerLazySingleton(() => UpdatePanicLocation(sl()));
+  sl.registerLazySingleton(() => CancelPanicAction(sl()));
   sl.registerLazySingleton(() => GetTrustedContacts(sl()));
   sl.registerLazySingleton(() => AddTrustedContact(sl()));
   sl.registerLazySingleton(() => UpdateTrustedContact(sl()));
@@ -201,9 +205,12 @@ Future<void> init() async {
       apiClient: sl(),
     ),
   );
+  sl.registerLazySingleton<PanicRemoteDataSource>(
+    () => PanicRemoteDataSource(apiClient: sl()),
+  );
   sl.registerLazySingleton<PanicRepository>(
     () => PanicRepositoryImpl(
-      apiClient: sl(),
+      remoteDataSource: sl(),
     ),
   );
   sl.registerLazySingleton<TrustedContactRepository>(
