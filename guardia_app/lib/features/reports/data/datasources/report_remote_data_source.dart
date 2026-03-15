@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:guardia_app/core/network/api_client.dart';
-import 'package:guardia_app/core/network/endpoints.dart';
 import '../models/report_model.dart';
 
 abstract class ReportRemoteDataSource {
@@ -10,9 +8,7 @@ abstract class ReportRemoteDataSource {
 }
 
 class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
-  final ApiClient _apiClient;
-
-  ReportRemoteDataSourceImpl(this._apiClient);
+  ReportRemoteDataSourceImpl();
 
   @override
   Future<void> createReport(ReportModel report, List<File> mediaFiles) async {

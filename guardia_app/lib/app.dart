@@ -4,6 +4,7 @@ import 'package:guardia_app/core/constants/app_constants.dart';
 import 'package:guardia_app/core/theme/app_theme.dart';
 import 'package:guardia_app/di/injection_container.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:guardia_app/presentation/bloc/contacts/trusted_contact_bloc.dart';
 import 'package:guardia_app/presentation/bloc/journey/journey_bloc.dart';
 import 'package:guardia_app/presentation/bloc/notifications/notification_bloc.dart';
@@ -22,7 +23,7 @@ class GuardiaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => sl<AuthBloc>()),
+        BlocProvider(create: (_) => sl<AuthBloc>()..add(AuthStatusSubscriptionRequested())),
         BlocProvider(create: (_) => sl<TrustedContactBloc>()),
         BlocProvider(create: (_) => sl<ReportBloc>()),
         BlocProvider(create: (_) => sl<JourneyBloc>()),

@@ -173,7 +173,7 @@ Future<void> init() async {
     () => AuthRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<ReportRemoteDataSource>(
-    () => ReportRemoteDataSourceImpl(sl()),
+    () => ReportRemoteDataSourceImpl(),
   );
   sl.registerLazySingleton<ReportRepository>(
     () => ReportRepositoryImpl(sl()),
