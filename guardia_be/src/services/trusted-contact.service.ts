@@ -47,20 +47,11 @@ export class TrustedContactService {
   }
 
   async update(userId: string, contactId: string, data: UpdateTrustedContactInput) {
-    const existing = await prisma.trustedContact.findUnique({
-      where: { id: contactId },
-    });
-
-    if (!existing) {
-      throw new NotFoundError("Trusted contact not found");
-    }
-
-    if (existing.user_id !== userId) {
-      throw new ForbiddenError("You do not own this contact");
-    }
-
-    const updated = await prisma.trustedContact.update({
-      where: { id: contactId },
+    const updateResult = await prisma.trustedContact.updateMany({
+      where: {
+        id: contactId,
+        user_id: userId,
+      },
       data: {
         contact_name: data.contact_name,
         contact_phone: data.contact_phone,
@@ -68,6 +59,23 @@ export class TrustedContactService {
         is_active: data.is_active,
         updated_at: new Date(),
       },
+    });
+
+    if (updateResult.count === 0) {
+      const existing = await prisma.trustedContact.findUnique({
+        where: { id: contactId },
+        select: { id: true },
+      });
+
+      if (!existing) {
+        throw new NotFoundError("Trusted contact not found");
+      }
+
+      throw new ForbiddenError("You do not own this contact");
+    }
+
+    const updated = await prisma.trustedContact.findUnique({
+      where: { id: contactId },
       select: {
         id: true,
         contact_name: true,
@@ -79,25 +87,33 @@ export class TrustedContactService {
       },
     });
 
+    if (!updated) {
+      throw new NotFoundError("Trusted contact not found");
+    }
+
     return updated;
   }
 
   async delete(userId: string, contactId: string) {
-    const existing = await prisma.trustedContact.findUnique({
-      where: { id: contactId },
+    const deleteResult = await prisma.trustedContact.deleteMany({
+      where: {
+        id: contactId,
+        user_id: userId,
+      },
     });
 
-    if (!existing) {
-      throw new NotFoundError("Trusted contact not found");
-    }
+    if (deleteResult.count === 0) {
+      const existing = await prisma.trustedContact.findUnique({
+        where: { id: contactId },
+        select: { id: true },
+      });
 
-    if (existing.user_id !== userId) {
+      if (!existing) {
+        throw new NotFoundError("Trusted contact not found");
+      }
+
       throw new ForbiddenError("You do not own this contact");
     }
-
-    await prisma.trustedContact.delete({
-      where: { id: contactId },
-    });
   }
 
   async getActiveContacts(userId: string) {

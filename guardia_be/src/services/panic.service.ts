@@ -129,8 +129,9 @@ export class PanicService {
       throw new BadRequestError("Emergency PIN is not configured for this user");
     }
 
-    const inputPin = data.emergency_pin ?? data.emergency_code;
-    const hasLegacySessionId = Boolean(data.session_id);
+    const inputPin = (data.emergency_pin ?? data.emergency_code)?.trim();
+    const sessionId = data.session_id?.trim();
+    const hasLegacySessionId = Boolean(sessionId);
 
     if (!inputPin && !hasLegacySessionId) {
       throw new BadRequestError("Emergency PIN or session_id is required");
@@ -143,7 +144,7 @@ export class PanicService {
       }
     }
 
-    if (hasLegacySessionId && data.session_id !== userId) {
+    if (hasLegacySessionId && sessionId !== userId) {
       throw new BadRequestError("Invalid panic session");
     }
 
