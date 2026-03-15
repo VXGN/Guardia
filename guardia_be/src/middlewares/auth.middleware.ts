@@ -18,7 +18,7 @@ export async function authMiddleware(
     return next(new UnauthorizedError("Missing or invalid authorization header"));
   }
 
-  const token = authHeader.split("Bearer ")[1];
+  const token = authHeader.substring(7).trim();
 
   if (!token) {
     return next(new UnauthorizedError("Token not provided"));
