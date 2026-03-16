@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -41,6 +42,11 @@ class _HomePageState extends State<HomePage> {
   double _maxRiskScore = 0.0;
   String? _riskError;
   final TextEditingController _searchController = TextEditingController();
+
+  // Realtime search suggestions (geocoding)
+  final List<Location> _suggestions = [];
+  Timer? _searchDebounce;
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -115,8 +121,83 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _clearSuggestions() {
+    if (_suggestions.isNotEmpty || _isSearching) {
+      setState(() {
+        _suggestions.clear();
+        _isSearching = false;
+      });
+    }
+  }
+
+  Future<void> _searchLocations(String query) async {
+    _searchDebounce?.cancel();
+
+    if (query.trim().length < 3) {
+      _clearSuggestions();
+      return;
+    }
+
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () async {
+      setState(() {
+        _isSearching = true;
+      });
+
+      try {
+        final results = await locationFromAddress(query);
+        if (!mounted) return;
+
+        setState(() {
+          _suggestions
+            ..clear()
+            ..addAll(results);
+          _isSearching = false;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _suggestions.clear();
+          _isSearching = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _onSuggestionSelected({
+    required Location location,
+    required String label,
+  }) async {
+    _clearSuggestions();
+
+    final target = LatLng(location.latitude, location.longitude);
+    setState(() {
+      _currentCenter = target;
+      _searchController.text = label;
+    });
+    _mapController.move(target, 13.0);
+
+    if (!mounted) return;
+
+    final routingBloc = context.read<RoutingBloc>();
+
+    routingBloc.add(
+      RoutingOriginChanged(_currentCenter.latitude, _currentCenter.longitude),
+    );
+
+    routingBloc.add(
+      RoutingDestinationChanged(
+        query: label,
+        lat: location.latitude,
+        lng: location.longitude,
+      ),
+    );
+
+    routingBloc.add(const RoutingRequested());
   }
 
   void _setHeatmapClusters(List<HeatmapCluster> clusters) {
@@ -241,7 +322,7 @@ class _HomePageState extends State<HomePage> {
                 initialCenter: _currentCenter,
                 initialZoom: 13.0,
                 onTap: (tapPosition, point) {
-                  // Handle tap event if needed
+                  _clearSuggestions();
                 },
               ),
               children: [
@@ -340,10 +421,12 @@ class _HomePageState extends State<HomePage> {
                   child: TextField(
                     controller: _searchController,
                     onChanged: (value) {
-                      // Handle search suggestions here if needed
+                      _searchLocations(value);
                     },
                     onTap: () {
-                      // Interaction logic
+                      if (_searchController.text.isNotEmpty) {
+                        _searchLocations(_searchController.text);
+                      }
                     },
                     onSubmitted: (value) async {
                       if (value.isNotEmpty) {
@@ -454,6 +537,55 @@ class _HomePageState extends State<HomePage> {
                       ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Search suggestions dropdown
+            if (!_isNavigationActive && _suggestions.isNotEmpty)
+              Positioned(
+                top: 120,
+                left: 24,
+                right: 24,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 260),
+                  child: Material(
+                    elevation: 8,
+                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white,
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: _suggestions.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final loc = _suggestions[index];
+                        final subtitle =
+                            '${loc.latitude.toStringAsFixed(4)}, ${loc.longitude.toStringAsFixed(4)}';
+
+                        return ListTile(
+                          leading: const Icon(
+                            Icons.place_outlined,
+                            color: AppColors.textSecondary,
+                          ),
+                          title: Text(
+                            _searchController.text,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            subtitle,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          onTap: () {
+                            _onSuggestionSelected(
+                              location: loc,
+                              label: _searchController.text,
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                 ),
