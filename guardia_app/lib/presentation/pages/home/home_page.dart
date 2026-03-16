@@ -380,11 +380,23 @@ class _HomePageState extends State<HomePage> {
                 ),
                 BlocBuilder<RoutingBloc, RoutingState>(
                   builder: (context, routingState) {
-                    return routingState.selectedRoute != null
+                    final route = routingState.selectedRoute;
+                    final points = route?.points
+                            .where(
+                              (p) =>
+                                  p.latitude >= -90 &&
+                                  p.latitude <= 90 &&
+                                  p.longitude >= -180 &&
+                                  p.longitude <= 180,
+                            )
+                            .toList() ??
+                        const [];
+
+                    return points.length >= 2
                         ? PolylineLayer(
                             polylines: [
                               Polyline(
-                                points: routingState.selectedRoute!.points,
+                                points: points,
                                 strokeWidth:
                                     6.0, // Thicker blue line as requested
                                 color: Colors.blueAccent,

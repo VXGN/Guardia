@@ -38,8 +38,18 @@ class RoutingRemoteDataSourceImpl implements RoutingRemoteDataSource {
         },
       );
 
-      final List<dynamic> data = response.data['data'] ?? [];
-      return data.map((json) => RouteOptionModel.fromJson(json)).toList();
+      final parsedRoutes = _parseServerRoutes(
+        response.data,
+        originLat: originLat,
+        originLng: originLng,
+        destLat: destLat,
+        destLng: destLng,
+      );
+      if (parsedRoutes.isNotEmpty) {
+        return parsedRoutes;
+      }
+
+      throw ServerException(message: 'Safe route response is empty');
     } catch (e) {
       // Catching any exception here (ServerException, NetworkException from ApiClient)
       // Fallback to dummy data if server is offline or fails
@@ -120,11 +130,11 @@ class RoutingRemoteDataSourceImpl implements RoutingRemoteDataSource {
           distanceMeters: 3800, // 3.8 km
           safetyScore: 92.5,
           polyline: '',
-          points: [
+          points: _sanitizePoints([
             LatLng(originLat, originLng),
             LatLng(originLat + (destLat - originLat) / 2, originLng + (destLng - originLng) / 2 + 0.005), // simple curve
             LatLng(destLat, destLng)
-          ],
+          ], fallbackOrigin: LatLng(originLat, originLng), fallbackDestination: LatLng(destLat, destLng)),
         ),
         RouteOptionModel(
           id: 'dummy_fast',
@@ -134,13 +144,124 @@ class RoutingRemoteDataSourceImpl implements RoutingRemoteDataSource {
           distanceMeters: 3400, // 3.4 km
           safetyScore: 65.0,
           polyline: '',
-          points: [
+          points: _sanitizePoints([
             LatLng(originLat, originLng),
             LatLng(destLat, destLng)
-          ],
+          ], fallbackOrigin: LatLng(originLat, originLng), fallbackDestination: LatLng(destLat, destLng)),
         ),
       ];
     }
+  }
+
+  List<RouteOptionModel> _parseServerRoutes(
+    dynamic rawResponse, {
+    required double originLat,
+    required double originLng,
+    required double destLat,
+    required double destLng,
+  }) {
+    // Legacy shape: data is already a list of route options.
+    if (rawResponse is List) {
+      return rawResponse
+          .whereType<Map>()
+          .map((item) => RouteOptionModel.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    }
+
+    if (rawResponse is! Map<String, dynamic>) {
+      return const [];
+    }
+
+    final payload = rawResponse['data'];
+
+    if (payload is List) {
+      return payload
+          .whereType<Map>()
+          .map((item) => RouteOptionModel.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    }
+
+    // Current backend shape:
+    // { success, message, data: { route: [{lat,lng}], total_distance_meters, ... } }
+    if (payload is Map<String, dynamic>) {
+      final routeRaw = payload['route'];
+      final points = _pointsFromRouteList(routeRaw);
+      final safePoints = _sanitizePoints(
+        points,
+        fallbackOrigin: LatLng(originLat, originLng),
+        fallbackDestination: LatLng(destLat, destLng),
+      );
+
+      final distanceMeters = (payload['total_distance_meters'] as num?)?.toInt() ?? 0;
+      final durationSeconds = (payload['estimated_duration_seconds'] as num?)?.toInt() ?? 0;
+      final totalRisk = (payload['total_risk_score'] as num?)?.toDouble() ?? 0.0;
+
+      return [
+        RouteOptionModel(
+          id: 'server_safe',
+          label: 'safest',
+          displayName: 'Safe Guardia',
+          durationSeconds: durationSeconds,
+          distanceMeters: distanceMeters,
+          safetyScore: _riskToSafetyScore(totalRisk),
+          polyline: '',
+          points: safePoints,
+          steps: const [],
+        ),
+      ];
+    }
+
+    return const [];
+  }
+
+  List<LatLng> _pointsFromRouteList(dynamic routeRaw) {
+    if (routeRaw is! List) {
+      return const [];
+    }
+
+    final points = <LatLng>[];
+    for (final item in routeRaw) {
+      if (item is! Map) {
+        continue;
+      }
+
+      final lat = (item['lat'] as num?)?.toDouble();
+      final lng = (item['lng'] as num?)?.toDouble();
+      if (lat == null || lng == null) {
+        continue;
+      }
+
+      if (_isValidLatLng(lat, lng)) {
+        points.add(LatLng(lat, lng));
+      }
+    }
+
+    return points;
+  }
+
+  List<LatLng> _sanitizePoints(
+    List<LatLng> rawPoints, {
+    required LatLng fallbackOrigin,
+    required LatLng fallbackDestination,
+  }) {
+    final points = rawPoints
+        .where((point) => _isValidLatLng(point.latitude, point.longitude))
+        .toList();
+
+    if (points.length >= 2) {
+      return points;
+    }
+
+    return [fallbackOrigin, fallbackDestination];
+  }
+
+  bool _isValidLatLng(double lat, double lng) {
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  }
+
+  double _riskToSafetyScore(double totalRiskScore) {
+    final score = (100.0 - totalRiskScore).clamp(0.0, 100.0);
+    return score;
   }
 }
 
