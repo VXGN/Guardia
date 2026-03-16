@@ -1,9 +1,11 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { randomBytes, scryptSync, scrypt as scryptCb, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 
-const PIN_LENGTH = 6;
+const scryptAsync = promisify(scryptCb);
+const PIN_LENGTH = 4;
 
 export function generateEmergencyPin(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 export function hashEmergencyPin(pin: string): string {
@@ -12,13 +14,13 @@ export function hashEmergencyPin(pin: string): string {
   return `${salt}:${hash}`;
 }
 
-export function verifyEmergencyPin(pin: string, storedHash: string): boolean {
+export async function verifyEmergencyPin(pin: string, storedHash: string): Promise<boolean> {
   const [salt, hash] = storedHash.split(":");
-  if (!salt || !hash || pin.length !== PIN_LENGTH) {
+  if (!salt || !hash || pin.length < PIN_LENGTH) {
     return false;
   }
 
-  const derived = scryptSync(pin, salt, 64);
+  const derived = (await scryptAsync(pin, salt, 64)) as Buffer;
   const stored = Buffer.from(hash, "hex");
 
   if (derived.length !== stored.length) {

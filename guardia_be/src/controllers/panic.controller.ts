@@ -26,4 +26,9 @@ export class PanicController {
     const result = await panicService.updatePanicLocation(req.uid!, req.body);
     sendSuccess(res, result, "Panic location updated");
   });
+
+  getEmergencyPinHash = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await panicService.getEmergencyPinHash(req.uid!);
+    sendSuccess(res, result, "Emergency PIN hash retrieved");
+  });
 }

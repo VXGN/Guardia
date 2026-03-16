@@ -121,10 +121,6 @@ export class PanicService {
       throw new NotFoundError("User not found");
     }
 
-    if (!user.panic_is_active) {
-      throw new NotFoundError("No active panic alert found");
-    }
-
     if (!user.emergency_pin_hash) {
       throw new BadRequestError("Emergency PIN is not configured for this user");
     }
@@ -138,7 +134,7 @@ export class PanicService {
     }
 
     if (inputPin) {
-      const isValidPin = verifyEmergencyPin(inputPin, user.emergency_pin_hash);
+      const isValidPin = await verifyEmergencyPin(inputPin, user.emergency_pin_hash);
       if (!isValidPin) {
         throw new BadRequestError("Invalid emergency PIN");
       }
@@ -146,6 +142,14 @@ export class PanicService {
 
     if (hasLegacySessionId && sessionId !== userId) {
       throw new BadRequestError("Invalid panic session");
+    }
+
+    if (!user.panic_is_active) {
+      return {
+        success: true,
+        message: "Emergency PIN verified. No active panic alert.",
+        cancelled_at: null,
+      };
     }
 
     const cancelledAt = new Date();
@@ -157,11 +161,44 @@ export class PanicService {
       },
     });
 
+    // Do not block cancel latency on fan-out notifications.
+    void this.notifyTrustedContactsPanicCancelled(userId, cancelledAt);
+
     return {
       success: true,
       message: "Panic alert cancelled successfully",
+      status: "CANCELLED",
+      session_id: userId,
       cancelled_at: cancelledAt.toISOString(),
     };
+  }
+
+  private async notifyTrustedContactsPanicCancelled(userId: string, cancelledAt: Date) {
+    try {
+      const activeContacts = await trustedContactService.getActiveContacts(userId);
+
+      if (activeContacts.length === 0) {
+        return;
+      }
+
+      await Promise.all(
+        activeContacts.map((contact) =>
+          prisma.notification.create({
+            data: {
+              recipient_phone: contact.contact_phone,
+              notification_type: "system",
+              title: "Emergency Update",
+              body: "Emergency alert has been cancelled by the user.",
+              is_sent: true,
+              sent_at: cancelledAt,
+            },
+          })
+        )
+      );
+    } catch (error) {
+      // Notification fan-out failure must not fail cancel semantics.
+      console.error("[PanicService] Failed to notify cancellation", error);
+    }
   }
 
   async updatePanicLocation(userId: string, data: UpdatePanicLocationInput) {
@@ -201,6 +238,22 @@ export class PanicService {
       latitude: data.latitude,
       longitude: data.longitude,
       updated_at: updatedAt.toISOString(),
+    };
+  }
+
+  async getEmergencyPinHash(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId, deleted_at: null },
+      select: { emergency_pin_hash: true },
+    });
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    return {
+      has_pin: Boolean(user.emergency_pin_hash),
+      emergency_pin_hash: user.emergency_pin_hash || null,
     };
   }
 
