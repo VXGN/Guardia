@@ -5,10 +5,14 @@ import 'package:flutter/material.dart';
 class SosCountdownOverlay extends StatefulWidget {
 
   const SosCountdownOverlay({
-    required this.onCancel, required this.onConfirm, super.key,
+    required this.onCancel,
+    required this.onConfirm,
+    required this.onPinCompleted,
+    super.key,
   });
   final VoidCallback onCancel;
   final VoidCallback onConfirm;
+  final Future<bool> Function(String pin) onPinCompleted;
 
   @override
   State<SosCountdownOverlay> createState() => _SosCountdownOverlayState();
@@ -17,8 +21,10 @@ class SosCountdownOverlay extends StatefulWidget {
 class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
   int _secondsRemaining = 3;
   Timer? _timer;
+  Timer? _confirmTimer;
   String _enteredPin = '';
-  final String _correctPin = '1234';
+  bool _isSubmittingPin = false;
+  bool _cancelled = false;
 
   @override
   void initState() {
@@ -28,20 +34,50 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_secondsRemaining > 1) {
+      if (_cancelled) {
+        timer.cancel();
+        return;
+      }
+
+      if (_enteredPin.length == 4) {
+        if (!_isSubmittingPin) {
+          unawaited(_trySubmitPin());
+        }
+        return;
+      }
+
+      if (_secondsRemaining > 0) {
         setState(() {
           _secondsRemaining--;
         });
-      } else {
-        _timer?.cancel();
-        widget.onConfirm();
+        if (_secondsRemaining == 0) {
+          timer.cancel();
+          _scheduleConfirmIfNeeded();
+        }
       }
+    });
+  }
+
+  void _scheduleConfirmIfNeeded() {
+    _confirmTimer?.cancel();
+    _confirmTimer = Timer(const Duration(milliseconds: 300), () {
+      if (_cancelled) {
+        return;
+      }
+
+      if (_isSubmittingPin || _enteredPin.length == 4) {
+        _scheduleConfirmIfNeeded();
+        return;
+      }
+
+      widget.onConfirm();
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _confirmTimer?.cancel();
     super.dispose();
   }
 
@@ -50,17 +86,60 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
       setState(() {
         _enteredPin += number;
       });
-      if (_enteredPin == _correctPin) {
-        _timer?.cancel();
-        widget.onCancel();
+
+      if (_enteredPin.length == 4) {
+        _confirmTimer?.cancel();
+        unawaited(_trySubmitPin());
       }
     }
   }
 
+  Future<void> _trySubmitPin() async {
+    if (_isSubmittingPin || _enteredPin.length != 4 || _cancelled) {
+      return;
+    }
+
+    _isSubmittingPin = true;
+    final cachedPin = _enteredPin;
+    final isValid = await widget.onPinCompleted(cachedPin);
+    _isSubmittingPin = false;
+
+    if (!mounted) {
+      return;
+    }
+
+    if (isValid) {
+      _cancelled = true;
+      _timer?.cancel();
+      widget.onCancel();
+      return;
+    }
+
+    setState(() {
+      _enteredPin = '';
+    });
+
+    if (_secondsRemaining == 0 && !_cancelled) {
+      _scheduleConfirmIfNeeded();
+    }
+  }
+
   void _onDeletePressed() {
-    if (_enteredPin.isNotEmpty) {
+    if (_enteredPin.isNotEmpty && !_isSubmittingPin) {
       setState(() {
         _enteredPin = _enteredPin.substring(0, _enteredPin.length - 1);
+      });
+    }
+  }
+
+  void _onCancelPressed() {
+    if (_isSubmittingPin) {
+      return;
+    }
+
+    if (_enteredPin.isNotEmpty) {
+      setState(() {
+        _enteredPin = '';
       });
     }
   }
@@ -219,7 +298,7 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
           children: [
             _buildKey('HAPUS', isSpecial: true, onTap: _onDeletePressed),
             _buildKey('0'),
-            _buildKey('BATAL', isSpecial: true, onTap: widget.onCancel),
+            _buildKey('BATAL', isSpecial: true, onTap: _onCancelPressed),
           ],
         ),
       ],

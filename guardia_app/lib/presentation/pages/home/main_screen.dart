@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_bloc.dart';
 import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_event.dart';
@@ -29,6 +30,15 @@ class _MainScreenState extends State<MainScreen> {
     const ReportTabPage(),
     const ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fetch emergency PIN hash for local verification during SOS countdown
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PanicBloc>().add(PanicLoadEmergencyPin());
+    });
+  }
 
   void _onTabTapped(int index) {
     setState(() {
@@ -76,6 +86,14 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               );
             }
+          },
+        ),
+        BlocListener<PanicBloc, PanicState>(
+          listenWhen: (previous, current) =>
+              previous.status != PanicStatus.active &&
+              current.status == PanicStatus.active,
+          listener: (context, _state) {
+            context.read<CompanionBloc>().add(const CompanionAlertTriggered());
           },
         ),
         BlocListener<CompanionBloc, CompanionState>(
@@ -151,7 +169,16 @@ class _MainScreenState extends State<MainScreen> {
                   },
                   onConfirm: () {
                     context.read<PanicBloc>().add(PanicCountdownFinished());
-                    context.read<CompanionBloc>().add(const CompanionAlertTriggered());
+                  },
+                  onPinCompleted: (pin) async {
+                    final completer = Completer<bool>();
+                    context.read<PanicBloc>().add(
+                      PanicCountdownPinSubmitted(
+                        emergencyCode: pin,
+                        result: completer,
+                      ),
+                    );
+                    return completer.future;
                   },
                 ),
                 

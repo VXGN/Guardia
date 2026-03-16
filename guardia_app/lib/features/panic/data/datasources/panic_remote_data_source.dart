@@ -39,16 +39,27 @@ class PanicRemoteDataSource {
     );
   }
 
+  /// Fetches the user's emergency PIN hash for local verification.
+  /// GET /api/panic/emergency-pin-hash
+  Future<String?> fetchEmergencyPinHash() async {
+    final response = await apiClient.get(Endpoints.emergencyPinHash);
+    final data = response.data as Map<String, dynamic>;
+    final inner = data['data'] as Map<String, dynamic>?;
+    if (inner == null || inner['has_pin'] != true) return null;
+    return inner['emergency_pin_hash'] as String?;
+  }
+
   /// Cancels an active panic session.
   /// POST /api/panic/cancel
   Future<void> cancelPanic({
-    required String sessionId,
+    String? sessionId,
     String? emergencyCode,
   }) async {
     await apiClient.post(
       Endpoints.cancelPanic,
       data: {
-        'session_id': sessionId,
+        if (sessionId != null && sessionId.trim().isNotEmpty)
+          'session_id': sessionId.trim(),
         if (emergencyCode != null && emergencyCode.trim().isNotEmpty)
           'emergency_code': emergencyCode.trim(),
       },

@@ -163,6 +163,7 @@ Future<void> init() async {
       updatePanicLocationUseCase: sl(),
       cancelPanicUseCase: sl(),
       panicAlertService: sl(),
+      panicRepository: sl(),
     ),
   );
   sl.registerLazySingleton(() => StartPanic(sl()));

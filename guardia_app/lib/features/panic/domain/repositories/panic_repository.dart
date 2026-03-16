@@ -13,7 +13,9 @@ abstract class PanicRepository {
   });
 
   Future<void> cancelPanic({
-    required String sessionId,
+    String? sessionId,
     String? emergencyCode,
   });
+
+  Future<String?> fetchEmergencyPinHash();
 }

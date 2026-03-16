@@ -47,6 +47,7 @@ class Endpoints {
   static const String triggerPanic = '$_apiPrefix/panic/trigger';
   static const String updatePanicLocation = '$_apiPrefix/panic/update-location';
   static const String cancelPanic = '$_apiPrefix/panic/cancel';
+  static const String emergencyPinHash = '$_apiPrefix/panic/emergency-pin-hash';
 
   // Notifications
   static const String notifications = '$_apiPrefix/notifications';

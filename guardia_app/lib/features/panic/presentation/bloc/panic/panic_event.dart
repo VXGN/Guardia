@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'dart:async';
 
 abstract class PanicEvent extends Equatable {
   const PanicEvent();
@@ -33,4 +34,19 @@ class PanicCancelRequested extends PanicEvent {
   List<Object?> get props => [emergencyCode];
 }
 
+class PanicCountdownPinSubmitted extends PanicEvent {
+  final String emergencyCode;
+  final Completer<bool> result;
+
+  const PanicCountdownPinSubmitted({
+    required this.emergencyCode,
+    required this.result,
+  });
+
+  @override
+  List<Object?> get props => [emergencyCode, result];
+}
+
 class PanicResetToIdle extends PanicEvent {}
+
+class PanicLoadEmergencyPin extends PanicEvent {}

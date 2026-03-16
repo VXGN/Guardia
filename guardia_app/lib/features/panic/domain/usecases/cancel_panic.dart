@@ -6,7 +6,7 @@ class CancelPanicAction {
   CancelPanicAction(this.repository);
 
   Future<void> call({
-    required String sessionId,
+    String? sessionId,
     String? emergencyCode,
   }) async {
     return repository.cancelPanic(
