@@ -227,18 +227,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: Column(
         children: [
-          _buildListTile(
-            Icons.people_outline,
-            'Trusted Contacts',
-            onTap: () => context.pushNamed('trusted_contacts'),
-          ),
-          const Divider(height: 1),
-          _buildListTile(
-            Icons.notifications_active,
-            'Notification Inbox',
-            onTap: () => context.pushNamed('notifications'),
-          ),
-          const Divider(height: 1),
           _buildSwitchTile(
             Icons.notifications_outlined,
             'Push Notifications',

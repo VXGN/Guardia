@@ -119,8 +119,9 @@ class SosActiveOverlay extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
+                  child: const Text(
                     'End Emergency',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),

@@ -167,8 +167,9 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 48),
+              const Text(
                 'SOS Triggering Soon',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -214,8 +215,9 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
                 ),
               ),
               const SizedBox(height: 40),
+              const Text(
                 'EMERGENCY PIN',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   letterSpacing: 1.2,
@@ -241,8 +243,9 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
               const SizedBox(height: 32),
               _buildKeypad(),
               const SizedBox(height: 24),
+              const Text(
                 'SOS will activate automatically if no action is taken.',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white54,
                   fontSize: 12,
                 ),

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:guardia_app/core/utils/location_utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:guardia_app/features/companion/data/datasources/chat_remote_data_source.dart';
 import 'package:guardia_app/features/companion/domain/entities/companion_message_entity.dart';
 import 'package:guardia_app/features/companion/domain/entities/journey_session_entity.dart';
 import 'package:guardia_app/features/companion/domain/entities/trusted_contact_entity.dart';
