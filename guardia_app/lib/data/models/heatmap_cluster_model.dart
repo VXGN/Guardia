@@ -1,4 +1,4 @@
-﻿import 'package:guardia_app/domain/entities/heatmap_cluster.dart';
+import 'package:guardia_app/domain/entities/heatmap_cluster.dart';
 
 class HeatmapClusterModel extends HeatmapCluster {
   const HeatmapClusterModel({
@@ -14,18 +14,28 @@ class HeatmapClusterModel extends HeatmapCluster {
 
   factory HeatmapClusterModel.fromJson(Map<String, dynamic> json) {
     return HeatmapClusterModel(
-      id: json['id'] as String,
+      id: (json['id'] ?? '').toString(),
       centerLatBlurred: _toDouble(json['center_lat_blurred']),
       centerLngBlurred: _toDouble(json['center_lng_blurred']),
       radiusMeters: _toInt(json['radius_meters']),
-      intensity: json['intensity'] as String,
+      intensity: (json['intensity'] ?? 'low').toString(),
       incidentCount: _toInt(json['incident_count']),
-      dominantType: json['dominant_type'] as String?,
-      timeSlot: json['time_slot'] as String?,
-      validFrom: DateTime.parse(json['valid_from'] as String),
-      validUntil: DateTime.parse(json['valid_until'] as String),
-      createdAt: DateTime.parse(json['created_at'] as String),
+      dominantType: json['dominant_type']?.toString(),
+      timeSlot: json['time_slot']?.toString(),
+      validFrom: _toDateTime(json['valid_from']),
+      validUntil: _toDateTime(json['valid_until']),
+      createdAt: _toDateTime(json['created_at']),
     );
+  }
+
+  static DateTime _toDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    try {
+      if (value is String) return DateTime.parse(value);
+      return DateTime.now();
+    } catch (_) {
+      return DateTime.now();
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -75,8 +75,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
     context.read<AuthBloc>().add(
       AuthRegisterRequested(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        fullName: _fullNameController.text.trim(),
       ),
     );
   }

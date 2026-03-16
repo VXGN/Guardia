@@ -81,7 +81,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(state.copyWith(status: AuthStatus.loading));
     try {
-      final user = await _authRepository.registerWithEmail(event.email, event.password);
+      final user = await _authRepository.registerWithEmail(
+        event.email, 
+        event.password,
+        fullName: event.fullName,
+      );
       emit(state.copyWith(status: AuthStatus.authenticated, user: user));
     } on AuthException catch (e) {
       emit(state.copyWith(status: AuthStatus.failure, message: e.message));

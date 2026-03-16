@@ -21,11 +21,18 @@ class AuthLoginRequested extends AuthEvent {
 
 /// Event when the user attempts to register with email and password.
 class AuthRegisterRequested extends AuthEvent {
-  const AuthRegisterRequested(this.email, this.password);
+  const AuthRegisterRequested({
+    required this.email,
+    required this.password,
+    required this.fullName,
+  });
+  
   final String email;
   final String password;
+  final String fullName;
+
   @override
-  List<Object> get props => [email, password];
+  List<Object> get props => [email, password, fullName];
 }
 
 /// Event when the user attempts to log in with Google.

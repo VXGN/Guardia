@@ -32,14 +32,20 @@ class RiskRepositoryImpl implements RiskRepository {
       );
 
       final dynamic responseData = response.data;
-      final clusters =
-          ((responseData['data'] as Map<String, dynamic>)['heatmap_clusters']
-                      as List<dynamic>? ??
-                  const <dynamic>[])
-              .map(
-                (e) => HeatmapClusterModel.fromJson(e as Map<String, dynamic>),
-              )
-              .toList();
+      final dataMap = responseData is Map<String, dynamic> ? responseData['data'] : null;
+      final clustersData = (dataMap is Map<String, dynamic>) 
+          ? (dataMap['heatmap_clusters'] as List<dynamic>?)
+          : null;
+
+      if (clustersData == null || clustersData.isEmpty) {
+        throw Exception('No clusters returned from API, using fallback');
+      }
+
+      final clusters = clustersData
+          .map(
+            (e) => HeatmapClusterModel.fromJson(e as Map<String, dynamic>),
+          )
+          .toList();
       return Right(clusters);
     } catch (e) {
       print('Falling back to mock HeatmapClusters due to error: $e');
@@ -135,10 +141,20 @@ class RiskRepositoryImpl implements RiskRepository {
       );
 
       final dynamic responseData = response.data;
-      final data = responseData['data'] as Map<String, dynamic>;
+      final dataMap = responseData is Map<String, dynamic> ? responseData['data'] : null;
+      
+      if (dataMap == null || dataMap is! Map<String, dynamic>) {
+        throw Exception('Invalid summary data from API');
+      }
+
+      final data = dataMap;
       final heatmapClusters =
           (data['heatmap_clusters'] as List<dynamic>? ?? const []);
       final riskScores = (data['risk_scores'] as List<dynamic>? ?? const []);
+
+      if (heatmapClusters.isEmpty && riskScores.isEmpty) {
+        throw Exception('Empty summary data, using fallback');
+      }
 
       double maxRiskScore = 0.0;
       for (final score in riskScores) {

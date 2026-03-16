@@ -47,7 +47,7 @@ class _HomePageState extends State<HomePage> {
 
   LatLng _currentCenter = _initialCenter;
 
-  final List<CircleMarker> _riskZones = [];
+  List<CircleMarker> _riskZones = [];
   bool _isNavigationActive = false;
   // Route polyline decoding is now handled by the data layer (RouteOptionModel).
   int _clusterCount = 0;
@@ -249,22 +249,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _setHeatmapClusters(List<HeatmapCluster> clusters) {
-    _riskZones
-      ..clear()
-      ..addAll(
-        clusters.map((cluster) {
-          final color = _colorForIntensity(cluster.intensity);
-          return CircleMarker(
-            point: LatLng(cluster.centerLatBlurred, cluster.centerLngBlurred),
-            radius: cluster.radiusMeters.toDouble(),
-            useRadiusInMeter: true,
-            color: color.withValues(alpha: 0.22),
-            borderColor: color.withValues(alpha: 0.45),
-            borderStrokeWidth: 1,
-          );
-        }),
-      );
-    _clusterCount = clusters.length;
+    setState(() {
+      _riskZones = clusters.map((cluster) {
+        final color = _colorForIntensity(cluster.intensity);
+        return CircleMarker(
+          point: LatLng(cluster.centerLatBlurred, cluster.centerLngBlurred),
+          radius: cluster.radiusMeters.toDouble(),
+          useRadiusInMeter: true,
+          color: color.withValues(alpha: 0.22),
+          borderColor: color.withValues(alpha: 0.45),
+          borderStrokeWidth: 1,
+        );
+      }).toList();
+      _clusterCount = clusters.length;
+      _riskError = null;
+    });
   }
 
   Color _colorForIntensity(String intensity) {
@@ -290,10 +289,7 @@ class _HomePageState extends State<HomePage> {
         BlocListener<RiskBloc, RiskState>(
           listener: (context, state) {
             if (state is HeatmapLoaded) {
-              setState(() {
-                _riskError = null;
-                _setHeatmapClusters(state.clusters);
-              });
+              _setHeatmapClusters(state.clusters);
             } else if (state is AreaRiskSummaryLoaded) {
               setState(() {
                 _riskError = null;
@@ -302,9 +298,13 @@ class _HomePageState extends State<HomePage> {
                 _maxRiskScore =
                     (state.summary['max_risk_score'] as num?)?.toDouble() ??
                     0.0;
-                _clusterCount =
-                    (state.summary['heatmap_cluster_count'] as num?)?.toInt() ??
-                    _clusterCount;
+                // If we don't have zones yet, use the summary count.
+                // Otherwise keep the count from the actual zones list.
+                if (_riskZones.isEmpty) {
+                  _clusterCount =
+                      (state.summary['heatmap_cluster_count'] as num?)?.toInt() ??
+                      0;
+                }
               });
             } else if (state is RiskError) {
               setState(() {

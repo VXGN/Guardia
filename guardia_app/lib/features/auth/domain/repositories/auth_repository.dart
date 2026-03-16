@@ -5,8 +5,8 @@ abstract class AuthRepository {
   /// Sign in with email and password.
   Future<UserEntity> loginWithEmail(String email, String password);
 
-  /// Create a new account with email and password.
-  Future<UserEntity> registerWithEmail(String email, String password);
+  /// Create a new account with email and password, and set fullName.
+  Future<UserEntity> registerWithEmail(String email, String password, {String? fullName});
 
   /// Sign in with Google.
   Future<UserEntity> loginWithGoogle();

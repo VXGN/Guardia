@@ -222,7 +222,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetAreaRiskSummary(sl()));
   sl.registerLazySingleton(() => GetNotifications(sl()));
 
-  sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(apiClient: sl()));
+  sl.registerLazySingleton<UserRepository>(
+    () => UserRepositoryImpl(apiClient: sl(), secureStorage: sl()),
+  );
   sl.registerLazySingleton<RiskRepository>(() => RiskRepositoryImpl(apiClient: sl()));
   sl.registerLazySingleton<NotificationRepository>(
     () => NotificationRepositoryImpl(apiClient: sl()),

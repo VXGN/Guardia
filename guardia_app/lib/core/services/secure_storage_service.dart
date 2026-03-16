@@ -1,4 +1,4 @@
-﻿import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorageService {
 
@@ -17,5 +17,19 @@ class SecureStorageService {
 
   Future<void> deleteToken() async {
     await _storage.delete(key: _tokenKey);
+  }
+
+  static const _userProfileKey = 'user_profile';
+
+  Future<void> saveUserProfile(String profileJson) async {
+    await _storage.write(key: _userProfileKey, value: profileJson);
+  }
+
+  Future<String?> getUserProfile() async {
+    return _storage.read(key: _userProfileKey);
+  }
+
+  Future<void> clearUserProfile() async {
+    await _storage.delete(key: _userProfileKey);
   }
 }

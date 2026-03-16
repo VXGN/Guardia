@@ -53,10 +53,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> registerWithEmail(String email, String password) async {
+  Future<UserEntity> registerWithEmail(String email, String password, {String? fullName}) async {
     try {
       final credential = await _dataSource.registerWithEmail(email, password);
-      final user = _mapFirebaseUser(credential.user);
+      
+      // Update display name if provided
+      if (fullName != null && credential.user != null) {
+        await credential.user!.updateDisplayName(fullName);
+        // Reload user to get updated data
+        await credential.user!.reload();
+      }
+
+      // Re-fetch to ensure we get the updated display name
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final user = _mapFirebaseUser(currentUser ?? credential.user);
       if (user == null) throw AuthException('Failed to load user profile.');
       return user;
     } on FirebaseAuthException catch (e) {

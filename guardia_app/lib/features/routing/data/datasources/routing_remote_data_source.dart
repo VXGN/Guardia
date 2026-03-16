@@ -46,7 +46,10 @@ class RoutingRemoteDataSourceImpl implements RoutingRemoteDataSource {
       print('Network error fetching routes: $e');
 
       try {
-        final osrmDio = Dio();
+        final osrmDio = Dio(BaseOptions(
+          connectTimeout: const Duration(seconds: 3),
+          receiveTimeout: const Duration(seconds: 3),
+        ));
         // To simulate "avoiding" a high-risk zone in the middle of a straight line,
         // we will ask OSRM to route via an intermediate waypoint that forces a detour curve.
         // We use the shared mock hazard location so the route visually bends around the red circle.
