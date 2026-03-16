@@ -64,4 +64,7 @@ class Endpoints {
   // Upload
   static const String uploadSingle = '$_apiPrefix/upload/single';
   static const String uploadMultiple = '$_apiPrefix/upload/multiple';
+
+  // Chat
+  static const String chatHistory = '$_apiPrefix/chat/history';
 }

@@ -21,6 +21,17 @@ class _CompanionChatPageState extends State<CompanionChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  @override
+  void initState() {
+    super.initState();
+    // Load chat history from the database after frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<CompanionBloc>().add(ChatHistoryRequested(widget.companionId));
+      }
+    });
+  }
+
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
 

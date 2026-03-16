@@ -109,3 +109,11 @@ class CompanionResetAlert extends CompanionEvent {
 class CompanionResetError extends CompanionEvent {
   const CompanionResetError();
 }
+
+class ChatHistoryRequested extends CompanionEvent {
+  final String otherUid;
+  const ChatHistoryRequested(this.otherUid);
+
+  @override
+  List<Object?> get props => [otherUid];
+}

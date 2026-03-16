@@ -61,6 +61,7 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
     on<CompanionResetError>(_onResetError);
     on<CompanionMessageReceived>(_onMessageReceived);
     on<CompanionConnectionChanged>(_onConnectionChanged);
+    on<ChatHistoryRequested>(_onChatHistoryRequested);
   }
 
   void _onMessageReceived(CompanionMessageReceived event, Emitter<CompanionState> emit) {
@@ -90,18 +91,44 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
     emit(state.copyWith(isChatConnected: event.isConnected));
   }
 
+  Future<void> _onChatHistoryRequested(ChatHistoryRequested event, Emitter<CompanionState> emit) async {
+    try {
+      final rawMessages = await chatRemoteDataSource.fetchChatHistory(event.otherUid);
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+      final historyMessages = rawMessages.map((msg) {
+        return CompanionMessageEntity(
+          id: msg['id']?.toString() ?? '',
+          text: msg['message']?.toString() ?? '',
+          isMe: msg['sender_uid'] == currentUid,
+          time: msg['timestamp'] != null
+              ? DateTime.tryParse(msg['timestamp'].toString()) ?? DateTime.now()
+              : DateTime.now(),
+        );
+      }).toList();
+
+      // Prepend history before any existing real-time messages
+      final existingIds = state.messages.map((m) => m.id).toSet();
+      final newHistory = historyMessages.where((m) => !existingIds.contains(m.id)).toList();
+
+      emit(state.copyWith(messages: [...newHistory, ...state.messages]));
+    } catch (e) {
+      print('Error loading chat history: $e');
+    }
+  }
+
   void _onMessageSent(CompanionMessageSent event, Emitter<CompanionState> emit) {
+    // Optimistically add the message to state immediately so it appears in the UI
+    final newMessage = CompanionMessageEntity(
+      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+      text: event.text,
+      isMe: true,
+      time: DateTime.now(),
+    );
+    emit(state.copyWith(messages: List.from(state.messages)..add(newMessage)));
+
+    // Also send via WebSocket to the backend
     chatRemoteDataSource.sendMessage(
-      // We don't have a specific receiver here because the backend handles broadcasting to the session.
-      // However, handleSendMessage requires receiver_uid.
-      // For now, let's assume 'broadcast' or similar if we can, but looking at backend, it needs receiver_uid.
-      // In a real journey, we might need to send to each companion or the backend broadcasts.
-      // Backend handles: receiverSockets = activeUsers.get(receiverUid).
-      // If we are the user, we send to the companion. But we have multiple?
-      // For competition simplicity, let's just use the first companion or 'session' if supported.
-      // Looking at backend chat.socket.ts: L88: const receiverUid = payload?.receiver_uid;
-      // It seems it's 1-to-1. 
-      // I'll update the event to include receiver_uid.
       event.receiverUid ?? '',
       event.text,
     );

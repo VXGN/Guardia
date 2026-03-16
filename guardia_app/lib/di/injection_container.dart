@@ -150,7 +150,7 @@ Future<void> init() async {
   sl.registerLazySingleton<JourneyRemoteDataSource>(
     () => JourneyRemoteDataSourceImpl(apiClient: sl()),
   );
-  sl.registerLazySingleton(() => ChatRemoteDataSource());
+  sl.registerLazySingleton(() => ChatRemoteDataSource(apiClient: sl()));
 
   // Features - Auth
   sl.registerFactory(() => AuthBloc(authRepository: sl()));
