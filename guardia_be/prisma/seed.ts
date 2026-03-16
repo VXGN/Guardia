@@ -260,6 +260,7 @@ async function main() {
 
   await prisma.heatmapCluster.createMany({
     data: [
+      // Jakarta Clusters (existing)
       {
         center_lat_blurred: -6.19200,
         center_lng_blurred: 106.82300,
@@ -269,7 +270,7 @@ async function main() {
         dominant_type: "theft",
         time_slot: "night",
         valid_from: new Date("2026-03-01T00:00:00Z"),
-        valid_until: new Date("2026-04-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
       },
       {
         center_lat_blurred: -6.20900,
@@ -280,7 +281,7 @@ async function main() {
         dominant_type: "stalking",
         time_slot: "night",
         valid_from: new Date("2026-03-01T00:00:00Z"),
-        valid_until: new Date("2026-04-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
       },
       {
         center_lat_blurred: -6.17500,
@@ -291,7 +292,7 @@ async function main() {
         dominant_type: "verbal_harassment",
         time_slot: "evening",
         valid_from: new Date("2026-03-01T00:00:00Z"),
-        valid_until: new Date("2026-04-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
       },
       {
         center_lat_blurred: -6.19500,
@@ -302,7 +303,63 @@ async function main() {
         dominant_type: "physical_harassment",
         time_slot: "night",
         valid_from: new Date("2026-03-01T00:00:00Z"),
-        valid_until: new Date("2026-04-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
+      },
+      // Lombok / NTB Clusters (Mataram area – app default center)
+      {
+        center_lat_blurred: -8.57900,
+        center_lng_blurred: 116.10500,
+        radius_meters: 400,
+        intensity: "critical",
+        incident_count: 14,
+        dominant_type: "theft",
+        time_slot: "night",
+        valid_from: new Date("2026-03-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
+      },
+      {
+        center_lat_blurred: -8.59200,
+        center_lng_blurred: 116.12300,
+        radius_meters: 300,
+        intensity: "high",
+        incident_count: 9,
+        dominant_type: "stalking",
+        time_slot: "night",
+        valid_from: new Date("2026-03-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
+      },
+      {
+        center_lat_blurred: -8.57000,
+        center_lng_blurred: 116.12800,
+        radius_meters: 350,
+        intensity: "medium",
+        incident_count: 5,
+        dominant_type: "verbal_harassment",
+        time_slot: "evening",
+        valid_from: new Date("2026-03-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
+      },
+      {
+        center_lat_blurred: -8.59800,
+        center_lng_blurred: 116.10000,
+        radius_meters: 250,
+        intensity: "low",
+        incident_count: 2,
+        dominant_type: "intimidation",
+        time_slot: "morning",
+        valid_from: new Date("2026-03-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
+      },
+      {
+        center_lat_blurred: -8.58600,
+        center_lng_blurred: 116.09500,
+        radius_meters: 280,
+        intensity: "high",
+        incident_count: 8,
+        dominant_type: "physical_harassment",
+        time_slot: "night",
+        valid_from: new Date("2026-03-01T00:00:00Z"),
+        valid_until: new Date("2026-06-01T00:00:00Z"),
       },
     ],
   });

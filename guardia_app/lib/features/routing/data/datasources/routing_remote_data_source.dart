@@ -5,6 +5,7 @@ import 'package:guardia_app/features/routing/data/models/route_step_model.dart';
 import 'package:dio/dio.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:guardia_app/core/network/endpoints.dart';
 abstract class RoutingRemoteDataSource {
   Future<List<RouteOptionModel>> getSafeRoutes({
     required double originLat,
@@ -27,11 +28,13 @@ class RoutingRemoteDataSourceImpl implements RoutingRemoteDataSource {
     required double destLng,
   }) async {
     try {
-      final response = await apiClient.get(
-        '/routing/safe',
-        queryParameters: {
-          'origin': '$originLat,$originLng',
-          'dest': '$destLat,$destLng',
+      final response = await apiClient.post(
+        Endpoints.safeRoute,
+        data: {
+          'start_lat': originLat,
+          'start_lng': originLng,
+          'end_lat': destLat,
+          'end_lng': destLng,
         },
       );
 

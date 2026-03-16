@@ -52,7 +52,15 @@ async def build_graph(
         if seg.near_security_post:
             safety_factor *= 0.6
 
-        weight = dist * (1 + risk / 100 * safety_factor)
+        # Instead of penalizing safe roads by making risk * safety factor,
+        # we penalize the BASE weight. Higher risk = higher weight.
+        # But GOOD things (lights, main road) = REDUCE the penalty.
+        # So we add a base penalty + risk penalty, and divide risk penalty by safety_factor.
+        # Thus, smaller safety_factor (0.8 * 0.7 = 0.56) makes the road SAFER (less weight).
+        # Actually: weight = dist * (1 + risk / 100 * (1/safety_factor)) is what would penalize it.
+        # Wait, if safety_factor is small (0.56) we want the road to be CHOSEN, so weight must be SMALLER.
+        # So weight = dist * (1 + risk / 100) * safety_factor
+        weight = dist * (1 + (risk / 100)) * safety_factor
 
         G.add_edge(s, e, weight=weight, distance=dist, risk=risk, segment_id=seg.id)
 
