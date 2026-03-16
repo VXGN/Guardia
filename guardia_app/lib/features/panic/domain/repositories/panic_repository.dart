@@ -18,4 +18,6 @@ abstract class PanicRepository {
   });
 
   Future<String?> fetchEmergencyPinHash();
+
+  Future<void> setEmergencyPin({required String pin});
 }

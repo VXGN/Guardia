@@ -4,21 +4,38 @@ import 'package:geolocator/geolocator.dart';
 class LocationUtils {
   LocationUtils._();
 
-  /// Check and request location permissions.
+  /// Check and request location permissions using Geolocator's native flow.
+  /// This correctly handles both permission and location service state.
   /// Returns `true` if permission is granted.
   static Future<bool> checkAndRequestPermission() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return false;
+    LocationPermission permission = await Geolocator.checkPermission();
+    print('LocationUtils: Permission status before request: $permission');
 
-    var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return false;
+      print('LocationUtils: Permission status after request: $permission');
     }
 
-    if (permission == LocationPermission.deniedForever) return false;
+    if (permission == LocationPermission.deniedForever) {
+      print('LocationUtils: Permission permanently denied.');
+      return false;
+    }
 
-    return true;
+    final granted =
+        permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+    print('LocationUtils: Permission granted = $granted');
+    return granted;
+  }
+
+  /// Opens the device's location settings.
+  static Future<bool> openLocationSettings() async {
+    return Geolocator.openLocationSettings();
+  }
+
+  /// Opens the app's permission settings.
+  static Future<bool> openAppSettings() async {
+    return Geolocator.openAppSettings();
   }
 
   /// Get the current device position.
@@ -43,17 +60,16 @@ class LocationUtils {
     return Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 5, // Update every 5 meters moved
+        distanceFilter: 5,
       ),
     );
   }
 
   /// Helper to generate a consistent dummy hazard zone for offline safe-routing testing.
-  /// Given an origin, it places a hazard slightly offset so routing can simulate avoiding it.
-  static Map<String, double> getMockHazardLocation(double originLat, double originLng) {
-    return {
-      'lat': originLat + 0.004,
-      'lng': originLng + 0.004,
-    };
+  static Map<String, double> getMockHazardLocation(
+    double originLat,
+    double originLng,
+  ) {
+    return {'lat': originLat + 0.004, 'lng': originLng + 0.004};
   }
 }

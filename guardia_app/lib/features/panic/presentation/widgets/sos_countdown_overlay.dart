@@ -19,7 +19,7 @@ class SosCountdownOverlay extends StatefulWidget {
 }
 
 class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
-  int _secondsRemaining = 3;
+  int _secondsRemaining = 5;
   Timer? _timer;
   Timer? _confirmTimer;
   String _enteredPin = '';
@@ -60,12 +60,14 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
 
   void _scheduleConfirmIfNeeded() {
     _confirmTimer?.cancel();
-    _confirmTimer = Timer(const Duration(milliseconds: 300), () {
+    // Grace period of 1.5s after countdown ends — gives user time to enter the final digit.
+    _confirmTimer = Timer(const Duration(milliseconds: 1500), () {
       if (_cancelled) {
         return;
       }
 
-      if (_isSubmittingPin || _enteredPin.length == 4) {
+      // Don't confirm if user is mid-entry (any digit entered) or submitting.
+      if (_isSubmittingPin || _enteredPin.isNotEmpty) {
         _scheduleConfirmIfNeeded();
         return;
       }

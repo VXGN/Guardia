@@ -23,12 +23,6 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
   /// Cached emergency PIN hash (scrypt "salt:hash") for local verification.
   String? _cachedPinHash;
 
-  /// Temporarily stores a locally validated PIN until backend cancel succeeds.
-  String? _pendingCountdownCancelPin;
-  bool _isPendingCountdownCancelInFlight = false;
-  int _pendingCountdownCancelRetryCount = 0;
-  static const int _maxPendingCountdownCancelRetries = 3;
-
   PanicBloc({
     required this.startPanicUseCase,
     required this.updatePanicLocationUseCase,
@@ -61,8 +55,6 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     PanicButtonPressed event,
     Emitter<PanicState> emit,
   ) async {
-    _clearPendingCountdownCancelPin();
-
     // Guard: only allow triggering from idle state
     if (state.status != PanicStatus.idle && state.status != PanicStatus.failure) {
       print('SOS Button Pressed ignored — current status: ${state.status}');
@@ -70,13 +62,15 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     }
 
     print('SOS Button Pressed - Checking permissions...');
-    // Check and request location permission
+
+    // Use geolocator's native permission check (handles service state internally)
     final isPermissionGranted = await LocationUtils.checkAndRequestPermission();
     if (!isPermissionGranted) {
-      print('SOS Failure: Location permission denied.');
+      print('SOS Failure: Location permission not granted.');
       emit(state.copyWith(
         status: PanicStatus.failure,
-        errorMessage: 'Izin lokasi ditolak. Tidak dapat mengirim SOS.',
+        errorMessage:
+            'Izin lokasi diperlukan untuk SOS. Pastikan GPS aktif dan izin lokasi diberikan.',
       ));
       return;
     }
@@ -113,11 +107,23 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
       final position = await LocationUtils.getCurrentPosition();
       print('Initial SOS Location: Lat=${position.latitude}, Lng=${position.longitude}');
 
+      // Guard: if session was cancelled while we fetched location, abort
+      if (state.status != PanicStatus.starting) {
+        print('SOS Start aborted — state changed to ${state.status} during location fetch.');
+        return;
+      }
+
       // Call use case to start panic session
       final session = await startPanicUseCase(
         lat: position.latitude,
         lng: position.longitude,
       );
+
+      // Guard: abort if cancelled while awaiting the start call
+      if (state.status != PanicStatus.starting) {
+        print('SOS Start aborted — state changed to ${state.status} during start call.');
+        return;
+      }
 
       print('SOS Session Started: ${session.id}');
 
@@ -133,6 +139,8 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
       // Start sound and vibration
       panicAlertService.start();
     } catch (e) {
+      // Guard: suppress failure if session was already cancelled
+      if (state.status == PanicStatus.idle) return;
       print('SOS Start Error: $e');
       emit(state.copyWith(
         status: PanicStatus.failure,
@@ -155,6 +163,12 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
         lat: event.latitude,
         lng: event.longitude,
       );
+
+      // Guard: do NOT re-emit active if session was cancelled during the await
+      if (state.session == null || state.status == PanicStatus.idle) {
+        print('Location update completed but session already cancelled. Ignoring.');
+        return;
+      }
 
       emit(state.copyWith(
         status: PanicStatus.active,
@@ -181,39 +195,23 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     final emergencyCode = event.emergencyCode?.trim();
     final sessionId = state.session?.id;
 
-    if (state.session == null && (emergencyCode == null || emergencyCode.isEmpty)) {
-      emit(state.copyWith(status: PanicStatus.idle, session: null));
-      return;
-    }
+    // Always reset state to idle immediately — do not wait for backend.
+    _stopLocationStreaming();
+    unawaited(panicAlertService.stop());
+    emit(const PanicState());
 
-    if (sessionId != null) {
-      print('SOS Status: Cancelling session $sessionId...');
-
-      // Close SOS immediately on UI while backend cancellation is processed.
-      _stopLocationStreaming();
-      unawaited(panicAlertService.stop());
-      emit(state.copyWith(status: PanicStatus.idle, session: null));
-
+    // Fire backend cancel in background (non-blocking).
+    unawaited(() async {
       try {
         await cancelPanicUseCase(
           sessionId: sessionId,
           emergencyCode: emergencyCode,
         );
-        print('SOS Session Cancelled successfully.');
+        print('SOS Session Cancelled on backend successfully.');
       } catch (e) {
-        // Keep the UI closed; backend/network failure should not re-open SOS session.
         print('SOS Cancel Error (non-blocking): $e');
       }
-      return;
-    }
-
-    // Countdown stage: validate PIN immediately with backend before trigger fires.
-    try {
-      await cancelPanicUseCase(emergencyCode: emergencyCode);
-      emit(state.copyWith(status: PanicStatus.idle, session: null));
-    } catch (e) {
-      print('SOS Countdown PIN verification failed: $e');
-    }
+    }());
   }
 
   Future<void> _onCountdownPinSubmitted(
@@ -228,41 +226,51 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
       return;
     }
 
-    // Try local verification first (instant, no network latency)
+    bool isValid = false;
+
+    // 1. Try local Scrypt verification first (instant, no network latency)
     if (_cachedPinHash != null) {
-      final isValid = verifyEmergencyPin(event.emergencyCode, _cachedPinHash!);
-      if (isValid) {
-        print('SOS PIN verified locally — cancelling countdown.');
+      isValid = verifyEmergencyPin(event.emergencyCode, _cachedPinHash!);
+      print('SOS PIN local verification result: $isValid');
+    }
 
-        _pendingCountdownCancelPin = event.emergencyCode;
-        _pendingCountdownCancelRetryCount = 0;
-        emit(state.copyWith(status: PanicStatus.idle, session: null));
-
-        if (!event.result.isCompleted) {
-          event.result.complete(true);
-        }
-
-        // Notify backend immediately; keep retrying briefly using the cached PIN.
-        unawaited(_flushPendingCountdownCancelPin());
-        return;
-      } else {
-        print('SOS PIN local verification failed.');
-        if (!event.result.isCompleted) {
-          event.result.complete(false);
-        }
-        return;
+    // 2. Fallback to backend if local fails or no cached hash available.
+    //    This handles cases where backend uses different Scrypt params.
+    if (!isValid) {
+      print('SOS PIN local check failed or unavailable — trying backend...');
+      try {
+        await cancelPanicUseCase(emergencyCode: event.emergencyCode);
+        isValid = true;
+        print('SOS PIN verified via backend.');
+      } catch (e) {
+        print('SOS Countdown PIN backend verification failed: $e');
+        isValid = false;
       }
     }
 
-    // Fallback: verify via backend when local hash is unavailable.
-    try {
-      await cancelPanicUseCase(emergencyCode: event.emergencyCode);
-      emit(state.copyWith(status: PanicStatus.idle, session: null));
+    if (isValid) {
+      print('SOS PIN verified — resetting to idle.');
+
+      // Immediately reset to idle — this is the authoritative state change.
+      emit(const PanicState());
+
       if (!event.result.isCompleted) {
         event.result.complete(true);
       }
-    } catch (e) {
-      print('SOS Countdown PIN verification failed: $e');
+
+      // Notify backend in background if we verified locally.
+      if (_cachedPinHash != null) {
+        unawaited(() async {
+          try {
+            await cancelPanicUseCase(emergencyCode: event.emergencyCode);
+            print('Background countdown cancel synced to backend successfully.');
+          } catch (e) {
+            print('Background countdown cancel failed (non-fatal): $e');
+          }
+        }());
+      }
+    } else {
+      print('SOS PIN verification failed.');
       if (!event.result.isCompleted) {
         event.result.complete(false);
       }
@@ -274,7 +282,6 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     Emitter<PanicState> emit,
   ) {
     print('SOS Status: Resetting to idle.');
-    _clearPendingCountdownCancelPin();
     _stopLocationStreaming();
     unawaited(panicAlertService.stop());
     emit(const PanicState());
@@ -296,37 +303,6 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
     }
 
     return error.toString().toLowerCase();
-  }
-
-  Future<void> _flushPendingCountdownCancelPin() async {
-    final pin = _pendingCountdownCancelPin;
-    if (pin == null || _isPendingCountdownCancelInFlight) {
-      return;
-    }
-
-    _isPendingCountdownCancelInFlight = true;
-    try {
-      await cancelPanicUseCase(emergencyCode: pin);
-      print('Background countdown cancel synced to backend successfully.');
-      _clearPendingCountdownCancelPin();
-      return;
-    } catch (e) {
-      _pendingCountdownCancelRetryCount += 1;
-      print('Background BE cancel attempt $_pendingCountdownCancelRetryCount failed: $e');
-    } finally {
-      _isPendingCountdownCancelInFlight = false;
-    }
-
-    if (_pendingCountdownCancelPin != null &&
-        _pendingCountdownCancelRetryCount < _maxPendingCountdownCancelRetries) {
-      await Future<void>.delayed(const Duration(milliseconds: 750));
-      await _flushPendingCountdownCancelPin();
-    }
-  }
-
-  void _clearPendingCountdownCancelPin() {
-    _pendingCountdownCancelPin = null;
-    _pendingCountdownCancelRetryCount = 0;
   }
 
   void _startLocationStreaming() {

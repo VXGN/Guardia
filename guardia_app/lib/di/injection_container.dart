@@ -38,6 +38,7 @@ import 'package:guardia_app/features/panic/data/datasources/panic_remote_data_so
 import 'package:guardia_app/features/panic/domain/usecases/start_panic.dart';
 import 'package:guardia_app/features/panic/domain/usecases/update_panic_location.dart';
 import 'package:guardia_app/features/panic/domain/usecases/cancel_panic.dart';
+import 'package:guardia_app/features/panic/domain/usecases/set_emergency_pin.dart';
 import 'package:guardia_app/features/panic/presentation/bloc/panic/panic_bloc.dart';
 
 // Features - Reports
@@ -169,6 +170,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => StartPanic(sl()));
   sl.registerLazySingleton(() => UpdatePanicLocation(sl()));
   sl.registerLazySingleton(() => CancelPanicAction(sl()));
+  sl.registerLazySingleton(() => SetEmergencyPin(sl()));
   sl.registerLazySingleton<PanicRepository>(
     () => PanicRepositoryImpl(remoteDataSource: sl()),
   );

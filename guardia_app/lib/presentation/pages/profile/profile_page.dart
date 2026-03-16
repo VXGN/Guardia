@@ -3,11 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:guardia_app/features/auth/presentation/bloc/auth_event.dart';
+
 import 'package:guardia_app/presentation/bloc/profile/profile_bloc.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_event.dart';
 import 'package:guardia_app/presentation/bloc/profile/profile_state.dart';
 import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
 import 'package:guardia_app/features/reports/presentation/bloc/report/report_state.dart';
+import 'package:guardia_app/di/injection_container.dart';
+import 'package:guardia_app/features/panic/domain/usecases/set_emergency_pin.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -245,6 +248,27 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => context.pushNamed('notifications'),
           ),
           const Divider(height: 1),
+          _buildListTile(
+            Icons.pin_outlined,
+            'Emergency PIN',
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Set / Update',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            onTap: () => _showSetPinSheet(context),
+          ),
+          const Divider(height: 1),
           _buildSwitchTile(
             Icons.notifications_outlined,
             'Push Notifications',
@@ -288,6 +312,194 @@ class _ProfilePageState extends State<ProfilePage> {
       trailing: trailing ?? const Icon(Icons.chevron_right, color: Colors.grey),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       onTap: onTap ?? () {},
+    );
+  }
+
+  Future<void> _showSetPinSheet(BuildContext pageContext) async {
+    String pin = '';
+    String confirmPin = '';
+    bool isConfirming = false;
+    bool isLoading = false;
+    String? errorText;
+
+    await showModalBottomSheet<void>(
+      context: pageContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            void onKeyTap(String key) {
+              setSheetState(() {
+                errorText = null;
+                if (!isConfirming) {
+                  if (key == '<') {
+                    if (pin.isNotEmpty) pin = pin.substring(0, pin.length - 1);
+                  } else if (pin.length < 4) {
+                    pin += key;
+                  }
+                } else {
+                  if (key == '<') {
+                    if (confirmPin.isNotEmpty) confirmPin = confirmPin.substring(0, confirmPin.length - 1);
+                  } else if (confirmPin.length < 4) {
+                    confirmPin += key;
+                    if (confirmPin.length == 4) {
+                      if (confirmPin == pin) {
+                        // Save
+                        setSheetState(() => isLoading = true);
+                        sl<SetEmergencyPin>()(pin: pin).then((_) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(pageContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('PIN darurat berhasil disimpan!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }).catchError((e) {
+                          setSheetState(() {
+                            isLoading = false;
+                            isConfirming = false;
+                            pin = '';
+                            confirmPin = '';
+                            errorText = 'Gagal menyimpan PIN. Coba lagi.';
+                          });
+                        });
+                      } else {
+                        setSheetState(() {
+                          errorText = 'PIN tidak cocok. Coba lagi.';
+                          isConfirming = false;
+                          pin = '';
+                          confirmPin = '';
+                        });
+                      }
+                    }
+                  }
+                }
+                if (!isConfirming && pin.length == 4) {
+                  isConfirming = true;
+                }
+              });
+            }
+
+            final currentPin = isConfirming ? confirmPin : pin;
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Icon(
+                    Icons.pin_outlined,
+                    color: AppColors.primary,
+                    size: 40,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isConfirming ? 'Konfirmasi PIN Darurat' : 'Set PIN Darurat',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    isConfirming
+                        ? 'Masukkan ulang PIN untuk konfirmasi'
+                        : 'PIN ini digunakan untuk membatalkan SOS',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  // Pin dots
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (i) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: i < currentPin.length
+                              ? AppColors.primary
+                              : Colors.grey[300],
+                        ),
+                      );
+                    }),
+                  ),
+                  if (errorText != null) ...
+                  [
+                    const SizedBox(height: 12),
+                    Text(
+                      errorText!,
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  if (isLoading)
+                    const CircularProgressIndicator()
+                  else
+                    _buildPinKeypad(onKeyTap),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPinKeypad(void Function(String) onKeyTap) {
+    final keys = ['1','2','3','4','5','6','7','8','9','<','0','✓'];
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 2.5,
+      ),
+      itemCount: keys.length,
+      itemBuilder: (_, i) {
+        final key = keys[i];
+        final isSpecial = key == '<' || key == '✓';
+        return GestureDetector(
+          onTap: () => key == '✓' ? null : onKeyTap(key),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isSpecial
+                  ? AppColors.primary.withValues(alpha: 0.08)
+                  : Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                key,
+                style: TextStyle(
+                  fontSize: isSpecial ? 20 : 22,
+                  fontWeight: FontWeight.bold,
+                  color: isSpecial ? AppColors.primary : AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

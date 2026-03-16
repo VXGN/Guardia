@@ -49,6 +49,15 @@ class PanicRemoteDataSource {
     return inner['emergency_pin_hash'] as String?;
   }
 
+  /// Sets or updates the user's emergency PIN.
+  /// POST /api/panic/emergency-pin
+  Future<void> setEmergencyPin({required String pin}) async {
+    await apiClient.post(
+      Endpoints.setEmergencyPin,
+      data: {'emergency_pin': pin},
+    );
+  }
+
   /// Cancels an active panic session.
   /// POST /api/panic/cancel
   Future<void> cancelPanic({

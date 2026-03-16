@@ -78,4 +78,9 @@ class PanicRepositoryImpl implements PanicRepository {
   Future<String?> fetchEmergencyPinHash() async {
     return remoteDataSource.fetchEmergencyPinHash();
   }
+
+  @override
+  Future<void> setEmergencyPin({required String pin}) async {
+    return remoteDataSource.setEmergencyPin(pin: pin);
+  }
 }
