@@ -41,6 +41,13 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "Beasiswanya-Mana-Woy_MobileApp_AppBuild_2026.apk"
+        }
+    }
 }
 
 flutter {
@@ -51,5 +58,3 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
-
-
