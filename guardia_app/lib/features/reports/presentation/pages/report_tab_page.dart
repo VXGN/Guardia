@@ -285,9 +285,11 @@ class _SocialReportCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        report.isAnonymous || report.userId == null 
+                        report.isAnonymous 
                             ? 'Anonymous Member' 
-                            : 'Member_${report.userId!.length > 5 ? report.userId!.substring(0, 5) : report.userId}',
+                            : (report.userName ?? (report.userId != null 
+                                ? 'Member_${report.userId!.length > 5 ? report.userId!.substring(0, 5) : report.userId}'
+                                : 'Guardia Member')),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,

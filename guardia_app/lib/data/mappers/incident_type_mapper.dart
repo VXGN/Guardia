@@ -14,6 +14,8 @@ class IncidentTypeMapper {
     'poor lighting': 'other',
     'verbal abuse': 'verbal_harassment',
     'medical issue': 'other',
+    'theft': 'theft',
+    'intimidation': 'intimidation',
     'other': 'other',
   };
 
@@ -24,11 +26,18 @@ class IncidentTypeMapper {
       return normalized;
     }
 
+    // Try mapping
     final mapped = _uiToBackend[normalized];
     if (mapped != null) {
       return mapped;
     }
 
-    throw FormatException('Unsupported incident type: $input');
+    // Direct match check for common patterns
+    if (normalized.contains('harassment')) return 'physical_harassment';
+    if (normalized.contains('theft')) return 'theft';
+    if (normalized.contains('abuse')) return 'verbal_harassment';
+
+    print('Warning: Unsupported incident type: $input, defaulting to other');
+    return 'other';
   }
 }

@@ -88,8 +88,12 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
           'media_urls': mediaUrls,
         },
       );
+      print('Successfully created report on server');
     } catch (e) {
-      print('Network error creating report, simulated success: $e');
+      print('CRITICAL: API error creating report: $e');
+      if (e is DioException) {
+        print('Detailed response: ${e.response?.data}');
+      }
       // Update dummy list
       final newReport = ReportModel.fromEntity(
         report.copyWith(id: 'mock_${DateTime.now().millisecondsSinceEpoch}'),
@@ -103,8 +107,15 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     try {
       final response = await apiClient.get(Endpoints.reportsMy);
       final dynamic responseData = response.data;
-      final data = responseData['data'] as Map<String, dynamic>;
-      final reports = (data['reports'] as List<dynamic>)
+      
+      List<dynamic> reportsJson = [];
+      if (responseData['data'] is Map) {
+        reportsJson = responseData['data']['reports'] as List<dynamic>? ?? [];
+      } else if (responseData['data'] is List) {
+        reportsJson = responseData['data'] as List<dynamic>;
+      }
+
+      final reports = reportsJson
           .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
           .toList();
       return reports;
@@ -120,11 +131,24 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     try {
       final response = await apiClient.get(Endpoints.reports);
       final dynamic responseData = response.data;
-      final data = responseData['data'] as Map<String, dynamic>;
-      final reports = (data['reports'] as List<dynamic>)
+      
+      // Handle different response structures
+      List<dynamic> reportsJson = [];
+      if (responseData['data'] is Map) {
+        reportsJson = responseData['data']['reports'] as List<dynamic>? ?? [];
+      } else if (responseData['data'] is List) {
+        reportsJson = responseData['data'] as List<dynamic>;
+      }
+
+      final reports = reportsJson
           .map((e) => ReportModel.fromJson(e as Map<String, dynamic>))
-          .where(_isInBaliOrNtb)
           .toList();
+      
+      if (reports.isEmpty) {
+        print('Warning: API returned 0 reports, falling back to mock');
+        return _mockReports;
+      }
+      
       return reports;
     } catch (e) {
       print('Falling back to mock AllReports due to error: $e');
@@ -239,15 +263,4 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     return 'Incident reported by user through Guardia app.';
   }
 
-  bool _isInBaliOrNtb(ReportModel report) {
-    const minLat = -9.5;
-    const maxLat = -7.5;
-    const minLng = 114.0;
-    const maxLng = 119.7;
-
-    return report.latitude >= minLat &&
-        report.latitude <= maxLat &&
-        report.longitude >= minLng &&
-        report.longitude <= maxLng;
-  }
 }

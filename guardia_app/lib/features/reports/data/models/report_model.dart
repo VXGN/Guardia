@@ -8,6 +8,7 @@ class ReportModel extends ReportEntity {
   const ReportModel({
     required super.id,
     @JsonKey(name: 'user_id') super.userId,
+    super.userName,
     required super.category,
     super.description,
     required super.latitude,
@@ -43,9 +44,18 @@ class ReportModel extends ReportEntity {
           .where((url) => url.isNotEmpty)
           .toList();
 
+      // Extract user name if available
+      String? userName;
+      if (json['user'] != null && json['user'] is Map) {
+        userName = json['user']['full_name'] as String?;
+      } else {
+        userName = json['user_name'] as String? ?? json['full_name'] as String?;
+      }
+
       return ReportModel(
         id: json['id'] as String,
         userId: json['user_id'] as String?,
+        userName: userName,
         category: json['incident_type'] as String? ?? 'other',
         description: json['description'] as String?,
         latitude: latitude,
@@ -68,6 +78,7 @@ class ReportModel extends ReportEntity {
     return ReportModel(
       id: entity.id,
       userId: entity.userId,
+      userName: entity.userName,
       category: entity.category,
       description: entity.description,
       latitude: entity.latitude,
@@ -84,6 +95,7 @@ class ReportModel extends ReportEntity {
     return ReportEntity(
       id: id,
       userId: userId,
+      userName: userName,
       category: category,
       description: description,
       latitude: latitude,

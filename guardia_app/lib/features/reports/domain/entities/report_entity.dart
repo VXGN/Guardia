@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class ReportEntity extends Equatable {
   final String id;
   final String? userId;
+  final String? userName;
   final String category; // e.g. verbal_harassment, physical_harassment, pickpocket, stalking, intimidation, other
   final String? description;
   final double latitude;
@@ -17,6 +18,7 @@ class ReportEntity extends Equatable {
   const ReportEntity({
     required this.id,
     this.userId,
+    this.userName,
     required this.category,
     this.description,
     required this.latitude,
@@ -32,6 +34,7 @@ class ReportEntity extends Equatable {
   List<Object?> get props => [
         id,
         userId,
+        userName,
         category,
         description,
         latitude,
@@ -46,6 +49,7 @@ class ReportEntity extends Equatable {
   ReportEntity copyWith({
     String? id,
     String? userId,
+    String? userName,
     String? category,
     String? description,
     double? latitude,
@@ -59,6 +63,7 @@ class ReportEntity extends Equatable {
     return ReportEntity(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
       category: category ?? this.category,
       description: description ?? this.description,
       latitude: latitude ?? this.latitude,
