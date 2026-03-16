@@ -234,7 +234,11 @@ class _ProfilePageState extends State<ProfilePage> {
             (val) {},
           ),
           const Divider(height: 1),
-          _buildListTile(Icons.privacy_tip_outlined, 'Privacy Policy'),
+          _buildListTile(
+            Icons.privacy_tip_outlined,
+            'Privacy Policy',
+            onTap: () => context.pushNamed('privacy_policy'),
+          ),
           const Divider(height: 1),
           _buildListTile(Icons.help_outline, 'Help & Support'),
         ],

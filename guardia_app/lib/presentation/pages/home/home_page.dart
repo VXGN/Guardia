@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -19,6 +20,18 @@ import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_s
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:guardia_app/core/utils/location_utils.dart';
+
+class NominatimResult {
+  final String displayName;
+  final double lat;
+  final double lon;
+
+  NominatimResult({
+    required this.displayName,
+    required this.lat,
+    required this.lon,
+  });
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -44,7 +57,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
 
   // Realtime search suggestions (geocoding)
-  final List<Location> _suggestions = [];
+  final List<NominatimResult> _suggestions = [];
   Timer? _searchDebounce;
   bool _isSearching = false;
 
@@ -149,15 +162,43 @@ class _HomePageState extends State<HomePage> {
       });
 
       try {
-        final results = await locationFromAddress(query);
+        final dio = Dio();
+        final response = await dio.get(
+          'https://nominatim.openstreetmap.org/search',
+          queryParameters: {
+            'q': query,
+            'format': 'json',
+            'limit': 5,
+            'addressdetails': 1,
+            'countrycodes': 'id',
+          },
+          options: Options(headers: {'User-Agent': 'guardia_app'}),
+        );
+
         if (!mounted) return;
 
-        setState(() {
-          _suggestions
-            ..clear()
-            ..addAll(results);
-          _isSearching = false;
-        });
+        if (response.statusCode == 200 && response.data is List) {
+          final List data = response.data;
+          final List<NominatimResult> results = data.map((json) {
+            return NominatimResult(
+              displayName: json['display_name'] ?? '',
+              lat: double.tryParse(json['lat'].toString()) ?? 0.0,
+              lon: double.tryParse(json['lon'].toString()) ?? 0.0,
+            );
+          }).where((r) => r.displayName.isNotEmpty).toList();
+
+          setState(() {
+            _suggestions
+              ..clear()
+              ..addAll(results);
+            _isSearching = false;
+          });
+        } else {
+          setState(() {
+            _suggestions.clear();
+            _isSearching = false;
+          });
+        }
       } catch (_) {
         if (!mounted) return;
         setState(() {
@@ -169,17 +210,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onSuggestionSelected({
-    required Location location,
+    required NominatimResult location,
     required String label,
   }) async {
     _clearSuggestions();
 
-    final target = LatLng(location.latitude, location.longitude);
+    final target = LatLng(location.lat, location.lon);
     setState(() {
-      _currentCenter = target;
       _searchController.text = label;
     });
-    _mapController.move(target, 13.0);
+    
+    // Fit map bounds to show both current center and target
+    final bounds = LatLngBounds.fromPoints([_currentCenter, target]);
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(50.0),
+      ),
+    );
 
     if (!mounted) return;
 
@@ -192,8 +240,8 @@ class _HomePageState extends State<HomePage> {
     routingBloc.add(
       RoutingDestinationChanged(
         query: label,
-        lat: location.latitude,
-        lng: location.longitude,
+        lat: location.lat,
+        lng: location.lon,
       ),
     );
 
@@ -399,6 +447,45 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
 
+            // 3. Map Header
+            if (!_isNavigationActive)
+              Positioned(
+                top: 124,
+                left: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Local Security Overview',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E293B),
+                        shadows: [
+                          Shadow(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      'Real-time data from community reports',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                        shadows: [
+                          Shadow(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // 2. Conditional Overlays (Search or Active Navigation)
             if (!_isNavigationActive)
               Positioned(
@@ -431,11 +518,25 @@ class _HomePageState extends State<HomePage> {
                     onSubmitted: (value) async {
                       if (value.isNotEmpty) {
                         try {
-                          List<Location> locations = await locationFromAddress(
-                            value,
+                          final dio = Dio();
+                          final response = await dio.get(
+                            'https://nominatim.openstreetmap.org/search',
+                            queryParameters: {
+                              'q': value,
+                              'format': 'json',
+                              'limit': 1,
+                            },
+                            options: Options(headers: {'User-Agent': 'guardia_app'}),
                           );
-                          if (locations.isNotEmpty) {
-                            final loc = locations.first;
+                          
+                          if (response.statusCode == 200 && response.data is List && (response.data as List).isNotEmpty) {
+                            final locData = (response.data as List).first;
+                            final lat = double.tryParse(locData['lat'].toString()) ?? 0.0;
+                            final lon = double.tryParse(locData['lon'].toString()) ?? 0.0;
+                            final displayName = locData['display_name'] ?? value;
+                            final displayParts = displayName.toString().split(', ');
+                            final title = displayParts.isNotEmpty ? displayParts.first : value;
+
                             // 1. Set Origin
                             if (context.mounted) {
                               context.read<RoutingBloc>().add(
@@ -448,9 +549,9 @@ class _HomePageState extends State<HomePage> {
                               // 2. Set Real Destination
                               context.read<RoutingBloc>().add(
                                 RoutingDestinationChanged(
-                                  query: value,
-                                  lat: loc.latitude,
-                                  lng: loc.longitude,
+                                  query: title,
+                                  lat: lat,
+                                  lng: lon,
                                 ),
                               );
 
@@ -459,11 +560,17 @@ class _HomePageState extends State<HomePage> {
                                 const RoutingRequested(),
                               );
                             }
+                          } else {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Location not found')),
+                              );
+                            }
                           }
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Location not found')),
+                              const SnackBar(content: Text('Error finding location')),
                             );
                           }
                         }
@@ -561,8 +668,9 @@ class _HomePageState extends State<HomePage> {
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final loc = _suggestions[index];
-                        final subtitle =
-                            '${loc.latitude.toStringAsFixed(4)}, ${loc.longitude.toStringAsFixed(4)}';
+                        final displayParts = loc.displayName.split(', ');
+                        final title = displayParts.isNotEmpty ? displayParts.first : _searchController.text;
+                        final subtitle = loc.displayName;
 
                         return ListTile(
                           leading: const Icon(
@@ -570,18 +678,21 @@ class _HomePageState extends State<HomePage> {
                             color: AppColors.textSecondary,
                           ),
                           title: Text(
-                            _searchController.text,
+                            title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
                             subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 12),
                           ),
                           onTap: () {
                             _onSuggestionSelected(
                               location: loc,
-                              label: _searchController.text,
+                              label: title,
                             );
                           },
                         );
@@ -619,44 +730,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-            // 3. Map Header
-            if (!_isNavigationActive)
-              Positioned(
-                top: 124,
-                left: 24,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Local Security Overview',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E293B),
-                        shadows: [
-                          Shadow(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      'Real-time data from community reports',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: const Color(0xFF64748B),
-                        shadows: [
-                          Shadow(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
       ),

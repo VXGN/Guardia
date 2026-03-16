@@ -19,6 +19,8 @@ import 'package:guardia_app/features/profile/presentation/pages/profile_page.dar
 import 'package:guardia_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_chat_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_call_page.dart';
+import 'package:guardia_app/features/profile/presentation/pages/policy_page.dart';
+
 
 
 /// GoRouter instance for Guardia app navigation.
@@ -60,6 +62,11 @@ final GoRouter appRouter = GoRouter(
           path: 'edit',
           name: 'edit_profile',
           builder: (context, state) => const EditProfilePage(),
+        ),
+        GoRoute(
+          path: 'privacy_policy',
+          name: 'privacy_policy',
+          builder: (context, state) => const PolicyPage(),
         ),
       ],
     ),
