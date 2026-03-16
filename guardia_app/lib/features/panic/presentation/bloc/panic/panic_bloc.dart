@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:guardia_app/core/utils/location_utils.dart';
-import 'package:guardia_app/core/utils/pin_verify.dart';
 import 'package:guardia_app/features/panic/domain/repositories/panic_repository.dart';
 import 'package:guardia_app/features/panic/domain/usecases/start_panic.dart';
 import 'package:guardia_app/features/panic/domain/usecases/update_panic_location.dart';
@@ -226,26 +225,15 @@ class PanicBloc extends Bloc<PanicEvent, PanicState> {
       return;
     }
 
+    print('SOS PIN verification starting...');
     bool isValid = false;
-
-    // 1. Try local Scrypt verification first (instant, no network latency)
-    if (_cachedPinHash != null) {
-      isValid = verifyEmergencyPin(event.emergencyCode, _cachedPinHash!);
-      print('SOS PIN local verification result: $isValid');
-    }
-
-    // 2. Fallback to backend if local fails or no cached hash available.
-    //    This handles cases where backend uses different Scrypt params.
-    if (!isValid) {
-      print('SOS PIN local check failed or unavailable — trying backend...');
-      try {
-        await cancelPanicUseCase(emergencyCode: event.emergencyCode);
-        isValid = true;
-        print('SOS PIN verified via backend.');
-      } catch (e) {
-        print('SOS Countdown PIN backend verification failed: $e');
-        isValid = false;
-      }
+    try {
+      await cancelPanicUseCase(emergencyCode: event.emergencyCode);
+      isValid = true;
+      print('SOS PIN verified via backend.');
+    } catch (e) {
+      print('SOS Countdown PIN backend verification failed: $e');
+      isValid = false;
     }
 
     if (isValid) {
