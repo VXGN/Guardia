@@ -157,6 +157,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
     return MultiBlocListener(
       listeners: [
         BlocListener<RiskBloc, RiskState>(
@@ -449,7 +451,7 @@ class _HomePageState extends State<HomePage> {
             Positioned(
               left: 24,
               right: 24,
-              bottom: 110,
+              bottom: 110 + bottomInset + 16,
               child: _RiskSummaryCard(
                 clusterCount: _clusterCount,
                 riskScoreCount: _riskScoreCount,

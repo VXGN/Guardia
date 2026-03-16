@@ -228,12 +228,6 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         children: [
           _buildListTile(
-            Icons.history,
-            'My Reports',
-            onTap: () => context.pushNamed('my_reports'),
-          ),
-          const Divider(height: 1),
-          _buildListTile(
             Icons.people_outline,
             'Trusted Contacts',
             onTap: () => context.pushNamed('trusted_contacts'),
