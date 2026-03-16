@@ -51,10 +51,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: AppColors.background),
-        onPressed: () => context.pop(),
-      ),
       title: const Text(
         'Profile',
         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
@@ -102,10 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildProfileHeader(
-            user.fullName ?? 'Citizen',
-            user.email ?? '-',
-          ),
+          _buildProfileHeader(user.fullName ?? 'Citizen', user.email ?? '-'),
           const SizedBox(height: 32),
           _buildImpactCard(context),
           const SizedBox(height: 32),
@@ -240,7 +233,11 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => context.pushNamed('privacy_policy'),
           ),
           const Divider(height: 1),
-          _buildListTile(Icons.help_outline, 'Help & Support'),
+          _buildListTile(
+            Icons.help_outline,
+            'Help & Support',
+            onTap: () => context.pushNamed('help_support'),
+          ),
         ],
       ),
     );

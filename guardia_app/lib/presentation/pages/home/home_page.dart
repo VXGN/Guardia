@@ -18,7 +18,7 @@ import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_b
 import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_event.dart';
 import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_state.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:geocoding/geocoding.dart';
+
 import 'package:guardia_app/core/utils/location_utils.dart';
 
 class NominatimResult {

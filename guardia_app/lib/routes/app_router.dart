@@ -20,6 +20,7 @@ import 'package:guardia_app/features/profile/presentation/pages/edit_profile_pag
 import 'package:guardia_app/presentation/pages/journey/companion_chat_page.dart';
 import 'package:guardia_app/presentation/pages/journey/companion_call_page.dart';
 import 'package:guardia_app/features/profile/presentation/pages/policy_page.dart';
+import 'package:guardia_app/features/profile/presentation/pages/help_support_page.dart';
 
 
 
@@ -67,6 +68,11 @@ final GoRouter appRouter = GoRouter(
           path: 'privacy_policy',
           name: 'privacy_policy',
           builder: (context, state) => const PolicyPage(),
+        ),
+        GoRoute(
+          path: 'help_support',
+          name: 'help_support',
+          builder: (context, state) => const HelpSupportPage(),
         ),
       ],
     ),

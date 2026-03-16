@@ -391,29 +391,6 @@ class _SocialReportCard extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              children: [
-                _SocialButton(
-                  icon: Icons.favorite_border,
-                  label: '24',
-                  onTap: () {},
-                ),
-                _SocialButton(
-                  icon: Icons.chat_bubble_outline,
-                  label: '8',
-                  onTap: () {},
-                ),
-                _SocialButton(
-                  icon: Icons.share_outlined,
-                  label: 'Share',
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -424,42 +401,5 @@ class _SocialReportCard extends StatelessWidget {
     if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
     if (difference.inHours < 24) return '${difference.inHours}h ago';
     return '${difference.inDays}d ago';
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: const Color(0xFF64748B)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
