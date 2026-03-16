@@ -60,4 +60,8 @@ class Endpoints {
   // News
   static const String newsArticles = '$_apiPrefix/news/articles';
   static const String newsAreaScores = '$_apiPrefix/news/area-scores';
+  
+  // Upload
+  static const String uploadSingle = '$_apiPrefix/upload/single';
+  static const String uploadMultiple = '$_apiPrefix/upload/multiple';
 }

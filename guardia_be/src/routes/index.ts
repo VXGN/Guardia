@@ -8,6 +8,7 @@ import { trustedContactRoutes } from "./trusted-contact.routes";
 import { panicRoutes } from "./panic.routes";
 import { notificationRoutes } from "./notification.routes";
 import { reportRoutes } from "./report.routes";
+import { uploadRoutes } from "./upload.routes";
 import { chatRoutes } from "./chat.routes";
 
 const router = Router();
@@ -21,6 +22,7 @@ router.use("/trusted-contacts", trustedContactRoutes);
 router.use("/panic", panicRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/reports", reportRoutes);
+router.use("/upload", uploadRoutes);
 router.use("/chat", chatRoutes);
 
 export { router as apiRouter };

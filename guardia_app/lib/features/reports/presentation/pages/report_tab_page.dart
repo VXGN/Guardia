@@ -18,7 +18,7 @@ class ReportTabPage extends StatelessWidget {
       create: (_) => sl<ReportBloc>()..add(ReportStarted()),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Ruang Aman'),
+          title: const Text('Safe Space'),
           centerTitle: true,
           elevation: 0,
           actions: [

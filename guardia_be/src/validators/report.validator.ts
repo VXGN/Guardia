@@ -16,6 +16,7 @@ export const createReportSchema = z.object({
     longitude: z.number().min(-180).max(180),
     location_label: z.string().max(255).optional(),
     is_anonymous: z.boolean().default(false),
+    media_urls: z.array(z.string().url()).optional(),
   }),
 });
 

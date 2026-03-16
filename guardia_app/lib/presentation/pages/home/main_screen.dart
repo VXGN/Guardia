@@ -58,10 +58,10 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: 8),
-            Text('SOS Terkirim'),
+            Text('SOS Sent'),
           ],
         ),
-        content: const Text('Lokasi dan peringatan darurat Anda telah berhasil dikirim ke semua kontak terpercaya.'),
+        content: const Text('Your location and emergency alerts have been successfully sent to all trusted contacts.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -81,7 +81,7 @@ class _MainScreenState extends State<MainScreen> {
             if (state.status == PanicStatus.failure && state.errorMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.errorMessage!),
+                  content: Text(state.errorMessage ?? 'An error occurred'),
                   backgroundColor: AppColors.error,
                 ),
               );
@@ -149,7 +149,7 @@ class _MainScreenState extends State<MainScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildNavItem(icon: Icons.map_outlined, label: 'Home', index: 0),
-                        _buildNavItem(icon: Icons.people_outline, label: 'Companion', index: 1),
+                        _buildNavItem(icon: Icons.people_outline, label: 'Companions', index: 1),
                         
                         const SizedBox(width: 48), // Space for the SOS FAB
                         

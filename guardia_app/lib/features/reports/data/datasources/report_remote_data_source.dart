@@ -1,5 +1,5 @@
-import 'dart:io';
-
+import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 import 'package:guardia_app/core/network/api_client.dart';
 import 'package:guardia_app/core/network/endpoints.dart';
 import 'package:guardia_app/data/mappers/incident_type_mapper.dart';
@@ -72,6 +72,8 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
       final normalizedType = IncidentTypeMapper.toBackend(report.category);
       final normalizedDescription = _normalizeDescription(report.description);
 
+      final mediaUrls = await _uploadMediaFiles(mediaFiles);
+
       await apiClient.post(
         Endpoints.reports,
         data: {
@@ -82,6 +84,7 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
           'longitude': report.longitude,
           'is_anonymous': report.isAnonymous,
           'location_label': report.locationLabel,
+          'media_urls': mediaUrls,
         },
       );
     } catch (e) {
@@ -192,6 +195,36 @@ class ReportRemoteDataSourceImpl implements ReportRemoteDataSource {
     } catch (e) {
       print('Network error deleting report, simulated success: $e');
       _mockReports.removeWhere((r) => r.id == id);
+    }
+  }
+
+  Future<List<String>> _uploadMediaFiles(List<File> files) async {
+    if (files.isEmpty) return [];
+
+    try {
+      final formData = FormData();
+      for (final file in files) {
+        formData.files.add(MapEntry(
+          'files',
+          await MultipartFile.fromFile(
+            file.path,
+            filename: p.basename(file.path),
+          ),
+        ));
+      }
+
+      final response = await apiClient.post(
+        Endpoints.uploadMultiple,
+        data: formData,
+      );
+
+      final dynamic responseData = response.data;
+      final data = responseData['data'] as Map<String, dynamic>;
+      final urls = (data['urls'] as List<dynamic>).map((e) => e as String).toList();
+      return urls;
+    } catch (e) {
+      print('Error uploading media files: $e');
+      return [];
     }
   }
 

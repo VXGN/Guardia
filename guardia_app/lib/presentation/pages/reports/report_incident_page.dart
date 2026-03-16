@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:guardia_app/common/widgets/custom_button.dart';
 import 'package:guardia_app/core/constants/app_colors.dart';
 import 'package:guardia_app/features/reports/presentation/bloc/report/report_bloc.dart';
@@ -18,6 +20,8 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   String? _selectedCategory;
   bool _isAnonymous = false;
   final TextEditingController _descriptionController = TextEditingController();
+  final List<File> _mediaFiles = [];
+  final ImagePicker _picker = ImagePicker();
 
   final List<Map<String, dynamic>> _categories = [
     {'name': 'Harassment', 'icon': Icons.back_hand_rounded, 'color': const Color(0xFFE11D48)},
@@ -41,6 +45,25 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   void dispose() {
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+
+    if (image != null) {
+      setState(() {
+        _mediaFiles.add(File(image.path));
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _mediaFiles.removeAt(index);
+    });
   }
 
   @override
@@ -288,6 +311,93 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               ),
             ),
             const SizedBox(height: 24),
+            // Media Picker
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Media Evidence',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _mediaFiles.length >= 5 ? null : _pickImage,
+                  icon: const Icon(Icons.add_a_photo, size: 18),
+                  label: const Text('Add Photo'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_mediaFiles.isEmpty)
+              Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5, style: BorderStyle.solid),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.image_outlined, color: Colors.grey[400], size: 32),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No media attached',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _mediaFiles.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 120,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            image: DecorationImage(
+                              image: FileImage(_mediaFiles[index]),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close, color: Colors.white, size: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 24),
             const Text(
               'Description',
               style: TextStyle(
@@ -363,7 +473,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                   ));
                   bloc.add(ReportPrivacyMediaUpdated(
                     isAnonymous: _isAnonymous,
-                    mediaFiles: const [], // TODO: Add media support if needed
+                    mediaFiles: _mediaFiles,
                   ));
                   
                   // Finally submit

@@ -14,35 +14,38 @@ export class ReportService {
   }
 
   async create(userId: string, data: CreateReportInput) {
-    const report = await prisma.incidentReport.create({
-      data: {
-        user_id: data.is_anonymous ? null : userId,
-        incident_type: data.incident_type,
-        description: data.description,
-        incident_at: new Date(data.incident_at),
-        latitude: data.latitude,
-        longitude: data.longitude,
-        latitude_blurred: this.blurCoordinate(data.latitude),
-        longitude_blurred: this.blurCoordinate(data.longitude),
-        location_label: data.location_label,
-        is_anonymous: data.is_anonymous,
-        status: "received",
-      },
-      select: {
-        id: true,
-        incident_type: true,
-        description: true,
-        incident_at: true,
-        latitude_blurred: true,
-        longitude_blurred: true,
-        location_label: true,
-        is_anonymous: true,
-        status: true,
-        created_at: true,
-      },
+    const report = await prisma.$transaction(async (tx) => {
+      const createdReport = await tx.incidentReport.create({
+        data: {
+          user_id: data.is_anonymous ? null : userId,
+          incident_type: data.incident_type,
+          description: data.description,
+          incident_at: new Date(data.incident_at),
+          latitude: data.latitude,
+          longitude: data.longitude,
+          latitude_blurred: this.blurCoordinate(data.latitude),
+          longitude_blurred: this.blurCoordinate(data.longitude),
+          location_label: data.location_label,
+          is_anonymous: data.is_anonymous,
+          status: "received",
+        },
+      });
+
+      if (data.media_urls && data.media_urls.length > 0) {
+        await tx.reportMedia.createMany({
+          data: data.media_urls.map((url) => ({
+            report_id: createdReport.id,
+            media_type: "photo", // Changed from 'image' to 'photo'
+            storage_url: url,
+            file_size_kb: 0,
+          })),
+        });
+      }
+
+      return createdReport;
     });
 
-    return report;
+    return this.getById(report.id);
   }
 
   async list(options: ListReportsInput = {}) {

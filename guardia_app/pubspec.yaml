@@ -53,6 +53,7 @@ dependencies:
   url_launcher: ^6.3.1
   vibration: 2.0.1
   pointycastle: ^3.9.1
+  image_picker: ^1.2.1
 
 dev_dependencies:
   flutter_test:

@@ -54,7 +54,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
           backgroundColor: Colors.white,
           appBar: AppBar(
             title: const Text(
-              'Temani (Companion)',
+              'Guardia Companion',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
@@ -313,7 +313,7 @@ class _CompanionSetupPageState extends State<CompanionSetupPage> {
                           children: [
                             Icon(Icons.delete_outline, color: AppColors.error, size: 20),
                             SizedBox(width: 8),
-                            Text('Hapus'),
+                            Text('Delete'),
                           ],
                         ),
                       ),

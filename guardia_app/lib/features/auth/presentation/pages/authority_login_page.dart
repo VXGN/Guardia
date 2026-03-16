@@ -14,6 +14,7 @@ class _AuthorityLoginPageState extends State<AuthorityLoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _nrpController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -22,11 +23,26 @@ class _AuthorityLoginPageState extends State<AuthorityLoginPage> {
     super.dispose();
   }
 
-  void _onLogin() {
+  void _onLogin() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement Authority Login action
-      // For now, redirect to a placeholder or back home
-      context.goNamed('home');
+      setState(() => _isLoading = true);
+      
+      // Simulate institutional verification delay
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Access Granted. Welcome back, Officer.'),
+            backgroundColor: Color(0xFF22C55E),
+          ),
+        );
+        
+        // Redirect to Home (Authority level access)
+        context.goNamed('home');
+      }
     }
   }
 
@@ -127,14 +143,23 @@ class _AuthorityLoginPageState extends State<AuthorityLoginPage> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'AUTHENTICATE',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF0F172A),
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'AUTHENTICATE',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
                 ),
               ),
               

@@ -315,7 +315,7 @@ class _HomePageState extends State<HomePage> {
                       } catch (e) {
                          if (context.mounted) {
                            ScaffoldMessenger.of(context).showSnackBar(
-                             SnackBar(content: Text('Lokasi tidak ditemukan')),
+                             SnackBar(content: Text('Location not found')),
                            );
                          }
                       }
