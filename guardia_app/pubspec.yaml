@@ -24,6 +24,7 @@ dependencies:
 
   # Routing
   go_router: ^17.1.0
+  web_socket_channel: ^3.0.1
 
   # Network
   dio: ^5.9.2

@@ -24,7 +24,10 @@ class _CompanionChatPageState extends State<CompanionChatPage> {
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
 
-    context.read<CompanionBloc>().add(CompanionMessageSent(text: _controller.text));
+    context.read<CompanionBloc>().add(CompanionMessageSent(
+      text: _controller.text,
+      receiverUid: widget.companionId,
+    ));
     _controller.clear();
     _scrollToBottom();
   }

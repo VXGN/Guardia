@@ -70,11 +70,28 @@ class JourneyEndRequested extends CompanionEvent {
 
 class CompanionMessageSent extends CompanionEvent {
   final String text;
+  final String? receiverUid;
   final bool isMe;
-  const CompanionMessageSent({required this.text, this.isMe = true});
+  const CompanionMessageSent({required this.text, this.receiverUid, this.isMe = true});
 
   @override
-  List<Object?> get props => [text, isMe];
+  List<Object?> get props => [text, receiverUid, isMe];
+}
+
+class CompanionMessageReceived extends CompanionEvent {
+  final Map<String, dynamic> message;
+  const CompanionMessageReceived(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class CompanionConnectionChanged extends CompanionEvent {
+  final bool isConnected;
+  const CompanionConnectionChanged(this.isConnected);
+
+  @override
+  List<Object?> get props => [isConnected];
 }
 
 class CompanionLocationShared extends CompanionEvent {

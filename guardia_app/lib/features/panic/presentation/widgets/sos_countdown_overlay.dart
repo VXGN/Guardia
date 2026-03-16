@@ -167,9 +167,8 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 48),
-              const Text(
-                'SOS akan diaktifkan',
-                style: TextStyle(
+                'SOS Triggering Soon',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -179,7 +178,7 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 48),
                 child: Text(
-                  'Jika ini tidak sengaja, masukkan PIN Darurat untuk membatalkan.',
+                  'If this is accidental, enter your Emergency PIN to cancel.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white70,
@@ -215,9 +214,8 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text(
-                'PIN DARURAT',
-                style: TextStyle(
+                'EMERGENCY PIN',
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   letterSpacing: 1.2,
@@ -243,9 +241,8 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
               const SizedBox(height: 32),
               _buildKeypad(),
               const SizedBox(height: 24),
-              const Text(
-                'Jika tidak ada tindakan, SOS aktif otomatis.',
-                style: TextStyle(
+                'SOS will activate automatically if no action is taken.',
+                style: const TextStyle(
                   color: Colors.white54,
                   fontSize: 12,
                 ),
@@ -262,8 +259,8 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
                   ),
                   child: const Center(
                     child: Text(
-                      'Masukkan PIN untuk membatalkan',
-                      style: TextStyle(
+                      'Enter PIN to cancel',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -298,9 +295,9 @@ class _SosCountdownOverlayState extends State<SosCountdownOverlay> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildKey('HAPUS', isSpecial: true, onTap: _onDeletePressed),
+            _buildKey('CLEAR', isSpecial: true, onTap: _onDeletePressed),
             _buildKey('0'),
-            _buildKey('BATAL', isSpecial: true, onTap: _onCancelPressed),
+            _buildKey('CANCEL', isSpecial: true, onTap: _onCancelPressed),
           ],
         ),
       ],

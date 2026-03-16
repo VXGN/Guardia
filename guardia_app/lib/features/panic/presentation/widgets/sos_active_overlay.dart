@@ -27,7 +27,7 @@ class SosActiveOverlay extends StatelessWidget {
           children: [
             const SizedBox(height: 48),
             const Text(
-              'Darurat Sedang Berlangsung',
+              'Emergency in Progress',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -38,7 +38,7 @@ class SosActiveOverlay extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 48),
               child: Text(
-                'Tetap tenang. Bantuan sedang dihubungi dan lokasi Anda dibagikan.',
+                'Stay calm. Responders are being alerted and your location is being shared.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white70,
@@ -75,8 +75,8 @@ class SosActiveOverlay extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'AKTIF',
-                      style: TextStyle(
+                      'ACTIVE',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -88,14 +88,14 @@ class SosActiveOverlay extends StatelessWidget {
             ),
             const SizedBox(height: 80),
             _buildStatusTile(
-              label: 'Lokasi Dibagikan',
-              status: 'AKTIF',
+              label: 'Location Sharing',
+              status: 'ACTIVE',
             ),
             const SizedBox(height: 48),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 48),
               child: Text(
-                'Jika keadaan sudah aman, tekan tombol di bawah untuk mengakhiri darurat.',
+                'If you are safe now, press the button below to end the emergency session.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white54,
@@ -119,9 +119,8 @@ class SosActiveOverlay extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Akhiri Darurat',
-                    style: TextStyle(
+                    'End Emergency',
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),

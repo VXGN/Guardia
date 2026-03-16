@@ -10,6 +10,7 @@ class CompanionState extends Equatable {
   final bool isUpdatingLocation;
   final bool isEndingJourney;
   final bool alertSent;
+  final bool isChatConnected;
   final String? errorMessage;
 
   const CompanionState({
@@ -22,6 +23,7 @@ class CompanionState extends Equatable {
     this.isUpdatingLocation = false,
     this.isEndingJourney = false,
     this.alertSent = false,
+    this.isChatConnected = false,
     this.errorMessage,
   });
 
@@ -38,6 +40,7 @@ class CompanionState extends Equatable {
     bool? isUpdatingLocation,
     bool? isEndingJourney,
     bool? alertSent,
+    bool? isChatConnected,
     String? errorMessage,
     bool clearActiveJourney = false,
     bool clearErrorMessage = false,
@@ -52,6 +55,7 @@ class CompanionState extends Equatable {
       isUpdatingLocation: isUpdatingLocation ?? this.isUpdatingLocation,
       isEndingJourney: isEndingJourney ?? this.isEndingJourney,
       alertSent: alertSent ?? this.alertSent,
+      isChatConnected: isChatConnected ?? this.isChatConnected,
       errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -67,6 +71,7 @@ class CompanionState extends Equatable {
         isUpdatingLocation,
         isEndingJourney,
         alertSent,
+        isChatConnected,
         errorMessage,
       ];
 }

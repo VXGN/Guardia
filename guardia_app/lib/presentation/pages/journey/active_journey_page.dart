@@ -66,10 +66,10 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           children: [
             Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: 8),
-            Text('SOS Terkirim'),
+            Text('SOS Sent'),
           ],
         ),
-        content: const Text('Lokasi dan peringatan darurat Anda telah berhasil dikirim ke semua kontak terpercaya.'),
+        content: const Text('Your location and emergency alerts have been successfully sent to all trusted contacts.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -94,7 +94,7 @@ class _ActiveJourneyPageState extends State<ActiveJourneyPage> {
           _startTime = null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Perjalanan selesai. Selamat tiba dengan selamat! 🎉'),
+              content: Text('Journey completed. Arrived safely! 🎉'),
               backgroundColor: AppColors.success,
             ),
           );

@@ -27,7 +27,9 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
   final UpdateJourneyLocation updateJourneyLocation;
   final EndJourney endJourney;
   final GetActiveJourney getActiveJourney;
-
+  final ChatRemoteDataSource chatRemoteDataSource;
+  
+  StreamSubscription? _chatSubscription;
   Timer? _locationTimer;
 
   CompanionBloc({
@@ -39,6 +41,7 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
     required this.updateJourneyLocation,
     required this.endJourney,
     required this.getActiveJourney,
+    required this.chatRemoteDataSource,
   }) : super(const CompanionState()) {
     on<CompanionStarted>(_onStarted);
     on<TrustedContactsRequested>(_onContactsRequested);
@@ -54,16 +57,52 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
     on<CompanionAlertTriggered>(_onAlertTriggered);
     on<CompanionResetAlert>(_onResetAlert);
     on<CompanionResetError>(_onResetError);
+    on<CompanionMessageReceived>(_onMessageReceived);
+    on<CompanionConnectionChanged>(_onConnectionChanged);
+  }
+
+  void _onMessageReceived(CompanionMessageReceived event, Emitter<CompanionState> emit) {
+    final payload = event.message['payload'];
+    final eventName = event.message['event'];
+
+    if (eventName == 'receive_message' || eventName == 'message_sent') {
+      final newMessage = CompanionMessageEntity(
+        id: payload['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        text: payload['message'] ?? '',
+        isMe: payload['sender_uid'] == FirebaseAuth.instance.currentUser?.uid,
+        time: payload['timestamp'] != null ? DateTime.parse(payload['timestamp']) : DateTime.now(),
+      );
+      
+      // Check if message already exists to avoid duplicates (e.g. from message_sent echo)
+      if (state.messages.any((m) => m.id == newMessage.id)) return;
+      
+      emit(state.copyWith(messages: List.from(state.messages)..add(newMessage)));
+    } else if (eventName == 'connected') {
+      add(const CompanionConnectionChanged(true));
+    } else if (eventName == 'error') {
+      emit(state.copyWith(errorMessage: payload['message']));
+    }
+  }
+
+  void _onConnectionChanged(CompanionConnectionChanged event, Emitter<CompanionState> emit) {
+    emit(state.copyWith(isChatConnected: event.isConnected));
   }
 
   void _onMessageSent(CompanionMessageSent event, Emitter<CompanionState> emit) {
-    final newMessage = CompanionMessageEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: event.text,
-      isMe: event.isMe,
-      time: DateTime.now(),
+    chatRemoteDataSource.sendMessage(
+      // We don't have a specific receiver here because the backend handles broadcasting to the session.
+      // However, handleSendMessage requires receiver_uid.
+      // For now, let's assume 'broadcast' or similar if we can, but looking at backend, it needs receiver_uid.
+      // In a real journey, we might need to send to each companion or the backend broadcasts.
+      // Backend handles: receiverSockets = activeUsers.get(receiverUid).
+      // If we are the user, we send to the companion. But we have multiple?
+      // For competition simplicity, let's just use the first companion or 'session' if supported.
+      // Looking at backend chat.socket.ts: L88: const receiverUid = payload?.receiver_uid;
+      // It seems it's 1-to-1. 
+      // I'll update the event to include receiver_uid.
+      event.receiverUid ?? '',
+      event.text,
     );
-    emit(state.copyWith(messages: List.from(state.messages)..add(newMessage)));
   }
 
   Future<void> _onLocationShared(CompanionLocationShared event, Emitter<CompanionState> emit) async {
@@ -126,6 +165,13 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
   Future<void> _onStarted(CompanionStarted event, Emitter<CompanionState> emit) async {
     add(const TrustedContactsRequested());
     
+    // Connect to chat
+    await chatRemoteDataSource.connect();
+    _chatSubscription?.cancel();
+    _chatSubscription = chatRemoteDataSource.messageStream.listen((msg) {
+      add(CompanionMessageReceived(msg));
+    });
+
     final result = await getActiveJourney();
     result.fold(
       (failure) => emit(state.copyWith(errorMessage: failure.message)),
@@ -290,6 +336,8 @@ class CompanionBloc extends Bloc<CompanionEvent, CompanionState> {
   @override
   Future<void> close() {
     _stopLocationTimer();
+    _chatSubscription?.cancel();
+    chatRemoteDataSource.disconnect();
     return super.close();
   }
 }

@@ -24,6 +24,7 @@ import 'package:guardia_app/features/companion/domain/usecases/update_journey_lo
 import 'package:guardia_app/features/companion/domain/usecases/get_active_journey.dart' as companion_uc_active;
 import 'package:guardia_app/features/companion/domain/usecases/end_journey.dart' as companion_uc_end;
 import 'package:guardia_app/features/companion/presentation/bloc/companion/companion_bloc.dart';
+import 'package:guardia_app/features/companion/data/datasources/chat_remote_data_source.dart';
 
 // Features - Auth
 import 'package:guardia_app/features/auth/domain/repositories/auth_repository.dart';
@@ -127,6 +128,7 @@ Future<void> init() async {
       updateJourneyLocation: sl(),
       endJourney: sl(),
       getActiveJourney: sl(),
+      chatRemoteDataSource: sl(),
     ),
   );
 
@@ -148,6 +150,7 @@ Future<void> init() async {
   sl.registerLazySingleton<JourneyRemoteDataSource>(
     () => JourneyRemoteDataSourceImpl(apiClient: sl()),
   );
+  sl.registerLazySingleton(() => ChatRemoteDataSource());
 
   // Features - Auth
   sl.registerFactory(() => AuthBloc(authRepository: sl()));

@@ -17,6 +17,7 @@ import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_e
 import 'package:guardia_app/features/routing/presentation/bloc/routing/routing_state.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:guardia_app/core/utils/location_utils.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,10 +27,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Mataram city center as default/initial location
   static const LatLng _initialCenter = LatLng(-8.5830695, 116.1155455);
   static const double _riskRadiusMeters = 5000;
   final MapController _mapController = MapController();
+  
+  LatLng _currentCenter = _initialCenter;
 
   final List<CircleMarker> _riskZones = [];
   bool _isNavigationActive = false;
@@ -68,7 +70,48 @@ class _HomePageState extends State<HomePage> {
       
       // Load notifications for the badge
       context.read<NotificationBloc>().add(LoadNotificationsRequested());
+      
+      // Fetch actual location
+      _getCurrentLocation();
     });
+  }
+
+  Future<void> _getCurrentLocation() async {
+    final granted = await LocationUtils.checkAndRequestPermission();
+    if (!granted) return;
+
+    try {
+      final position = await LocationUtils.getCurrentPosition();
+      if (!mounted) return;
+
+      final newCenter = LatLng(position.latitude, position.longitude);
+      setState(() {
+        _currentCenter = newCenter;
+      });
+
+      _mapController.move(newCenter, 13.0);
+
+      // Refresh risk data for the actual location
+      if (context.mounted) {
+        final riskBloc = context.read<RiskBloc>();
+        riskBloc.add(
+          LoadHeatmapRequested(
+            latitude: newCenter.latitude,
+            longitude: newCenter.longitude,
+            radiusMeters: _riskRadiusMeters,
+          ),
+        );
+        riskBloc.add(
+          LoadAreaRiskSummaryRequested(
+            newCenter.latitude,
+            newCenter.longitude,
+            radiusMeters: _riskRadiusMeters,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+    }
   }
 
   @override
@@ -186,9 +229,12 @@ class _HomePageState extends State<HomePage> {
           // 1. OpenStreetMap Background
           FlutterMap(
             mapController: _mapController,
-            options: const MapOptions(
-              initialCenter: _initialCenter,
-              initialZoom: 14,
+            options: MapOptions(
+              initialCenter: _currentCenter,
+              initialZoom: 13.0,
+              onTap: (tapPosition, point) {
+                // Handle tap event if needed
+              },
             ),
             children: [
               TileLayer(
@@ -219,7 +265,7 @@ class _HomePageState extends State<HomePage> {
                   final markers = <Marker>[
                     // Current Location Marker
                     Marker(
-                      point: _initialCenter,
+                      point: _currentCenter,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.blue.withAlpha(50),
@@ -297,8 +343,8 @@ class _HomePageState extends State<HomePage> {
                           // 1. Set Origin
                           if (context.mounted) {
                             context.read<RoutingBloc>().add(RoutingOriginChanged(
-                               _initialCenter.latitude,
-                               _initialCenter.longitude,
+                               _currentCenter.latitude,
+                               _currentCenter.longitude,
                             ));
                             
                             // 2. Set Real Destination
@@ -401,16 +447,49 @@ class _HomePageState extends State<HomePage> {
             ),
           if (!_isNavigationActive)
             Positioned(
-              left: 16,
-              right: 16,
+              left: 24,
+              right: 24,
               bottom: 110,
               child: _RiskSummaryCard(
-              clusterCount: _clusterCount,
-              riskScoreCount: _riskScoreCount,
-              maxRiskScore: _maxRiskScore,
-              errorMessage: _riskError,
+                clusterCount: _clusterCount,
+                riskScoreCount: _riskScoreCount,
+                maxRiskScore: _maxRiskScore,
+                errorMessage: _riskError,
+              ),
             ),
-          ),
+          
+          // 3. Map Header
+          if (!_isNavigationActive)
+            Positioned(
+              top: 124,
+              left: 24,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Local Security Overview',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1E293B),
+                      shadows: [
+                        Shadow(color: Colors.white.withValues(alpha: 0.8), blurRadius: 4),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'Real-time data from community reports',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: const Color(0xFF64748B),
+                      shadows: [
+                        Shadow(color: Colors.white.withValues(alpha: 0.8), blurRadius: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
       ),
@@ -433,35 +512,122 @@ class _RiskSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.insights, color: AppColors.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              errorMessage ??
-                  'Risk: ${maxRiskScore.toStringAsFixed(1)} | Zones: $clusterCount | Segments: $riskScoreCount',
-              style: TextStyle(
-                color: errorMessage != null ? AppColors.error : const Color(0xFF1E293B),
-                fontWeight: FontWeight.w600,
+    if (errorMessage != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                errorMessage!,
+                style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
               ),
             ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.security, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Area Security Status',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const Spacer(),
+              _buildRiskBadge(maxRiskScore),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildIndicator(Icons.radar, 'Monitoring', '$clusterCount Zones'),
+              _buildIndicator(Icons.analytics_outlined, 'Precision', '$riskScoreCount Segments'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiskBadge(double score) {
+    Color color = score > 7 ? AppColors.error : (score > 4 ? Colors.orange : AppColors.success);
+    String label = score > 7 ? 'HIGH RISK' : (score > 4 ? 'MODERATE' : 'SAFE ARCH');
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIndicator(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF94A3B8), size: 16),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+            ),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
